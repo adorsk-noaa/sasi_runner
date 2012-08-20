@@ -1,0 +1,28 @@
+<mockup version="1.0" skin="sketch" measuredW="729" measuredH="482" mockupW="357" mockupH="214">
+  <controls>
+    <control controlID="0" controlTypeID="com.balsamiq.mockups::Canvas" x="372" y="310" w="357" h="172" measuredW="100" measuredH="70" zOrder="0" locked="false" isInGroup="-1">
+      <controlProperties>
+        <borderStyle>roundedSolid</borderStyle>
+        <color>13421772</color>
+      </controlProperties>
+    </control>
+    <control controlID="1" controlTypeID="com.balsamiq.mockups::Label" x="380" y="268" w="-1" h="-1" measuredW="118" measuredH="33" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <size>24</size>
+        <text>Select%20file%3A</text>
+      </controlProperties>
+    </control>
+    <control controlID="2" controlTypeID="com.balsamiq.mockups::DataGrid" x="372" y="331" w="357" h="115" measuredW="349" measuredH="115" zOrder="2" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Name%20%5E%2C%20Uploaded%20By%2C%20Date%20of%20Upload%2C%20Size%0Afoo.csv%2C%20cdemarest%2C%202012-08-03%2012%3A13%3A44%2C%2024M%0Afoo.csv%2C%20cdemarest%2C%202012-08-03%2012%3A13%3A44%2C%2024M%0Afoo.csv%2C%20cdemarest%2C%202012-08-03%2012%3A13%3A44%2C%2024M</text>
+        <verticalScrollbar>true</verticalScrollbar>
+      </controlProperties>
+    </control>
+    <control controlID="3" controlTypeID="com.balsamiq.mockups::Button" x="483" y="448" w="-1" h="-1" measuredW="121" measuredH="27" zOrder="3" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>CircledPlusIcon%7Cxsmall</icon>
+        <text>Add%20new%20file...</text>
+      </controlProperties>
+    </control>
+  </controls>
+</mockup>

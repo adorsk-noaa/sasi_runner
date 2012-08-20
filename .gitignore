@@ -1,3 +1,6 @@
+py2.7
+logs
+
 *.py[co]
 
 # Packages
