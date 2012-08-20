@@ -1,0 +1,50 @@
+<mockup version="1.0" skin="sketch" measuredW="1196" measuredH="911" mockupW="1136" mockupH="891">
+  <controls>
+    <control controlID="0" controlTypeID="com.balsamiq.mockups::BrowserWindow" x="60" y="20" w="1136" h="891" measuredW="450" measuredH="400" zOrder="0" locked="true" isInGroup="-1">
+      <controlProperties>
+        <verticalScrollbar>true</verticalScrollbar>
+      </controlProperties>
+    </control>
+    <control controlID="1" controlTypeID="com.balsamiq.mockups::Title" x="88" y="105" w="-1" h="-1" measuredW="426" measuredH="50" zOrder="2" locked="false" isInGroup="-1">
+      <controlProperties>
+        <color>16777215</color>
+        <text>Run%20Model%20Configuration</text>
+      </controlProperties>
+    </control>
+    <control controlID="27" controlTypeID="com.balsamiq.mockups::SubTitle" x="88" y="167" w="-1" h="-1" measuredW="159" measuredH="33" zOrder="4" locked="false" isInGroup="-1">
+      <controlProperties>
+        <italic>true</italic>
+        <text>Output%20Format</text>
+      </controlProperties>
+    </control>
+    <control controlID="28" controlTypeID="com.balsamiq.mockups::Canvas" x="81" y="158" w="832" h="43" measuredW="100" measuredH="70" zOrder="3" locked="false" isInGroup="-1">
+      <controlProperties>
+        <borderStyle>none</borderStyle>
+        <color>10470904</color>
+      </controlProperties>
+    </control>
+    <control controlID="29" controlTypeID="com.balsamiq.mockups::Canvas" x="81" y="107" w="1088" h="43" measuredW="100" measuredH="70" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <borderStyle>none</borderStyle>
+        <color>2848996</color>
+      </controlProperties>
+    </control>
+    <control controlID="58" controlTypeID="com.balsamiq.mockups::RadioButtonGroup" x="102" y="215" w="-1" h="-1" measuredW="186" measuredH="63" zOrder="5" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>%28o%29%20GeoRefine%20%28selected%29%0A%28%20%29%20CSV%20Data%20Files%0A%28%20%29%20CSV%20Data%20Files%20+%20MetaData</text>
+      </controlProperties>
+    </control>
+    <control controlID="60" controlTypeID="com.balsamiq.mockups::Button" x="81" y="313" w="-1" h="-1" measuredW="83" measuredH="30" zOrder="6" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>RightFillTriangleIcon%7Csmall</icon>
+        <text>run%20it%21</text>
+      </controlProperties>
+    </control>
+    <control controlID="61" controlTypeID="com.balsamiq.mockups::Button" x="182" y="313" w="-1" h="-1" measuredW="88" measuredH="30" zOrder="7" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>CircledXIcon%7Csmall</icon>
+        <text>cancel</text>
+      </controlProperties>
+    </control>
+  </controls>
+</mockup>
