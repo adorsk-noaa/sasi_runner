@@ -1,5 +1,5 @@
-from sasi_runner.app import app, db
-from .models import SASIModelConfig
+from sasi_runner.app import app
+from sasi_runner.app.sasi_model_config.models import SASIModelConfig
 
 from flask import Blueprint, request, jsonify, render_template, Markup
 
