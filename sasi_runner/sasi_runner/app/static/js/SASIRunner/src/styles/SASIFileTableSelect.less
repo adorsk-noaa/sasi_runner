@@ -1,4 +1,66 @@
 @import url("table_select_styles/TableSelect-example.less");
+@import url("jquery.qtip.css");
+@import url("button.less");
+@import url("rounded-corners.less");
 
 .sasi-file-table-select{
+    .add-file-button{
+        .button;
+        display: inline-block;
+    }
+}
+
+.add-file-dialog.qtip{
+    .rounded_corners;
+    background-color: white;
+    border-color: #ddd;
+    border-style: solid;
+    border-width: 0 thin thin thin;
+
+    .ui-tooltip-titlebar{
+        .rounded_corners_top;
+        background-color: #ddd;
+    }
+
+    .ui-tooltip-content{
+        padding: 0;
+    }
+
+    .body-container{
+        padding: 5px;
+        position: relative;
+
+        .overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: gray;
+            opacity: .5;
+            z-index: 2;
+        }
+    }
+
+    .footer-container{
+        padding: 5px;
+        border-top: thin solid #ddd;
+
+        .status{
+            min-height: 1em;
+
+            .loading-status {
+                .text{
+                }
+                .image {
+                    display: inline-block;
+                    width: 16px;
+                    height: 16px;
+                    background-image: url("images/loading_16x16.gif");
+                    opacity: 0;
+                }
+            }
+        }
+    }
 }

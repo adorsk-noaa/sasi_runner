@@ -30,9 +30,11 @@ function($, Backbone, _, _s, ui, SASIRunner){
         fileModels.push(fileModel);
     }
 
-    var sasi_file_collection = new Backbone.Collection(fileModels);
+    var sasi_files = new Backbone.Collection(fileModels);
+    sasi_files.url = '/sasi_runner/sasi_file/category/testcat/';
+
 	var sasi_file_select_model = new Backbone.Model({
-        choices: sasi_file_collection,
+        choices: sasi_files
     });
 
     var columns = [];
