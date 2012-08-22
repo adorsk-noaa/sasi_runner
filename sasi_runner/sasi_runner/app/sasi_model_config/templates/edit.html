@@ -1,18 +1,14 @@
 <html>
     <head>
         <title>Edit SASI Model Config '{{config.id}}'</title>
-        {% for asset in assets.get('css') %}
-        <link href="{{asset}}" rel="stylesheet" type="text/css">
+        {% for asset in assets %}
+        {{asset}}
         {% endfor %}
 
-        {% for asset in assets.get('js') %}
-        <script src="{{asset}}" type="text/javascript"></script>
-        {% endfor %}
-
-        {% for field in field %}
+        {% for field in fields %}
         {% if field.script %}
         <script type="text/javascript">
-            {{field.script}}
+            {{field.script|safe}}
         </script>
         {% endif %}
         {% endfor %}
