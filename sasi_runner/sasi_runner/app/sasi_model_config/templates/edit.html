@@ -5,21 +5,67 @@
         {{asset}}
         {% endfor %}
 
+        <script type="text/javascript">
+            less.env = 'development';
+        </script>
+
         {% for field in fields %}
         {% if field.script %}
         <script type="text/javascript">
             {{field.script|safe}}
-        </script>
-        {% endif %}
-        {% endfor %}
-    </head>
-
-    <body>
-        <h3></h3>
-        <div>
-            {% for field in fields %}
-            {{field.content}}
+            </script>
+            {% endif %}
             {% endfor %}
-        </div>
-    </body>
-</html>
+        </head>
+
+        <body>
+            <div class="sasi-model-config-edit">
+                <div class="inner">
+                    <h2 class="header">Edit SASI Model Config '{{config.id}}'</h2>
+                    <div class="body">
+                        <div class="inner">
+
+                            <div class="checklist">
+                                <div class="inner">
+                                    <h3 class="header">Checklist</h3>
+                                    <div class="body">
+                                        <div class="inner">
+                                            <div class="table">
+                                                {% for field in fields %}
+                                                <div class="row">
+                                                    <div class="checkbox-cell cell">
+                                                        <div class="inner">
+                                                            <input id="{{field.id}}-checkbox" type="checkbox">
+                                                        </div>
+                                                    </div>
+                                                    <div class="link-cell cell">
+                                                        <div class="inner">
+                                                            <a href="#{{field.id}}">{{field.label}}</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="sections">
+                                {% for field in fields %}
+                                <a name="{{field.id}}"></a>
+                                <div class="field-section section" id="{{field.id}}">
+                                    <div class="inner">
+                                        <h3 class="header">{{field.label}}</h3>
+                                        <div class="description">{{field.description}}</div>
+                                        <div class="body">{{field.body}}</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div>
+                            </div>
+                        </div>
+                    </div>
+                </body>
+            </html>

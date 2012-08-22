@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify, render_template, Markup, url_for
 
 
 bp = Blueprint('sasi_model_config', __name__, url_prefix='/config',
-               template_folder='templates') 
+               template_folder='templates', static_folder='static') 
 
 @bp.route('/', methods=['GET'])
 def hello():
@@ -19,7 +19,10 @@ def edit(id):
     fields = [
         {
             'id': 'substrates',
-            'label': 'Substrates'
+            'label': 'Substrates',
+            'description': '''
+            Select a file which contains SASI substrate data/metadata. See blabla for examples...
+            '''
         }
     ]
 
@@ -47,15 +50,9 @@ def edit(id):
                            fields=rendered_fields)
 
 def render_field(field):
-    content = """
-    <div class="field-section" id="%s">
-    <h3 class="header">%s</h3>
-    <div class="body">
-    <div class="description">The description</div>
+    body= """
     <div class="widget">The Widget</div>
-    </div>
-    </div>
-    """ % (field.get('id'), field.get('label'))
+    """
 
     script = """
         require(["jquery","use!backbone","use!underscore", "SASIRunner"],
@@ -78,7 +75,10 @@ def render_field(field):
         });
     """ % (field.get('id'))
     return {
-        'content': Markup(content),
+        'id': field.get('id'),
+        'label': field.get('label'),
+        'description': field.get('description'),
+        'body': Markup(body),
         'assets': [],
         'script': script
     }
@@ -94,6 +94,11 @@ def get_common_assets():
         # SASIRunner.less
         format_link_asset(rel='stylesheet/less', href=url_for('static',
             filename='js/SASIRunner/src/styles/SASIRunner.less')),
+
+        # SASIModelConfig_edit.less
+        format_link_asset(rel='stylesheet/less',
+            href=url_for('sasi_model_config.static', 
+                         filename='styles/SASIModelConfig_edit.less')),
 
         # less.js
         format_script_asset(src=url_for('static', filename='sasi_assets/js/less.js')),
