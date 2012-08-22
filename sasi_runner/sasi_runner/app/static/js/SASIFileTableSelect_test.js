@@ -10,11 +10,13 @@ function($, Backbone, _, _s, ui, SASIRunner){
 
     var fileCounter = 1;
     var createFileModel = function(opts){
+        var date = new Date();
+        date.setMinutes(date.getMinutes() - fileCounter);
         var fileModel = new Backbone.Model(_.extend({
             id: fileCounter,
             filename: fileCounter,
             size: Math.round(Math.random() * 1e5),
-            created: new Date().toISOString()
+            created: date
         }, opts));
         fileCounter += 1;
         return fileModel;

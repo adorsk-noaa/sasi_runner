@@ -6,10 +6,11 @@ define([
 	"_s",
 	"use!qtip",
 	"use!jqForm",
+	"Util",
 	"TableSelect",
 	"text!./templates/AddFileDialog.html",
 		],
-function($, Backbone, _, ui, _s, qtip, jqForm, TableSelect, AddFileDialogTemplate){
+function($, Backbone, _, ui, _s, qtip, jqForm, Util, TableSelect, AddFileDialogTemplate){
 
     var TableSelectView = TableSelect.views.TableSelectView;
 
@@ -19,14 +20,44 @@ function($, Backbone, _, ui, _s, qtip, jqForm, TableSelect, AddFileDialogTemplat
             $(this.el).addClass('sasi-file-table-select');
 
             // Set columns for files.
-            var fileColumns = [];
+            var fileColumns = {};
             _.each(['filename', 'size', 'created'], function(attr){
-                fileColumns.push({
-                    field: attr,
-                    label: attr
-                });
+                fileColumns[attr] = {
+                    mData: attr,
+                    sTitle: _s.capitalize(attr)
+                };
             });
-            opts.columns = fileColumns;
+            // Decorate columns for sorting/formatting.
+            _.extend(fileColumns['size'], {
+                mData : function(data, renderType, setValue){
+                    var value = data['size'];
+                    if (renderType == 'sort'){
+                        return value;
+                    }
+                    else{
+                        return Util.util.friendlyBytes(value);
+                    }
+                },
+                sType: 'numeric'
+            });
+            _.extend(fileColumns['created'], {
+                mData : function(data, renderType, setValue){
+                    var value = data['created'];
+                    if (renderType == 'sort'){
+                        return value;
+                    }
+                    else{
+                        if (value){
+                            return new Date(value).toLocaleString();
+                        }
+                        else{
+                            return '';
+                        }
+                    }
+                },
+                sType: 'date'
+            });
+            opts.columns = _.values(fileColumns);
 
             // Use 'filename' as the selection label attribute.
             opts.selectionLabelAttr = 'filename';
