@@ -51,6 +51,7 @@ function($, Backbone, _, ui, _s, qtip, jqForm, TableSelect, AddFileDialogTemplat
             var $cancelButton = $('.cancel', $fileDialog);
             var $submitButton = $('.submit', $fileDialog);
             var $form = $('.upload-form', $fileDialog);
+            var $fileInput = $('input[type="file"]', $form);
             var $overlay = $('.overlay', $fileDialog);
             var $loadingStatus = $('.loading-status', $fileDialog);
             var $loadingText = $('.text', $loadingStatus);
@@ -118,6 +119,16 @@ function($, Backbone, _, ui, _s, qtip, jqForm, TableSelect, AddFileDialogTemplat
             // Submit upload when submit button is clicked.
             $submitButton.on('click', function(event){
 
+                // If file was empty, show message.
+                if (! $fileInput.val()){
+                    $loadingStatus.addClass('error');
+                    $loadingText.html('Select a file to upload.');
+                    return;
+                }
+                else{
+                    $loadingStatus.removeClass('success error');
+                }
+
                 var deferred = $.Deferred();
                 $submitButton.attr('disabled', true);
                 $cancelButton.attr('disabled', true);
@@ -134,7 +145,8 @@ function($, Backbone, _, ui, _s, qtip, jqForm, TableSelect, AddFileDialogTemplat
                     deferred.resolve(data);
                     },
                     error: function(){
-                    deferred.reject();
+                        var msg = 'Server could not read file.';
+                        deferred.reject(msg);
                     }
                     });
 
@@ -152,7 +164,7 @@ function($, Backbone, _, ui, _s, qtip, jqForm, TableSelect, AddFileDialogTemplat
                 // When upload completes successfully, create file model from response.
                 deferred.done(function(data){
                     $overlay.fadeOut(function(){
-                        $loadingText.html('Upload was successful.');
+                        $loadingText.html('Upload successful.');
                         $loadingStatus.addClass('success');
                         var fileModel = new Backbone.Model(data);
                         _this.choices.add(fileModel);
