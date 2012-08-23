@@ -1,3 +1,6 @@
+@checklist_w: 300px;
+@right_margin: 15px;
+
 .sasi-model-config-edit{
     > .inner {
         width: 100%;
@@ -16,12 +19,12 @@
 
     .checklist {
         position: fixed;
-        right: 0;
-        width: 200px;
+        right: @right_margin;
+        width: @checklist_w;
     }
 
     .sections{
-        margin-right: 200px;
+        margin-right: @checklist_w + @right_margin;
     }
 
     .field-section {

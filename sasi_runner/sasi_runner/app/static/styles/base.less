@@ -1,4 +1,83 @@
 @import url("reset.css");
 
-body {
+.clearfix{
+    clear: both;
+}
+
+p {
+    margin: 1em 0;
+}
+
+em {
+    font-style: italic;
+}
+
+strong{
+    font-weight: bold;
+}
+
+html, body {
+    height: 100%;
+    min-width: 960px;
+}
+
+body > .inner{
+    position: absolute;
+    top: 15px;
+    left: 0;
+    right: 0;
+    bottom: 15px;
+}
+
+#header{
+    height: 50px;
+    border-bottom: thin solid #bcf;
+    margin-bottom: 15px;
+}
+
+#header > h1.title{
+    font-size: 36px;
+    padding-left: 20px;
+}
+
+#content{
+    margin: 0 15px;
+}
+
+h2, h3{
+    padding: 7px;
+    box-shadow: 2px 2px 3px #CCCCCC;
+}
+
+h2 {
+    margin: 0 0 10px;
+
+    background-color: #bcf;
+
+    color: #333;
+    font-size: 150%;
+    text-transform: uppercase;
+    font-family: sans;
+    font-style: italic;
+    
+}
+
+h3.header{
+    margin: 0 0 15px 0;
+    background-color: #e3e9ff;
+
+    font-size: 125%;
+    font-family: sans;
+}
+
+.table{
+    display: table;
+
+    .row{
+        display: table-row;
+
+        .cell{
+            display: table-cell;
+        }
+    }
 }

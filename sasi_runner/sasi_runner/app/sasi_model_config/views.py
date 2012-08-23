@@ -1,7 +1,10 @@
-from sasi_runner.app import app
+from sasi_runner.app import app, db
 from sasi_runner.app.sasi_model_config.models import SASIModelConfig
+from sasi_runner.app.sasi_file.models import SASIFile
+from sasi_runner.app.sasi_file.views import sasi_file_to_dict
 
-from flask import Blueprint, request, jsonify, render_template, Markup, url_for
+from flask import Blueprint, request, jsonify, render_template, Markup
+from flask import url_for, json
 
 
 bp = Blueprint('sasi_model_config', __name__, url_prefix='/config',
@@ -20,6 +23,7 @@ def edit(id):
         {
             'id': 'substrates',
             'label': 'Substrates',
+            'category': 'substrates',
             'description': '''
             Select a file which contains SASI substrate data/metadata. See blabla for examples...
             '''
@@ -57,11 +61,17 @@ def render_field(field):
     <div class="widget">The Widget</div>
     """
 
+    # Get json for initial files.
+    files = db.session.query(SASIFile).filter(SASIFile.category ==
+                                              field['category']).all()
+    file_dicts = [sasi_file_to_dict(f) for f in files]
+    files_json = json.dumps(file_dicts)
+
     script = """
         require(["jquery","use!backbone","use!underscore", "SASIRunner"],
         function($, Backbone, _, SASIRunner){
-            var sasi_files = new Backbone.Collection();
-            sasi_files.url = '/sasi_runner/sasi_file/category/testcat/';
+            var sasi_files = new Backbone.Collection(%s);
+            sasi_files.url = '/sasi_runner/sasi_file/category/%s/';
 
             var sasi_file_select_model = new Backbone.Model({
                 choices: sasi_files
@@ -81,7 +91,7 @@ def render_field(field):
                 sasi_file_select_view.trigger('ready');
             });
         });
-    """ % (field.get('id'), field.get('id'))
+    """ % (files_json, field.get('category'), field.get('id'), field.get('id'))
     return {
         'id': field.get('id'),
         'label': field.get('label'),
