@@ -66,6 +66,14 @@ function($, Backbone, _, ui, _s, qtip, jqForm, Util, TableSelect, AddFileDialogT
             var $fileControl = this.createAddFileControl();
             opts.controls = [$fileControl];
 
+            // Set other table options.
+            opts.tableOpts = {
+                oLanguage: {
+                    sEmptyTable: "No files available.  Click 'add new file' below to upload files."
+                }
+            };
+
+
             TableSelectView.prototype.initialize.apply(this, arguments);
         },
 

@@ -45,7 +45,7 @@
             padding: 0 15px 15px 15px;
 
             > h3.header{
-                background-color: none;
+                background-color: #FFF9E3;
                 .rounded_corners_top;
             }
 
@@ -55,6 +55,22 @@
                 border-width: thin thin thin thin;
                 border-style: solid;
                 border-color: #bcf;
+
+                .cell {
+                    padding: 5px;
+                }
+
+                .controls {
+                    margin-top: 5px;
+                    padding: 5px;
+                }
+
+                a {
+                    color: blue;
+                    &:hover {
+                        color: purple;
+                    }
+                }
             }
         }
     }
@@ -66,6 +82,7 @@
         bottom: 0;
         left: 0;
         overflow-y: scroll;
+        padding-right: 15px;
 
         .section {
             margin-bottom: 30px;
@@ -81,8 +98,33 @@
 
             > .body{
                 > .widget {
+                    margin-top: 15px;
+
+                    &.text {
+                        input[type="text"]{
+                            padding: 0 5px;
+                        }
+                    }
+
                     &.sasi-file-table-select{
                         height: 200px;
+                        padding: 2px;
+
+                        .header-container, .controls-container {
+                            > .inner {
+                                border: 0;
+                                background-color: none;
+                            }
+                        }
+
+                        .choices-table {
+                            td {
+                                &.odd, &.even{
+                                    background-color: none;
+                                }
+                                border: thin solid #999;
+                            }
+                        }
                     }
                 }
             }

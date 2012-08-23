@@ -23,15 +23,15 @@ upload_sets = [uploads]
 def hello():
     return "hello sasi file" 
 
-@bp.route('/category/<categoryId>/', methods=['POST'])
-def uploadCategoryFile(categoryId):
+@bp.route('/category/<category_id>/', methods=['POST'])
+def uploadCategoryFile(category_id):
     if 'sasi_file' in request.files:
         filename = uploads.save(request.files['sasi_file'])
         # Get file info.
         path = uploads.path(filename)
         size = os.stat(path).st_size
         # Create file model.
-        sasi_file = SASIFile(filename=filename, category=categoryId, path=path, 
+        sasi_file = SASIFile(filename=filename, category=category_id, path=path, 
                              size=size, created=datetime.utcnow())
         db.session.add(sasi_file)
         db.session.commit()
@@ -40,10 +40,10 @@ def uploadCategoryFile(categoryId):
         file_dict = sasi_file_to_dict(sasi_file)
         return jsonify(file_dict)
 
-@bp.route('/category/<categoryId>/', methods=['GET'])
-def getCategoryFiles(categoryId):
+@bp.route('/category/<category_id>/', methods=['GET'])
+def getCategoryFiles(category_id):
     category_files = db.session.query(SASIFile).filter(SASIFile.category ==
-                                                       categoryId)
+                                                       category_id)
     file_dicts = []
     for category_file in category_files:
         file_dicts.append(sasi_file_to_dict(category_file))

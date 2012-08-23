@@ -14,30 +14,61 @@ bp = Blueprint('sasi_model_config', __name__, url_prefix='/config',
 def hello():
     return "hello" 
 
+def render_reference_link(section=None):
+    section_hash = ''
+    if section:
+        section_hash = '#%s' % section
+
+    reference_link = """
+    <a href="%s%s" target="_blank">SASI Configuration File Reference Guide</a>
+    """ % (
+        url_for('sasi_model_config.configuration_reference'),
+        section_hash)
+    
+    return reference_link
+
+@bp.route('/configuration_reference/', methods=['GET'])
+def configuration_reference():
+    return "fish"
+
+
 @bp.route('/<id>/edit', methods=['GET'])
 def edit(id):
-    # Load config model.
     config = SASIModelConfig(id)
 
+    # Initialize fields w/ title field.
     fields = [
         {
-            'id': 'substrates',
-            'label': 'Substrates',
-            'category': 'substrates',
-            'description': '''
-            Select a file which contains SASI substrate data/metadata. See blabla for examples...
-            '''
-        },
-
-        {
-            'id': 'features',
-            'label': 'Features',
-            'category': 'features',
-            'description': '''
-            Select a file which contains SASI feature data/metadata. See blabla for examples...
-            '''
+            'id': 'title', 
+            'label': 'Title', 
+            'widget': 'text',
+            'description': "The name of this configuration."
         }
     ]
+
+    # Define file select fields.
+    file_select_fields = [
+        'substrates',
+        'features',
+        'gears',
+        'habitats',
+        'grid',
+        {'id': 'va', 'label': 'Vulnerability Assessment'},
+        {'id': 'model_parameters', 'label': 'Model Parameters'},
+        {'id': 'map_layers', 'label': 'Map Layers'},
+        {'id': 'fishing_efforts', 'label': 'Fishing Efforts'}
+    ]
+    for field in file_select_fields:
+        if isinstance(field, str):
+            field = {'id': field} 
+        field.setdefault('label', field['id'].capitalize())
+        field.setdefault('widget', 'file_select')
+        field.setdefault('widget_options',{'category': field['id']})
+        field.setdefault('description', ('Select a file which contains '
+                                         '%s data/metadata. See the %s '
+                                         'for an example') % 
+                         (field['label'], render_reference_link(field['id'])))
+        fields.append(field)
 
     # Render fields.
     rendered_fields = []
@@ -66,48 +97,58 @@ def edit(id):
                            fields=rendered_fields)
 
 def render_field(field):
-    body= """
-    <div class="widget">The Widget</div>
-    """
+    rendered_widget = render_widget(field)
 
+    html = rendered_widget.get('html')
+    assets = rendered_widget.get('assets')
+    script = rendered_widget.get('script')
+
+    return {
+        'id': field['id'],
+        'label': field['label'],
+        'description': Markup(field.get('description', '')),
+        'html': Markup(html),
+        'assets': {},
+        'script': script
+    }
+
+def render_widget(field):
+    widget_type = field.get('widget')
+
+    if widget_type == 'text':
+        return render_text_widget(field)
+
+    elif widget_type == 'file_select':
+        return render_file_select_widget(field)
+
+def render_text_widget(field):
+    script = render_template('js/text_widget.js', field=field)
+
+    return {
+        'script': script,
+        'html': ('<div class="widget text"><label>%s: </label>'
+                 '<input type="text" value="%s"></div>'
+                ) % (field['label'], field.get('value', '')),
+        'assets': {}
+    }
+
+def render_file_select_widget(field):
     # Get json for initial files.
+    category = field['widget_options'].get('category')
     files = db.session.query(SASIFile).filter(SASIFile.category ==
-                                              field['category']).all()
+                                              category).all()
     file_dicts = [sasi_file_to_dict(f) for f in files]
     files_json = json.dumps(file_dicts)
 
-    script = """
-        require(["jquery","use!backbone","use!underscore", "SASIRunner"],
-        function($, Backbone, _, SASIRunner){
-            var sasi_files = new Backbone.Collection(%s);
-            sasi_files.url = '/sasi_runner/sasi_file/category/%s/';
-
-            var sasi_file_select_model = new Backbone.Model({
-                choices: sasi_files
-            });
-
-            var sasi_file_select_view = new SASIRunner.views.SASIFileTableSelectView({
-                model: sasi_file_select_model,
-                el: $('.field-section[id="%s"] .widget')
-            });
-            
-            sasi_file_select_model.on('change:selection', function(){
-                var value = sasi_file_select_model.get('selection');
-                fieldDispatcher.trigger('field:change', '%s', value)
-            });
-
-            $(document).ready(function(){
-                sasi_file_select_view.trigger('ready');
-            });
-        });
-    """ % (files_json, field.get('category'), field.get('id'), field.get('id'))
+    script = render_template('js/file_select_widget.js',
+                             field=field,
+                             initial_files_json=files_json,
+                             category=category
+                            )
     return {
-        'id': field.get('id'),
-        'label': field.get('label'),
-        'description': field.get('description'),
-        'body': Markup(body),
-        'assets': {},
-        'script': script
+        'script': script,
+        'html': '<div class="widget"></div>',
+        'assets': {}
     }
 
 def get_common_assets():
