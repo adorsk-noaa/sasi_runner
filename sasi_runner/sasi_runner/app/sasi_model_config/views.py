@@ -31,10 +31,32 @@ def render_reference_link(section=None):
 def configuration_reference():
     return "fish"
 
+@bp.route('/', methods=['POST'], defaults={'config_id': None})
+@bp.route('/<config_id>/', methods=['POST'])
+def save_config(config_id):
+    if not config_id:
+        config = SASIModelConfig()
+    else:
+        # @TODO: load config from db.
+        config = None
 
-@bp.route('/<id>/edit', methods=['GET'])
-def edit(id):
-    config = SASIModelConfig(id)
+    # Update config w/ form values.
+    for attr, value in request.form.items():
+        print "a: ", attr, "v: ", value
+        if hasattr(config, attr):
+            print "setting"
+            setattr(config, attr, value)
+
+    # Save the config.
+    db.session.add(config)
+    db.session.commit()
+    return "id: ", config.id
+
+
+@bp.route('/create/', methods=['GET'], defaults={'config_id': None})
+@bp.route('/<config_id>/edit', methods=['GET'])
+def edit(config_id):
+    config = SASIModelConfig(config_id)
 
     # Initialize fields w/ title field.
     fields = [
@@ -92,9 +114,12 @@ def edit(id):
         main_asset_set = assets.setdefault(category, [])
         main_asset_set.extend(asset_dict.keys())
 
+    # Define post destination.
+    form_url = url_for('sasi_model_config.save_config', config_id=config_id)
+
     # Render template.
     return render_template("edit.html", config=config, assets=assets, 
-                           fields=rendered_fields)
+                           fields=rendered_fields, form_url=form_url)
 
 def render_field(field):
     rendered_widget = render_widget(field)

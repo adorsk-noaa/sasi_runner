@@ -46,7 +46,19 @@
 
                 // 'save' handling.
                 $('.save-button').on('click', function(){
-                    console.log("save click", fieldValues);
+                    var deferred = $.ajax({
+                        'url': '{{form_url}}',
+                        'type': 'POST',
+                        'data': fieldValues,
+                        'success': function(){
+                            console.log('success', arguments);
+                        },
+                        'error': function(){
+                            console.log('error', arguments);
+                        }
+
+                    });
+
                 });
 
                 // 'cancel' handling.
