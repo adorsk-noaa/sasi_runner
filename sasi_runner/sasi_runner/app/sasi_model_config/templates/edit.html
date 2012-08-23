@@ -9,6 +9,22 @@
             less.env = 'development';
         </script>
 
+        <script type="text/javascript">
+            // Checklist script.
+            var checklistDispatcher;
+            require(["jquery","use!backbone","use!underscore"],
+                    function($, Backbone, _, SASIRunner){
+                        checklistDispatcher = _.clone(Backbone.Events);
+
+                        checklistDispatcher.on('field:change', function(fieldId, checked){
+                            $fieldCheckbox = $('#' + fieldId + '-checkbox');
+                            $fieldCheckbox.attr('checked', checked);
+                        });
+                    });
+
+
+        </script>
+
         {% for field in fields %}
         {% if field.script %}
         <script type="text/javascript">
@@ -35,7 +51,7 @@
                                                 <div class="row">
                                                     <div class="checkbox-cell cell">
                                                         <div class="inner">
-                                                            <input id="{{field.id}}-checkbox" type="checkbox">
+                                                            <input id="{{field.id}}-checkbox" type="checkbox" disabled="true">
                                                         </div>
                                                     </div>
                                                     <div class="link-cell cell">

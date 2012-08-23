@@ -68,12 +68,18 @@ def render_field(field):
                 model: sasi_file_select_model,
                 el: $('.field-section[id="%s"] .widget')
             });
+            
+            sasi_file_select_model.on('change:selection', function(){
+                var selection = sasi_file_select_model.get('selection');
+                var checked = (selection != null);
+                checklistDispatcher.trigger('field:change', '%s', checked)
+            });
 
             $(document).ready(function(){
                 sasi_file_select_view.trigger('ready');
             });
         });
-    """ % (field.get('id'))
+    """ % (field.get('id'), field.get('id'))
     return {
         'id': field.get('id'),
         'label': field.get('label'),
