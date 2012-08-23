@@ -27,6 +27,15 @@ def edit(id):
             'description': '''
             Select a file which contains SASI substrate data/metadata. See blabla for examples...
             '''
+        },
+
+        {
+            'id': 'features',
+            'label': 'Features',
+            'category': 'features',
+            'description': '''
+            Select a file which contains SASI feature data/metadata. See blabla for examples...
+            '''
         }
     ]
 

@@ -1,30 +1,75 @@
+@import "rounded-corners.less";
 @checklist_w: 300px;
-@right_margin: 15px;
 
 .sasi-model-config-edit{
+    width: 100%;
+    height: 100%;
+
     > .inner {
+        position: relative;
         width: 100%;
         height: 100%;
 
+        @header_h: 35px;
+
         > .header{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: @header_h;
             background-color: #bcf;
             box-shadow: 2px 2px 3px #CCCCCC;
         }
         > .body{
+            position: absolute;
+            top: @header_h + 2 * 15px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+
             > .inner{
                 position: relative;
+                height: 100%;
             }
         }
     }
 
     .checklist {
-        position: fixed;
-        right: @right_margin;
+        position: absolute;
+        top: 0;
+        right: 0;
         width: @checklist_w;
+
+        > .inner {
+            padding: 0 15px 15px 15px;
+
+            > h3.header{
+                background-color: none;
+                .rounded_corners_top;
+            }
+
+            > .body{
+                padding: 15px;
+                .rounded_corners;
+                border-width: thin thin thin thin;
+                border-style: solid;
+                border-color: #bcf;
+            }
+        }
     }
 
     .sections{
-        margin-right: @checklist_w + @right_margin;
+        position: absolute;
+        top: 0;
+        right: @checklist_w;
+        bottom: 0;
+        left: 0;
+        overflow-y: scroll;
+
+        .section {
+            margin-bottom: 30px;
+        }
     }
 
     .field-section {
