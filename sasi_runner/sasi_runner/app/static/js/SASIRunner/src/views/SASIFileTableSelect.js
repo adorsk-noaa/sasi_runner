@@ -67,7 +67,6 @@ function($, Backbone, _, ui, _s, qtip, jqForm, Util, TableSelect, AddFileDialogT
             opts.controls = [$fileControl];
 
             TableSelectView.prototype.initialize.apply(this, arguments);
-            this.postInitialize();
         },
 
         postInitialize: function(){

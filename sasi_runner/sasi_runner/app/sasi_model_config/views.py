@@ -32,18 +32,21 @@ def edit(id):
         rendered_field = render_field(field)
         rendered_fields.append(rendered_field)
 
-    # Initialize assets with common assets.
+    # Initialize common assets.
     assets = get_common_assets()
 
     # Clobber assets from fields.
-    # @TODO: set this from asset categories above.
     clobbered_assets = {}
     for rendered_field in rendered_fields:
-        for asset in rendered_field.get('assets', []):
-            clobbered_assets[asset] = asset
+        for category, field_assets in rendered_field.get('assets', {}).items():
+            asset_dict = clobbered_assets.setdefault(category, {})
+            for field_asset in field_assets:
+                asset_dict[field_asset] = field_asset
 
     # Add clobbered assets to global assets.
-    assets.extend(clobbered_assets.keys())
+    for category, asset_dict in clobbered_assets.items():
+        main_asset_set = assets.setdefault(category, [])
+        main_asset_set.extend(asset_dict.keys())
 
     # Render template.
     return render_template("edit.html", config=config, assets=assets, 
@@ -70,9 +73,8 @@ def render_field(field):
             });
             
             sasi_file_select_model.on('change:selection', function(){
-                var selection = sasi_file_select_model.get('selection');
-                var checked = (selection != null);
-                checklistDispatcher.trigger('field:change', '%s', checked)
+                var value = sasi_file_select_model.get('selection');
+                fieldDispatcher.trigger('field:change', '%s', value)
             });
 
             $(document).ready(function(){
@@ -85,34 +87,37 @@ def render_field(field):
         'label': field.get('label'),
         'description': field.get('description'),
         'body': Markup(body),
-        'assets': [],
+        'assets': {},
         'script': script
     }
 
 def get_common_assets():
-    return [
-        # require.js
-        format_script_asset(src=url_for('static', filename='js/require_config.js')),
+    return {
+        'styles': [
+            # SASIRunner.less
+            format_link_asset(rel='stylesheet/less', href=url_for('static',
+                filename='js/SASIRunner/src/styles/SASIRunner.less')),
 
-        format_script_asset(src=url_for('static',
-                                    filename='sasi_assets/js/require.js/require.js')),
+            # SASIModelConfig_edit.less
+            format_link_asset(rel='stylesheet/less',
+                href=url_for('sasi_model_config.static', 
+                             filename='styles/SASIModelConfig_edit.less')), 
+            # jquery-ui css
+            format_link_asset(rel='stylesheet', href=url_for('static', 
+                filename=('sasi_assets/js/jquery.ui/styles/'
+                          'jquery-ui-1.8.18.custom.css')))
+        ],
 
-        # SASIRunner.less
-        format_link_asset(rel='stylesheet/less', href=url_for('static',
-            filename='js/SASIRunner/src/styles/SASIRunner.less')),
+        'scripts': [
+            # require.js
+            format_script_asset(src=url_for('static', 
+                filename='js/require_config.js')),
 
-        # SASIModelConfig_edit.less
-        format_link_asset(rel='stylesheet/less',
-            href=url_for('sasi_model_config.static', 
-                         filename='styles/SASIModelConfig_edit.less')),
+            format_script_asset(src=url_for('static',
+                filename='sasi_assets/js/require.js/require.js')),
+        ],
 
-        # less.js
-        format_script_asset(src=url_for('static', filename='sasi_assets/js/less.js')),
-
-        # jquery-ui css
-        format_link_asset(rel='stylesheet/less', href=url_for('static',
-            filename='sasi_assets/js/jquery.ui/styles/jquery-ui-1.8.18.custom.css'))
-    ]
+    }
 
 def format_script_asset(type_='text/javascript', **kwargs):
     asset = '<script '

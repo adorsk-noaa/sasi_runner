@@ -1,87 +1,135 @@
-<html>
-    <head>
-        <title>Edit SASI Model Config '{{config.id}}'</title>
-        {% for asset in assets %}
-        {{asset}}
-        {% endfor %}
-
-        <script type="text/javascript">
-            less.env = 'development';
-        </script>
-
-        <script type="text/javascript">
-            // Checklist script.
-            var checklistDispatcher;
-            require(["jquery","use!backbone","use!underscore"],
-                    function($, Backbone, _, SASIRunner){
-                        checklistDispatcher = _.clone(Backbone.Events);
-
-                        checklistDispatcher.on('field:change', function(fieldId, checked){
-                            $fieldCheckbox = $('#' + fieldId + '-checkbox');
-                            $fieldCheckbox.attr('checked', checked);
-                        });
-                    });
+{% extends "base.html" %}
 
 
-        </script>
+{% block title %} Edit SASI Model Config '{{config.id}}' {% endblock %}
 
-        {% for field in fields %}
-        {% if field.script %}
-        <script type="text/javascript">
-            {{field.script|safe}}
-            </script>
-            {% endif %}
-            {% endfor %}
-        </head>
 
-        <body>
-            <div class="sasi-model-config-edit">
-                <div class="inner">
-                    <h2 class="header">Edit SASI Model Config '{{config.id}}'</h2>
-                    <div class="body">
-                        <div class="inner">
+{% block styles %}
 
-                            <div class="checklist">
-                                <div class="inner">
-                                    <h3 class="header">Checklist</h3>
-                                    <div class="body">
-                                        <div class="inner">
-                                            <div class="table">
-                                                {% for field in fields %}
-                                                <div class="row">
-                                                    <div class="checkbox-cell cell">
-                                                        <div class="inner">
-                                                            <input id="{{field.id}}-checkbox" type="checkbox" disabled="true">
-                                                        </div>
-                                                    </div>
-                                                    <div class="link-cell cell">
-                                                        <div class="inner">
-                                                            <a href="#{{field.id}}">{{field.label}}</a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {% endfor %}
+{{ super() }}
+
+{% for style in assets.styles %}
+{{style}}
+{% endfor %}
+
+{% endblock %}
+
+
+{% block scripts %}
+
+{{ super() }}
+
+{% for script in assets.scripts %}
+{{script}}
+{% endfor %}
+
+<script type="text/javascript">
+    // Globals.
+    var fieldDispatcher;
+    var fieldValues;
+    require(["jquery","use!backbone","use!underscore"],
+            function($, Backbone, _, SASIRunner){
+                // Setup field management.
+                fieldDispatcher = _.clone(Backbone.Events);
+                fieldValues = {};
+
+                // Listen for field changes.
+                fieldDispatcher.on('field:change', function(fieldId, value){
+
+                    // Set field's checkbox. 
+                    $fieldCheckbox = $('#' + fieldId + '-checkbox');
+                    $fieldCheckbox.attr('checked', (value != null));
+
+                    // Update field's value.
+                    fieldValues[fieldId] = value;
+                });
+
+                // 'save' handling.
+                $('.save-button').on('click', function(){
+                    console.log("save click", fieldValues);
+                });
+
+                // 'cancel' handling.
+                $('.cancel-button').on('click', function(){
+                    console.log("cancel click");
+                });
+            });
+</script>
+
+
+{% for field in fields %}
+{% if field.script %}
+<script type="text/javascript">
+{{field.script|safe}}
+</script>
+{% endif %}
+{% endfor %}
+
+{% endblock %}
+
+
+{% block content %}
+{{ super() }}
+
+<div class="sasi-model-config-edit">
+    <div class="inner">
+        <h2 class="header">Edit SASI Model Config '{{config.id}}'</h2>
+        <div class="body">
+            <div class="inner">
+
+                <div class="checklist">
+                    <div class="inner">
+                        <h3 class="header">Checklist</h3>
+                        <div class="body">
+                            <div class="inner">
+                                <div class="table">
+                                    {% for field in fields %}
+                                    <div class="row">
+                                        <div class="checkbox-cell cell">
+                                            <div class="inner">
+                                                <input id="{{field.id}}-checkbox" type="checkbox" disabled="true">
+                                            </div>
+                                        </div>
+                                        <div class="link-cell cell">
+                                            <div class="inner">
+                                                <a href="#{{field.id}}">{{field.label}}</a>
                                             </div>
                                         </div>
                                     </div>
+                                    {% endfor %}
                                 </div>
-                            </div>
 
-                            <div class="sections">
-                                {% for field in fields %}
-                                <a name="{{field.id}}"></a>
-                                <div class="field-section section" id="{{field.id}}">
-                                    <div class="inner">
-                                        <h3 class="header">{{field.label}}</h3>
-                                        <div class="description">{{field.description}}</div>
-                                        <div class="body">{{field.body}}</div>
-                                    </div>
+                                <div class="controls">
+                                    <button class="save-button button">save</button>
+                                    <button class="cancel-button button">cancel</button>
                                 </div>
-                                {% endfor %}
-                            </div>
-                            <div>
+
                             </div>
                         </div>
                     </div>
-                </body>
-            </html>
+                </div>
+
+                <div class="sections">
+                    {% for field in fields %}
+                    <a name="{{field.id}}"></a>
+                    <div class="field-section section" id="{{field.id}}">
+                        <div class="inner">
+                            <h3 class="header">{{field.label}}</h3>
+                            <div class="description">{{field.description}}</div>
+                            <div class="body">{{field.body}}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="controls">
+                    <button class="save-button button">save</button>
+                    <button class="cancel-button button">cancel</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
