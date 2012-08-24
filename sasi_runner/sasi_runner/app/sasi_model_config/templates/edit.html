@@ -60,7 +60,7 @@
 
                 // 'cancel' handling.
                 $('.cancel-button').on('click', function(){
-                        window.location.replace("{{url_for('.list_configs')}}");
+                    window.location.replace("{{url_for('.list_configs')}}");
                 });
             });
 </script>
@@ -114,7 +114,7 @@
                                         <input type="hidden" name="{{field.id}}">
                                         {% endfor %}
                                         <button class="save-button button">save &amp; go to configs list</button>
-                                        <button class="cancel-button button">cancel and go to configs list</button>
+                                        <div class="cancel-button button">cancel and go to configs list</div>
                                     </form>
                                 </div>
 
