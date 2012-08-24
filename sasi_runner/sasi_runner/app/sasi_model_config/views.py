@@ -48,9 +48,16 @@ def render_reference_link(section=None):
 def configuration_reference():
     return "fish"
 
-@bp.route('/<int:config_id>', methods=['GET'])
+@bp.route('/<int:config_id>/run', methods=['GET'])
 def run_config(config_id):
     return "run"
+
+@bp.route('/<int:config_id>', methods=['DELETE'])
+def delete_config(config_id):
+    config = initialize_config(config_id)
+    db.session.delete(config)
+    db.session.commit()
+    return "deleted"
 
 @bp.route('/', methods=['POST'], defaults={'config_id': None})
 @bp.route('/<int:config_id>', methods=['POST'])

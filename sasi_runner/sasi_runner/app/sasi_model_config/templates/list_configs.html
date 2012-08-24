@@ -29,7 +29,7 @@
     function($, Backbone, _, DataTables){
 
         // Setup table.
-        $('.config-table').dataTable({
+        var dataTable = $('.config-table').dataTable({
             sDom: 't',
             aoColumnDefs: [
                 {
@@ -58,8 +58,27 @@
                 window.location = url.replace('99999', config_id);
             },
 
-            delete: function(config_id){
-                console.log('delete');
+            delete: function(config_id, tr){
+                var url = '{{ url_for('.delete_config', config_id=99999) }}';
+                url = url.replace('99999', config_id);
+                var deferred = $.ajax({
+                    url: url,
+                    type: 'DELETE',
+                });
+
+                deferred.then(function(){
+                    // Remove the row.
+                    $(tr).fadeOut(750, function(){
+                        setTimeout(500, function(){
+                            dataTable.fnDeleteRow(tr);
+                        });
+                    });
+                });
+
+                deferred.fail(function(){
+                    // Handle errors.
+                    console.log("delete error");
+                });
             }
         };
 
@@ -73,7 +92,7 @@
 
             var handler = actionHandlers[action];
             if (handler){
-                handler(config_id);
+                handler(config_id, $row.get(0));
             }
         });
     });
