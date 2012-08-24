@@ -6,8 +6,13 @@ require(["jquery","use!backbone","use!underscore", "SASIRunner"],
         sasi_files.url = "{{ url_for('sasi_file.uploadCategoryFile', 
             category_id=category) }}";
 
+        var initial_value = null;
+        {% if value %}
+        initial_value = "{{value}}";
+        {% endif %}
         var sasi_file_select_model = new Backbone.Model({
-            choices: sasi_files
+            choices: sasi_files,
+            selection: initial_value
         });
 
         var sasi_file_select_view = new SASIRunner.views.SASIFileTableSelectView({

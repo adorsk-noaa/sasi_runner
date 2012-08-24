@@ -4,14 +4,14 @@ from sasi_runner.app.sasi_file.models import SASIFile
 from sasi_runner.app.sasi_file.views import sasi_file_to_dict
 
 from flask import Blueprint, request, jsonify, render_template, Markup
-from flask import url_for, json
+from flask import url_for, json, redirect
 
 
 bp = Blueprint('sasi_model_config', __name__, url_prefix='/config',
                template_folder='templates', static_folder='static') 
 
 @bp.route('/', methods=['GET'])
-def hello():
+def list_configs():
     return "hello" 
 
 def render_reference_link(section=None):
@@ -22,7 +22,7 @@ def render_reference_link(section=None):
     reference_link = """
     <a href="%s%s" target="_blank">SASI Configuration File Reference Guide</a>
     """ % (
-        url_for('sasi_model_config.configuration_reference'),
+        url_for('.configuration_reference'),
         section_hash)
     
     return reference_link
@@ -34,10 +34,7 @@ def configuration_reference():
 @bp.route('/', methods=['POST'], defaults={'config_id': None})
 @bp.route('/<int:config_id>', methods=['POST'])
 def save_config(config_id):
-    if not config_id:
-        config = SASIModelConfig()
-    else:
-        config = db.session.query(SASIModelConfig).get(config_id)
+    config = initialize_config(config_id)
 
     # Update config w/ form values.
     for attr, value in request.form.items():
@@ -45,12 +42,18 @@ def save_config(config_id):
             # If attribute is a file attribute,
             # get file from the db.
             if is_file_attr(attr):
-                value = db.session.query(SASIFile).get(value)
+                if value:
+                    value = db.session.query(SASIFile).get(value)
+                else:
+                    value = None
             setattr(config, attr, value)
 
     # Save the config.
     db.session.add(config)
     db.session.commit()
+
+    # Redirect to the configs page.
+    return redirect(url_for('.list_configs'))
 
 def is_file_attr(attr):
     """
@@ -61,10 +64,20 @@ def is_file_attr(attr):
         SASIModelConfig, attr)
     return (target_class == SASIFile)
 
+def initialize_config(config_id=None):
+    """
+    Helper function to load a config.
+    """
+    if not config_id:
+        config = SASIModelConfig()
+    else:
+        config = db.session.query(SASIModelConfig).get(config_id)
+    return config
+
 @bp.route('/create/', methods=['GET'], defaults={'config_id': None})
 @bp.route('/<int:config_id>/edit', methods=['GET'])
 def edit(config_id):
-    config = SASIModelConfig(config_id)
+    config = initialize_config(config_id)
 
     # Initialize fields w/ title field.
     fields = [
@@ -103,6 +116,7 @@ def edit(config_id):
     # Render fields.
     rendered_fields = []
     for field in fields:
+        field.setdefault('value', getattr(config, field['id']))
         rendered_field = render_field(field)
         rendered_fields.append(rendered_field)
 
@@ -123,7 +137,7 @@ def edit(config_id):
         main_asset_set.extend(asset_dict.keys())
 
     # Define post destination.
-    form_url = url_for('sasi_model_config.save_config', config_id=config_id)
+    form_url = url_for('.save_config', config_id=config_id)
 
     # Render template.
     return render_template("edit.html", config=config, assets=assets, 
@@ -135,10 +149,12 @@ def render_field(field):
     html = rendered_widget.get('html')
     assets = rendered_widget.get('assets')
     script = rendered_widget.get('script')
+    value = rendered_widget.get('value')
 
     return {
         'id': field['id'],
         'label': field['label'],
+        'value': value,
         'description': Markup(field.get('description', '')),
         'html': Markup(html),
         'assets': {},
@@ -162,7 +178,8 @@ def render_text_widget(field):
         'html': ('<div class="widget text"><label>%s: </label>'
                  '<input type="text" value="%s"></div>'
                 ) % (field['label'], field.get('value', '')),
-        'assets': {}
+        'assets': {},
+        'value': field.get('value', '')
     }
 
 def render_file_select_widget(field):
@@ -173,15 +190,24 @@ def render_file_select_widget(field):
     file_dicts = [sasi_file_to_dict(f) for f in files]
     files_json = json.dumps(file_dicts)
 
+    selected_file = field.get('value')
+    if selected_file:
+        value = selected_file.id
+    else:
+        value = ''
+
     script = render_template('js/file_select_widget.js',
                              field=field,
                              initial_files_json=files_json,
-                             category=category
+                             category=category,
+                             value=value
                             )
+
     return {
         'script': script,
         'html': '<div class="widget"></div>',
-        'assets': {}
+        'assets': {},
+        'value': value
     }
 
 def get_common_assets():
@@ -193,7 +219,7 @@ def get_common_assets():
 
             # SASIModelConfig_edit.less
             format_link_asset(rel='stylesheet/less',
-                href=url_for('sasi_model_config.static', 
+                href=url_for('.static', 
                              filename='styles/SASIModelConfig_edit.less')), 
             # jquery-ui css
             format_link_asset(rel='stylesheet', href=url_for('static', 

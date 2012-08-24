@@ -26,44 +26,41 @@
 <script type="text/javascript">
     // Globals.
     var fieldDispatcher;
-    var fieldValues;
     require(["jquery","use!backbone","use!underscore"],
             function($, Backbone, _, SASIRunner){
+
+                // Shortcut to value form.
+                var $valueForm = $('form.value-form', '.checklist');
+
                 // Setup field management.
                 fieldDispatcher = _.clone(Backbone.Events);
-                fieldValues = {};
 
-                // Listen for field changes.
-                fieldDispatcher.on('field:change', function(fieldId, value){
-
+                var updateFieldValue = function(fieldId, value){
                     // Set field's checkbox. 
                     $fieldCheckbox = $('#' + fieldId + '-checkbox');
                     $fieldCheckbox.attr('checked', (value != null));
 
                     // Update field's value.
-                    fieldValues[fieldId] = value;
-                });
+                    $fieldInput = $('input[name="' + fieldId +  '"]', $valueForm);
+                    $fieldInput.val(value);
+                };
 
-                // 'save' handling.
-                $('.save-button').on('click', function(){
-                    var deferred = $.ajax({
-                        'url': '{{form_url}}',
-                        'type': 'POST',
-                        'data': fieldValues,
-                        'success': function(){
-                            console.log('success', arguments);
-                        },
-                        'error': function(){
-                            console.log('error', arguments);
-                        }
+                // Initialize field values.
+                {% for field in fields %}
+                {% if field.value %}
+                    {% set initial_value = "'%s'" % field.value %}
+                {% else %}
+                    {% set initial_value = 'null' %}
+                {% endif %}
+                updateFieldValue('{{field.id}}', {{initial_value|safe}});
+                {% endfor %}
 
-                    });
-
-                });
+                // Listen for field changes.
+                fieldDispatcher.on('field:change', updateFieldValue);
 
                 // 'cancel' handling.
                 $('.cancel-button').on('click', function(){
-                    console.log("cancel click");
+                        window.location.replace("{{url_for('.list_configs')}}");
                 });
             });
 </script>
@@ -112,8 +109,13 @@
                                 </div>
 
                                 <div class="controls">
-                                    <button class="save-button button">save</button>
-                                    <button class="cancel-button button">cancel</button>
+                                    <form class="value-form" action="{{form_url}}" method="POST">
+                                        {% for field in fields %}
+                                        <input type="hidden" name="{{field.id}}">
+                                        {% endfor %}
+                                        <button class="save-button button">save &amp; go to configs list</button>
+                                        <button class="cancel-button button">cancel and go to configs list</button>
+                                    </form>
                                 </div>
 
                             </div>
