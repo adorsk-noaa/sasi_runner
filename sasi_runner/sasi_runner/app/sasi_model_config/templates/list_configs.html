@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% set title="SASI Model Configurations" %}
+{% block title %} {{title}} {% endblock %}
+
+
+{% block styles %}
+
+{{ super() }}
+
+{% for style in assets.styles %}
+{{style}}
+{% endfor %}
+
+{% endblock %}
+
+
+{% block scripts %}
+
+{{ super() }}
+
+{% for script in assets.scripts %}
+{{script}}
+{% endfor %}
+
+
+<script type="text/javascript">
+    require(["jquery","use!backbone","use!underscore", "use!DataTables"],
+    function($, Backbone, _, DataTables){
+        $('.configs-table').dataTable({
+            sDom: 't',
+            aoColumnDefs: [
+                {
+                    aTargets: ['actions'],
+                    bSortable: false
+                }
+            ],
+            bPaginate: false,
+            bAutoWidth: false
+        });
+    });
+</script>
+
+{% endblock %}
+
+
+{% block content %}
+{{ super() }}
+
+<div class="sasi-model-config-configs-list">
+    <div class="inner">
+        <h2 class="header">{{title}}</h2>
+        <div class="body">
+            <div class="inner">
+                <p> To create a new model configuration, click here: <a href="{{ url_for('.edit') }}">create new model config</a> .</p>
+
+                <div class="configs-table-container">
+                    <table class="configs-table">
+                        <thead>
+                            <th class="name">Name</th>
+                            <th class="actions">Actions</th>
+                        </thead>
+                        <tbody>
+                            {% for config in configs %}
+                            <tr>
+                                <td class="name">
+                                    <div class="inner">
+                                        {{config.title}}
+                                    </div>
+                                </td>
+                                <td class="actions">
+                                    <div class="inner">
+                                        {% for action in actions %}
+                                        <div class="action {{action.id}}">
+                                            <a href="javascript:{}">{{action.label}}</a>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

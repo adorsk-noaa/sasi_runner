@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-
-{% block title %} Edit SASI Model Config '{{config.id}}' {% endblock %}
+{% set title="Edit SASI Model Configuration" %}
+{% block title %} {{title}} {% endblock %}
 
 
 {% block styles %}
@@ -82,7 +82,7 @@
 
 <div class="sasi-model-config-edit">
     <div class="inner">
-        <h2 class="header">Edit SASI Model Config '{{config.id}}'</h2>
+        <h2 class="header"> {{title}} </h2>
         <div class="body">
             <div class="inner">
 

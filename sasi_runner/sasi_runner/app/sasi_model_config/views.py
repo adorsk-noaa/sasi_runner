@@ -12,7 +12,25 @@ bp = Blueprint('sasi_model_config', __name__, url_prefix='/config',
 
 @bp.route('/', methods=['GET'])
 def list_configs():
-    return "hello" 
+    configs = db.session.query(SASIModelConfig).all()
+    assets = get_common_assets()
+
+    # Setup actions.
+    actions = [
+        'id',
+        'run',
+        'edit',
+        'delete'
+    ]
+
+    for i in range(len(actions)):
+        action = actions[i]
+        actions[i] = {'id': action, 'label': action}
+
+    actions.insert(2, {'id': 'clone', 'label': "clone as new"})
+
+    return render_template("list_configs.html", configs=configs,
+                           assets=assets, actions=actions) 
 
 def render_reference_link(section=None):
     section_hash = ''
