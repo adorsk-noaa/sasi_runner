@@ -48,6 +48,10 @@ def render_reference_link(section=None):
 def configuration_reference():
     return "fish"
 
+@bp.route('/<int:config_id>', methods=['GET'])
+def run_config(config_id):
+    return "run"
+
 @bp.route('/', methods=['POST'], defaults={'config_id': None})
 @bp.route('/<int:config_id>', methods=['POST'])
 def save_config(config_id):

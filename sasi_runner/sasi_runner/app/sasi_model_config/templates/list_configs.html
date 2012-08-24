@@ -27,7 +27,9 @@
 <script type="text/javascript">
     require(["jquery","use!backbone","use!underscore", "use!DataTables"],
     function($, Backbone, _, DataTables){
-        $('.configs-table').dataTable({
+
+        // Setup table.
+        $('.config-table').dataTable({
             sDom: 't',
             aoColumnDefs: [
                 {
@@ -38,6 +40,42 @@
             bPaginate: false,
             bAutoWidth: false
         });
+
+        // Setup action handlers.
+        var actionHandlers = {
+            edit: function(config_id){
+                var url = '{{ url_for('.edit', config_id=99999) }}';
+                window.location = url.replace('99999', config_id);
+            },
+
+            run: function(config_id){
+                var url = '{{ url_for('.run_config', config_id=99999) }}';
+                window.location = url.replace('99999', config_id);
+            },
+
+            clone: function(config_id){
+                var url = '{{ url_for('.clone', config_id=99999) }}';
+                window.location = url.replace('99999', config_id);
+            },
+
+            delete: function(config_id){
+                console.log('delete');
+            }
+        };
+
+
+        $('.action-link').on('click', function(event){
+            var $link = $(event.delegateTarget);
+            var $row = $link.closest('tr');
+
+            var action = $link.data('action_id');
+            var config_id = $row.data('config_id');
+
+            var handler = actionHandlers[action];
+            if (handler){
+                handler(config_id);
+            }
+        });
     });
 </script>
 
@@ -47,32 +85,35 @@
 {% block content %}
 {{ super() }}
 
-<div class="sasi-model-config-configs-list">
+<div class="sasi-model-config-config-list">
     <div class="inner">
         <h2 class="header">{{title}}</h2>
         <div class="body">
             <div class="inner">
-                <p> To create a new model configuration, click here: <a href="{{ url_for('.edit') }}">create new model config</a> .</p>
+                <p> To create a new model configuration, click here: <a href="{{ url_for('.edit') }}">Create new model configuration</a> </p>
 
-                <div class="configs-table-container">
-                    <table class="configs-table">
+                <div class="config-table-container">
+                    <table class="config-table">
                         <thead>
                             <th class="name">Name</th>
                             <th class="actions">Actions</th>
                         </thead>
                         <tbody>
                             {% for config in configs %}
-                            <tr>
-                                <td class="name">
+                            <tr data-config_id="{{config.id}}">
+                                <td class="name-cell">
                                     <div class="inner">
                                         <a href="{{ url_for('.edit', config_id=config.id) }}">{{config.title}}</a>
                                     </div>
                                 </td>
-                                <td class="actions">
+                                <td class="actions-cell">
                                     <div class="inner">
                                         {% for action in actions %}
                                         <div class="action {{action.id}}">
-                                            <a href="javascript:{}">{{action.label}}</a>
+                                            <a class="action-link" href="javascript:{}" data-action_id={{action.id}}>
+                                                <div class="action-icon {{action.id}}"></div>
+                                                <div class="action-text">{{action.label}}</div>
+                                            </a>
                                         </div>
                                         {% endfor %}
                                     </div>
