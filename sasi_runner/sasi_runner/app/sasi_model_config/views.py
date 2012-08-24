@@ -17,9 +17,8 @@ def list_configs():
 
     # Setup actions.
     actions = [
-        'id',
-        'run',
         'edit',
+        'run',
         'delete'
     ]
 
@@ -92,10 +91,18 @@ def initialize_config(config_id=None):
         config = db.session.query(SASIModelConfig).get(config_id)
     return config
 
+@bp.route('/<int:config_id>/clone', methods=['GET'])
+def clone(config_id=None):
+    source_config = initialize_config(config_id)
+    new_config = source_config.clone()
+    new_config.title = "Clone of %s" % source_config.title
+    return edit(config=new_config)
+
 @bp.route('/create/', methods=['GET'], defaults={'config_id': None})
 @bp.route('/<int:config_id>/edit', methods=['GET'])
-def edit(config_id):
-    config = initialize_config(config_id)
+def edit(config_id=None, config=None):
+    if not config:
+        config = initialize_config(config_id)
 
     # Initialize fields w/ title field.
     fields = [

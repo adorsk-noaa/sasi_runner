@@ -65,7 +65,7 @@
                             <tr>
                                 <td class="name">
                                     <div class="inner">
-                                        {{config.title}}
+                                        <a href="{{ url_for('.edit', config_id=config.id) }}">{{config.title}}</a>
                                     </div>
                                 </td>
                                 <td class="actions">

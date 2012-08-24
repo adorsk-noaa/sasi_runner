@@ -20,6 +20,17 @@ class SASIModelConfig(object):
         for attr in file_attrs:
             setattr(self, attr, kwargs.get(attr))
 
+    def clone(self):
+        """
+        Clone a config, w/out cloning its id.
+        """
+        clone = SASIModelConfig()
+        clone.title = self.title
+        for attr in file_attrs:
+            setattr(clone, attr, getattr(self, attr))
+        return clone
+
+
 file_columns = []
 for attr in file_attrs:
     column = Column(attr + "_file", Integer,
