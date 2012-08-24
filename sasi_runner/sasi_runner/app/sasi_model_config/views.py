@@ -32,29 +32,37 @@ def configuration_reference():
     return "fish"
 
 @bp.route('/', methods=['POST'], defaults={'config_id': None})
-@bp.route('/<config_id>/', methods=['POST'])
+@bp.route('/<int:config_id>', methods=['POST'])
 def save_config(config_id):
     if not config_id:
         config = SASIModelConfig()
     else:
-        # @TODO: load config from db.
-        config = None
+        config = db.session.query(SASIModelConfig).get(config_id)
 
     # Update config w/ form values.
     for attr, value in request.form.items():
-        print "a: ", attr, "v: ", value
         if hasattr(config, attr):
-            print "setting"
+            # If attribute is a file attribute,
+            # get file from the db.
+            if is_file_attr(attr):
+                value = db.session.query(SASIFile).get(value)
             setattr(config, attr, value)
 
     # Save the config.
     db.session.add(config)
     db.session.commit()
-    return "id: ", config.id
 
+def is_file_attr(attr):
+    """
+    Helper function to determine if an attribute is a file
+    attribute.
+    """
+    target_class = db.get_attr_target_class(
+        SASIModelConfig, attr)
+    return (target_class == SASIFile)
 
 @bp.route('/create/', methods=['GET'], defaults={'config_id': None})
-@bp.route('/<config_id>/edit', methods=['GET'])
+@bp.route('/<int:config_id>/edit', methods=['GET'])
 def edit(config_id):
     config = SASIModelConfig(config_id)
 
