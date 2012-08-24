@@ -22,7 +22,8 @@ class SASIModelConfig(object):
 
 file_columns = []
 for attr in file_attrs:
-    column = Column(attr, Integer)
+    column = Column(attr + "_file", Integer,
+                    ForeignKey(sasi_file_models.table.c.id))
     file_columns.append(column)
 
 table = Table('sasi_model_config', db.metadata,
@@ -31,4 +32,9 @@ table = Table('sasi_model_config', db.metadata,
               *file_columns
              )
 
-mapper(SASIModelConfig, table)
+relationships = {}
+for attr in file_attrs:
+    relationships[attr] = relationship(sasi_file_models.SASIFile, 
+        primaryjoin=(table.c[attr + "_file"]==sasi_file_models.table.c.id))
+
+mapper(SASIModelConfig, table, properties=relationships)
