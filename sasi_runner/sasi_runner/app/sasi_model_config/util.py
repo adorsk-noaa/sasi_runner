@@ -1,6 +1,8 @@
 import os
 import zipfile
 import csv
+import shapefile
+import tempfile
 
 
 def validate_config(config):
@@ -20,7 +22,8 @@ class ConfigValidator(object):
             'substrates',
             'features',
             'gears',
-            'va'
+            'va',
+#            'habitats'
         ]
 
         for section in sections:
@@ -34,6 +37,7 @@ class ConfigValidator(object):
     def get_section_validator(self, config=None, section=None):
         validator = None
 
+        # CSV sections.
         if section in [
             'substrates',
             'features',
@@ -67,7 +71,32 @@ class ConfigValidator(object):
                 config=config, 
                 section=section, 
                 required_file_paths=required_file_paths,
-                csv_requirements=[{
+                column_requirements=[{
+                    'file_path': data_file_path,
+                    'required_columns': required_columns
+                }]
+            )
+
+        # Shapefile sections.
+        if section in [
+            'habitats',
+        ] :
+            data_file_path = os.path.join(section, 'data', section + '.shp')
+            required_file_paths = [data_file_path]
+
+            required_columns = []
+            if section == 'habitats':
+                required_columns = [
+                    'substrates',
+                    'z',
+                    'energy'
+                ]
+
+            validator = ShpFileSectionValidator(
+                config=config, 
+                section=section, 
+                required_file_paths=required_file_paths,
+                column_requirements=[{
                     'file_path': data_file_path,
                     'required_columns': required_columns
                 }]
@@ -105,12 +134,25 @@ class FileSectionValidator(SectionValidator):
             raise ValidationError("File '%s' could not be located."
                                   " Names are case-sensitive." 
                                   % self.section_file.filename)
+        self.validate_zfile_paths()
         self.validate_required_files()
 
     def get_zfile(self):
         if not hasattr(self, 'zfile'):
             self.zfile = zipfile.ZipFile(self.section_file.path, 'r')
         return self.zfile
+
+    def validate_zfile_paths(self):
+        zfile = self.get_zfile()
+        zfile_contents = zfile.namelist()
+        for member in zfile_contents:
+            if os.path.isabs(member) or '..' in member:
+                raise ValidationError("Insecure path '%s' in archive '%s'."
+                                      " Absolute paths and paths with '..' "
+                                      " are not permitted."
+                                      % (member, 
+                                         self.section_file.filename)
+                                     )
 
     def validate_required_files(self):
         zfile = self.get_zfile()
@@ -126,21 +168,46 @@ class FileSectionValidator(SectionValidator):
 
 
 class CSVFileSectionValidator(FileSectionValidator):
-    def __init__(self, csv_requirements=[], **kwargs):
+    def __init__(self, column_requirements=[], **kwargs):
         FileSectionValidator.__init__(self, **kwargs)
-        self.csv_requirements = csv_requirements
+        self.column_requirements = column_requirements
 
     def validate(self):
         super(CSVFileSectionValidator, self).validate()
         zfile = self.get_zfile()
-        for requirement in self.csv_requirements:
+        for requirement in self.column_requirements:
             file_path = requirement['file_path']
             required_columns = requirement['required_columns']
             csv_reader = csv.DictReader(zfile.open(file_path, 'rU'))
+            csv_columns = csv_reader.fieldnames
             for column in required_columns:
-                if column not in csv_reader.fieldnames:
+                if column not in csv_columns:
                     raise ValidationError(
                         "Column '%s' was not found in data file" 
                         " '%s', in archive file '%s'. This column is required."
                         " Names are case-sensitive."
+                        % (column, file_path, self.section_file.filename)) 
+
+class ShpFileSectionValidator(FileSectionValidator):
+    def __init__(self, column_requirements=[], **kwargs):
+        FileSectionValidator.__init__(self, **kwargs)
+        self.column_requirements = column_requirements
+
+    def validate(self):
+        super(ShpFileSectionValidator, self).validate()
+        zfile = self.get_zfile()
+        tmpdir = tempfile.mkdtemp()
+
+        for requirement in self.column_requirements:
+            file_path = requirement['file_path']
+            required_columns = requirement['required_columns']
+            shp_reader = shapefile.Reader(file_path)
+            shp_columns = [shp_field[0].upper() 
+                           for shp_field in shp_reader.fields]
+            for column in required_columns:
+                if column.upper() not in shp_columns:
+                    raise ValidationError(
+                        "Column '%s' was not found in data file" 
+                        " '%s', in archive file '%s'. This column is required."
+                        " Names are *not* case-sensitive."
                         % (column, file_path, self.section_file.filename)) 
