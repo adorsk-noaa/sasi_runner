@@ -17,6 +17,7 @@ file_attrs = [
 class SASIModelConfig(object):
     def __init__(self, id=None, title="New Configuration", **kwargs): 
         self.id = id
+        self.title = title
         for attr in file_attrs:
             setattr(self, attr, kwargs.get(attr))
 

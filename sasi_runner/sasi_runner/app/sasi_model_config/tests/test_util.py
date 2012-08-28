@@ -22,17 +22,26 @@ class SASIModelConfigValidationTest(unittest.TestCase):
 
     def setUp_config_1(self):
         data_dir = os.path.join(base_data_dir, "config_1")
-        config = SASIModelConfig(id=self.get_id())
-
-        # Setup substrates.
-        config.substrates = SASIFile(
+        config = SASIModelConfig(
             id=self.get_id(),
-            path=os.path.join(data_dir, "substrates.zip"),
-            filename="substrates_xxx.zip",
-            category="substrates",
-            size=12345,
-            created=None
+            title="config 1"
         )
+
+        # Setup file sections.
+        for section in [
+            'substrates', 
+            'features', 
+            'gears',
+            'va'
+        ]:
+            setattr(config, section, SASIFile(
+                id=self.get_id(),
+                path=os.path.join(data_dir, section + ".zip"),
+                filename=section + ".zip",
+                category=section,
+                size=12345,
+                created=None
+            ))
 
         return config
 
