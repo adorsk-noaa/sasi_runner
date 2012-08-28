@@ -35,7 +35,9 @@ class SASIModelConfigValidationTest(unittest.TestCase):
             'va',
             'habitats',
             'grid',
-            'parameters'
+            'model_parameters',
+            'fishing_efforts',
+            'map_layers',
         ]:
             setattr(config, section, SASIFile(
                 id=self.get_id(),

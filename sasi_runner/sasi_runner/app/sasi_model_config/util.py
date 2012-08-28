@@ -5,6 +5,8 @@ import shapefile
 import tempfile
 
 
+shp_extensions = ['shp', 'shx', 'dbf']
+
 def validate_config(config):
     config_validator = ConfigValidator(config=config)
     config_validator.validate()
@@ -25,7 +27,9 @@ class ConfigValidator(object):
             'va',
             'habitats',
             'grid',
-            'parameters',
+            'model_parameters',
+            'fishing_efforts',
+            'map_layers',
         ]
 
         for section in sections:
@@ -45,7 +49,7 @@ class ConfigValidator(object):
             'features',
             'gears',
             'va',
-            'parameters',
+            'model_parameters',
         ] :
             data_file_path = os.path.join(section, 'data', section + '.csv')
             required_file_paths = [data_file_path]
@@ -72,7 +76,7 @@ class ConfigValidator(object):
                     "R"
                 ]
 
-            elif section == 'parameters':
+            elif section == 'model_parameters':
                 required_columns = [
                     "time_start",
                     "time_end",
@@ -90,11 +94,10 @@ class ConfigValidator(object):
             )
 
         # Shapefile sections.
-        if section in [
+        elif section in [
             'habitats',
             'grid',
         ] :
-            shp_extensions = ['shp', 'shx', 'dbf']
             required_file_paths = [
                 os.path.join(section, 'data', section) + '.' + extension for
                 extension in shp_extensions]
@@ -122,6 +125,20 @@ class ConfigValidator(object):
                     'file_path': shp_file_path,
                     'required_columns': required_columns
                 }]
+            )
+
+        # Fishing efforts section.
+        elif section == 'fishing_efforts':
+            validator = FishingEffortsFileSectionValidator(
+                config=config, 
+                section=section, 
+            )
+
+        # Map Layers section.
+        elif section == 'map_layers':
+            validator = MapLayersFileSectionValidator(
+                config=config, 
+                section=section, 
             )
 
         return validator
@@ -234,3 +251,85 @@ class ShpFileSectionValidator(FileSectionValidator):
                         " '%s', in archive file '%s'. This column is required."
                         " Names are *not* case-sensitive."
                         % (column, file_path, self.section_file.filename)) 
+
+class FishingEffortsFileSectionValidator(FileSectionValidator):
+    def __init__(self, **kwargs):
+        FileSectionValidator.__init__(self, **kwargs)
+
+    def validate(self):
+        super(FishingEffortsFileSectionValidator, self).validate()
+        model_config_path = os.path.join(self.section, 'model.csv')
+        csv_validator = CSVFileSectionValidator(
+            config=self.config,
+            section=self.section,
+            required_file_paths=[model_config_path],
+            column_requirements=[{
+                'file_path': model_config_path,
+                'required_columns': ['model_type']
+            }]
+        )
+        csv_validator.validate()
+        zfile = self.get_zfile()
+        model_config_reader = csv.DictReader(
+            zfile.open(model_config_path, 'rU'))
+        model_config = model_config_reader.next()
+        model_type = model_config.get('model_type')
+
+        if model_type == 'from_data':
+            data_file_path = os.path.join(self.section, 'data',
+                                     'fishing_efforts.csv')
+            data_validator = CSVFileSectionValidator(
+                config=self.config,
+                section=self.section,
+                required_file_paths=[data_file_path],
+                column_requirements=[{
+                    'file_path': data_file_path,
+                    'required_columns': [
+                        #@TODO: FILL THIS IN.
+                    ]
+                }]
+            )
+            data_validator.validate()
+
+        elif not model_type == 'uniform_density':
+            raise ValidationError(
+                "Invalid fishing effort model type '%s', in file"
+                " '%s', in archive file '%s'."
+                " Model type must be 'from_data', or 'uniform_density'."
+                " Names are case-sensitive."
+            % (model_type, model_config_path, self.section_file.filename)) 
+
+
+class MapLayersFileSectionValidator(FileSectionValidator):
+    def __init__(self, **kwargs):
+        FileSectionValidator.__init__(self, **kwargs)
+
+    def validate(self):
+        super(MapLayersFileSectionValidator, self).validate()
+        zfile = self.get_zfile()
+        tmpdir = tempfile.mkdtemp()
+        zfile.extractall(tmpdir)
+
+        map_layers = []
+        data_base_path = os.path.join(tmpdir, self.section, "data")
+        for item in os.listdir(data_base_path):
+            item_path = os.path.join(data_base_path, item)
+            if os.path.isdir(item_path):
+                map_layers.append({
+                    'name': item,
+                    'path': item_path
+                })
+
+        for map_layer in map_layers:
+            required_file_paths = []
+            for extension in shp_extensions:
+                required_file_paths.append(os.path.join(self.section, 
+                    'data', map_layer['name'], 
+                    map_layer['name'] + '.' + extension))
+
+            layer_validator = FileSectionValidator(
+                config=self.config,
+                section=self.section,
+                required_file_paths=required_file_paths
+            )
+            layer_validator.validate()
