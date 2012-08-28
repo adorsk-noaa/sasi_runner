@@ -48,9 +48,15 @@ def render_reference_link(section=None):
 def configuration_reference():
     return "fish"
 
-@bp.route('/<int:config_id>/run', methods=['GET'])
+@bp.route('/<int:config_id>/pre_run', methods=['GET'])
+def pre_run_config(config_id):
+    assets = get_common_assets()
+    return render_template("pre_run_config.html", assets=assets, 
+                           config_id=config_id)
+
+@bp.route('/<int:config_id>/run', methods=['POST'])
 def run_config(config_id):
-    return "run"
+    return "running"
 
 @bp.route('/<int:config_id>', methods=['DELETE'])
 def delete_config(config_id):

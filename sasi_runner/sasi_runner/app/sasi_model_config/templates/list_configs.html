@@ -49,7 +49,7 @@
             },
 
             run: function(config_id){
-                var url = '{{ url_for('.run_config', config_id=99999) }}';
+                var url = '{{ url_for('.pre_run_config', config_id=99999) }}';
                 window.location = url.replace('99999', config_id);
             },
 
@@ -129,7 +129,7 @@
                                     <div class="inner">
                                         {% for action in actions %}
                                         <div class="action {{action.id}}">
-                                            <a class="action-link" href="javascript:{}" data-action_id={{action.id}}>
+                                            <a class="action-link" href="javascript:{}" data-action_id="{{action.id}}">
                                                 <div class="action-icon {{action.id}}"></div>
                                                 <div class="action-text">{{action.label}}</div>
                                             </a>

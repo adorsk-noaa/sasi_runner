@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% set title="Run SASI Model Configuration" %}
+{% block title %} {{title}} {% endblock %}
+
+
+{% block styles %}
+
+{{ super() }}
+
+{% for style in assets.styles %}
+{{style}}
+{% endfor %}
+
+{% endblock %}
+
+
+{% block scripts %}
+
+{{ super() }}
+
+{% for script in assets.scripts %}
+{{script}}
+{% endfor %}
+
+
+<script type="text/javascript">
+    require(["jquery","use!backbone","use!underscore"],
+    function($, Backbone, _){
+
+        // Setup action handlers.
+        var actionHandlers = {
+            run: function(){
+               $('#run_form').submit(); 
+            },
+
+            cancel: function(){
+                var url = '{{ url_for('.list_configs') }}';
+                window.location = url;
+            }
+        };
+
+
+        $('.action').on('click', function(event){
+            var $button = $(event.delegateTarget);
+            var action = $button.data('action_id');
+
+            var handler = actionHandlers[action];
+            if (handler){
+                handler();
+            }
+        });
+    });
+</script>
+
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<div class="sasi-model-pre-run-config">
+    <div class="inner">
+        <h2 class="header"> {{title}} </h2>
+        <div class="body">
+            <div class="inner">
+
+                <form id="run_form" action="{{ url_for('.run_config', config_id=config_id) }}">
+                    <div class="sections">
+                        <div class="section">
+                            <div class="inner">
+                                <h3 class="header">Select Output Format</h3>
+                                <div class="body">
+                                    <div class="table">
+                                        {% set options = [('georefine', 'GeoRefine',)] %}
+                                        {% for option in options %}
+                                        <div class="row">
+                                            <div class="cell"><input type="radio" id="output_format" name="output_format" value="{{option[0]}}"></div>
+                                            <div class="cell"><label>{{option[1]}}</label></div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        {% for action in [{'id': 'run', 'label': 'run it!'}, {'id': 'cancel', 'label': 'cancel'}] %}
+                        <div class="action" data-action_id="{{action.id}}">
+                            <div class="action-icon {{action.id}}"></div>
+                            <div class="action-text">{{action.label}}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
