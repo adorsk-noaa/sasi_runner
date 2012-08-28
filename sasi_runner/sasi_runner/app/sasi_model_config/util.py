@@ -1,4 +1,5 @@
 import os
+import zipfile
 
 
 def validate_config(config):
@@ -44,12 +45,16 @@ class FileSectionValidator(SectionValidator):
         SectionValidator.__init__(self)
         self.config = config
         self.section = section
+        self.section_file = getattr(self.config, self.section)
 
     def validate(self):
-        section_file = getattr(self.config, self.section)
-        if not os.path.isfile(section_file.path):
+        if not os.path.isfile(self.section_file.path):
             raise ValidationError("File '%s' could not be located." %
-                                  section_file.filename)
+                                  self.section_file.filename)
 
 class SubstratesValidator(FileSectionValidator):
-    pass
+    def validate(self):
+        super(SubstratesValidator, self).validate()
+        zfile = zipfile.ZipFile(self.section_file)
+        print zfile.namelist()
+        "data/substrates.csv"
