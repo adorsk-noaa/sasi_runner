@@ -33,7 +33,9 @@ class SASIModelConfigValidationTest(unittest.TestCase):
             'features', 
             'gears',
             'va',
-            'habitats'
+            'habitats',
+            'grid',
+            'parameters'
         ]:
             setattr(config, section, SASIFile(
                 id=self.get_id(),

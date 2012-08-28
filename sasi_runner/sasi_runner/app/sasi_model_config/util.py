@@ -23,7 +23,9 @@ class ConfigValidator(object):
             'features',
             'gears',
             'va',
-#            'habitats'
+            'habitats',
+            'grid',
+            'parameters',
         ]
 
         for section in sections:
@@ -43,6 +45,7 @@ class ConfigValidator(object):
             'features',
             'gears',
             'va',
+            'parameters',
         ] :
             data_file_path = os.path.join(section, 'data', section + '.csv')
             required_file_paths = [data_file_path]
@@ -52,11 +55,13 @@ class ConfigValidator(object):
                 required_columns = [
                     'id'
                 ]
+
             elif section == 'features':
                 required_columns = [
                     'id', 
                     'category'
                 ]
+
             elif section == 'va':
                 required_columns = [
                     "Gear ID", 
@@ -65,6 +70,13 @@ class ConfigValidator(object):
                     "Energy",
                     "S",
                     "R"
+                ]
+
+            elif section == 'parameters':
+                required_columns = [
+                    "time_start",
+                    "time_end",
+                    "time_step",
                 ]
 
             validator = CSVFileSectionValidator(
@@ -80,16 +92,26 @@ class ConfigValidator(object):
         # Shapefile sections.
         if section in [
             'habitats',
+            'grid',
         ] :
-            data_file_path = os.path.join(section, 'data', section + '.shp')
-            required_file_paths = [data_file_path]
+            shp_extensions = ['shp', 'shx', 'dbf']
+            required_file_paths = [
+                os.path.join(section, 'data', section) + '.' + extension for
+                extension in shp_extensions]
+            shp_file_path = required_file_paths[0]
 
             required_columns = []
             if section == 'habitats':
                 required_columns = [
-                    'substrates',
+                    'substrate',
                     'z',
                     'energy'
+                ]
+
+            elif section == 'grid':
+                required_columns = [
+                    'type_id',
+                    'type',
                 ]
 
             validator = ShpFileSectionValidator(
@@ -97,7 +119,7 @@ class ConfigValidator(object):
                 section=section, 
                 required_file_paths=required_file_paths,
                 column_requirements=[{
-                    'file_path': data_file_path,
+                    'file_path': shp_file_path,
                     'required_columns': required_columns
                 }]
             )
@@ -197,17 +219,18 @@ class ShpFileSectionValidator(FileSectionValidator):
         super(ShpFileSectionValidator, self).validate()
         zfile = self.get_zfile()
         tmpdir = tempfile.mkdtemp()
+        zfile.extractall(tmpdir)
 
         for requirement in self.column_requirements:
             file_path = requirement['file_path']
             required_columns = requirement['required_columns']
-            shp_reader = shapefile.Reader(file_path)
+            shp_reader = shapefile.Reader(os.path.join(tmpdir, file_path))
             shp_columns = [shp_field[0].upper() 
                            for shp_field in shp_reader.fields]
             for column in required_columns:
                 if column.upper() not in shp_columns:
                     raise ValidationError(
-                        "Column '%s' was not found in data file" 
+                        "Column '%s' was not found in records for file" 
                         " '%s', in archive file '%s'. This column is required."
                         " Names are *not* case-sensitive."
                         % (column, file_path, self.section_file.filename)) 
