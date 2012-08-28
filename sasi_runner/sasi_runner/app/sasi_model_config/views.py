@@ -56,6 +56,9 @@ def pre_run_config(config_id):
 
 @bp.route('/<int:config_id>/run', methods=['POST'])
 def run_config(config_id):
+    config = initialize_config(config_id)
+
+    # Validate config.
     return "running"
 
 @bp.route('/<int:config_id>', methods=['DELETE'])
@@ -293,5 +296,6 @@ def format_link_asset(rel='stylesheet', type_='text/css', **kwargs):
         asset += '%s="%s" ' % (key, value)
     asset += '>'
     return Markup(asset)
+
 
 
