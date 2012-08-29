@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% set title="Running SASI Model Configuration" %}
+{% block title %} {{title}} {% endblock %}
+
+
+{% block styles %}
+
+{{ super() }}
+
+{% for style in assets.styles %}
+{{style}}
+{% endfor %}
+
+{% endblock %}
+
+
+{% block scripts %}
+
+{{ super() }}
+
+{% for script in assets.scripts %}
+{{script}}
+{% endfor %}
+
+
+<script type="text/javascript">
+    require(["jquery","use!backbone","use!underscore"],
+    function($, Backbone, _){
+    });
+</script>
+
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<div class="sasi-model-config-run-status">
+    <div class="inner">
+        <h2 class="header"> {{title}} </h2>
+        <div class="body">
+            <div class="inner">
+
+                <div class="progress-bar-container">
+                    <div class="progress-bar">
+                    </div>
+                </div>
+
+                <div class="milestones-container">
+                    <div class="milestones table">
+                        {% for milestone in [
+                        {'id': 'validating', 'label': 'validating configuration...'},
+                        {'id': 'metadata', 'label': 'generating metadata...'},
+                        {'id': 'model', 'label': 'running model...'},
+                        {'id': 'formatting', 'label': 'formatting results...'},
+                        {'id': 'assembling', 'label': 'assembling output file...'},
+                        {'id': 'finished', 'label': 'finished!'},
+                        ] %}
+                        <div class="row milestone {{ milestone['id'] }}">
+                            <div class="cell label-cell">
+                                <div class="label">
+                                    {{ milestone['label'] }}
+                                </div>
+                            </div>
+
+                            <div class="cell image-cell">
+                                <div class="image">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
