@@ -5,6 +5,7 @@ from sqlalchemy.orm import mapper, relationship
 
 file_attrs = [
     'substrates',
+    'energies',
     'features',
     'gears',
     'habitats',
