@@ -9,13 +9,9 @@ import unittest
 
 class RunConfigTaskTest(DBTestCase):
 
-    def setUp(self):
-        super(RunConfigTaskTest, self).setUp()
-        self.configs = {}
-        self.configs['config_1'] = config_setup.setUp_config_1()
-
     def test_run_config_task(self):
-        task = rct.get_run_config_task(self.configs['config_1'])
+        config = config_setup.generate_config()
+        task = rct.get_run_config_task(config)
         task.run()
 
 if __name__ == '__main__':

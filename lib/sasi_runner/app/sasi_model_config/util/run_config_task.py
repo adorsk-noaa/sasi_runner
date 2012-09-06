@@ -3,6 +3,7 @@ import sasi_runner.app.sasi_model_config.models as smc_models
 import sasi_runner.app.sasi_model_config.util.tasks as tasks
 from sasi_data.dao.sasi_sa_dao import SASI_SqlAlchemyDAO
 from sasi_data.ingestors.sasi_ingestor import SASI_Ingestor
+from sasi_model.sasi_model import SASI_Model
 import tempfile
 import zipfile
 import sasipedia
@@ -31,7 +32,6 @@ class RunConfigTask(tasks.Task):
 
         # Make temp data dir.
         data_dir= tempfile.mkdtemp(prefix="sasi_test.")
-        print "data_dir is: ", data_dir
 
         # Unpack config files to tmp dir.
         for file_attr in smc_models.file_attrs:
@@ -42,7 +42,6 @@ class RunConfigTask(tasks.Task):
 
         # Make target dir.
         target_dir = tempfile.mkdtemp(prefix="sasi_target")
-        print "target dir is: ", target_dir
 
         # Generate metadata.
         metadata_dir = os.path.join(target_dir, "metadata")
@@ -56,10 +55,43 @@ class RunConfigTask(tasks.Task):
         sasi_ingestor = SASI_Ingestor(dao=dao)
         sasi_ingestor.ingest(data_dir=data_dir)
 
-        for c in dao.query('{{Cell}}'):
-            print c
+        # Setup model.
+        parameters = dao.query('{{ModelParameters}}').one()
+        cells = dao.query('{{Cell}}').all()
+        substrates = dao.query('{{Substrate}}').all()
+        features = dao.query('{{Feature}}').all()
+        gears = dao.query('{{Gear}}').all()
+        vas = dao.query('{{VA}}').all()
+        efforts = dao.query('{{Effort}}').all()
 
-        # Generate model results.
+        taus = {}
+        omegas = {}
+        for i in range(1,4):
+            taus[i] = getattr(parameters, "t_%s" % i)
+            omegas[i] = getattr(parameters, "w_%s" % i)
+
+        m = SASI_Model(
+            t0=parameters.time_start,
+            tf=parameters.time_end,
+            dt=parameters.time_step,
+            taus=taus,
+            omegas=omegas,
+            cells=cells,
+            features=features,
+            efforts=efforts,
+            vas=vas,
+            opts={'verbose': True}
+        )
+
+        # Run the model.
+        m.run()
+
+        # Save the results.
+        dao.save_all(m.results)
+
+        for r in dao.query('{{Result}}'):
+            print r
+
         # Format results and metadata per output format.
         # Create results object.
         # Generate results link.
