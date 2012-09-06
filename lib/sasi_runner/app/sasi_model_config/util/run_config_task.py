@@ -1,6 +1,8 @@
+import sasi_runner.app.db as db
 import sasi_runner.app.sasi_model_config.models as smc_models
 import sasi_runner.app.sasi_model_config.util.tasks as tasks
-import sasi_runner.app.sasi_model_config.util.validation as validation
+from sasi_data.dao.sasi_sa_dao import SASI_SqlAlchemyDAO
+from sasi_data.ingestors.sasi_ingestor import SASI_Ingestor
 import tempfile
 import zipfile
 import sasipedia
@@ -15,16 +17,17 @@ class RunConfigTask(tasks.Task):
 
     def run(self):
         # Validate config.
-        try:
-            validation.validate_config(self.config)
-        except e:
-            self.update_status(
-                code='failed', 
-                data=[
-                    {'type': 'error', 'value': "%s" % e}
-                ]
-            )
-            return
+        # @TODO: Add this in later.
+        #try:
+            #validation.validate_config(self.config)
+        #except e:
+            #self.update_status(
+                #code='failed', 
+                #data=[
+                    #{'type': 'error', 'value': "%s" % e}
+                #]
+            #)
+            #return
 
         # Make temp data dir.
         data_dir= tempfile.mkdtemp(prefix="sasi_test.")
@@ -45,6 +48,16 @@ class RunConfigTask(tasks.Task):
         metadata_dir = os.path.join(target_dir, "metadata")
         os.mkdir(metadata_dir)
         sasipedia.generate_sasipedia(targetDir=metadata_dir, dataDir=data_dir)
+
+        # Setup SASI DAO.
+        dao = SASI_SqlAlchemyDAO(session=db.session)
+
+        # Ingest data.
+        sasi_ingestor = SASI_Ingestor(dao=dao)
+        sasi_ingestor.ingest(data_dir=data_dir)
+
+        for c in dao.query('{{Cell}}'):
+            print c
 
         # Generate model results.
         # Format results and metadata per output format.
