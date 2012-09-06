@@ -47,6 +47,8 @@ class RunConfigTask(tasks.Task):
         sasipedia.generate_sasipedia(targetDir=metadata_dir, dataDir=data_dir)
 
         # Generate model results.
+        results = sasi.run_model(data_dir=data_dir)
+
         # Format results and metadata per output format.
         # Create results object.
         # Generate results link.
