@@ -1,6 +1,7 @@
 import sasi_runner.app.db as db
 import sasi_runner.app.sasi_model_config.models as smc_models
 import sasi_runner.app.sasi_model_config.util.tasks as tasks
+import sasi_runner.app.sasi_model_config.util.packagers as smc_packagers
 from sasi_data.dao.sasi_sa_dao import SASI_SqlAlchemyDAO
 from sasi_data.ingestors.sasi_ingestor import SASI_Ingestor
 from sasi_model.sasi_model import SASI_Model
@@ -12,7 +13,7 @@ import os
 
 
 class RunConfigTask(tasks.Task):
-    def __init__(self, config=None):
+    def __init__(self, config=None, output_format=None):
         super(RunConfigTask, self).__init__()
         self.config = config
 
@@ -87,15 +88,20 @@ class RunConfigTask(tasks.Task):
         m.run()
 
         # Save the results.
-        dao.save_all(m.results)
+        #dao.save_all(m.results)
 
-        for r in dao.query('{{Result}}'):
-            print r
+        # Format output package.
+        format_output_package(config, dao, output_format)
 
-        # Format results and metadata per output format.
         # Create results object.
         # Generate results link.
         return
+
+def format_output_package(config=None, dao=None, output_format=None):
+    packager = None
+    if output_format == 'georefine':
+        packager = smc_packagers.GeoRefinePackager()
+    packager.create_package()
 
 def get_run_config_task(config):
     return RunConfigTask(config)
