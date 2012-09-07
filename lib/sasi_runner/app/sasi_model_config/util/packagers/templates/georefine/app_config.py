@@ -5,6 +5,7 @@ quantity_fields = {
     'results.cell.area:sum': { 
         'id': 'results.cell.area:sum',
         'label': 'Cell Area',
+        'info': 'Cell Area Info', #@TODO
         'value_type': 'numeric',
         'inner_query': {
             'SELECT': [{'ID': 'cell_area', 'EXPRESSION': '{{results.cell.area}}/1000000.0'}],
@@ -34,6 +35,7 @@ for f in sasi_fields:
     quantity_fields[field_id] = {
         'id': field_id,
         'label': f[1],
+        'info': 'da info', #@TODO
         'value_type': 'numeric',
         'inner_query': {
             'GROUP_BY': [
@@ -89,14 +91,36 @@ facets = {
                 'filter_entity': '{{results.substrate.id}}'
             },
         },
-        # @TODO: Quantity Fields here.
     }
 }
 
+# Add quantity field facet definitions.
+for qfield in quantity_fields.values():
+    facets['definitions'][qfield['id']] = {
+        'id': qfield['id'],
+        'facetDef': {
+            'label': qfield['label'],
+            'info': qfield['info'],
+            'type': 'numeric',
+            'KEY': {
+                'KEY_ENTITY': {
+                    'ID': 'facet%s_%s' % (qfield['id'], qfield['id']), 
+                    'EXPRESSION': '{{results.%s}}' % qfield['id'],
+                    'AS_HISTOGRAM': True,
+                    'ALL_VALUES': True
+                },
+            },
+            'primary_filter_groups': ['data'],
+            'base_filter_groups': ['scenario'],
+            'filter_entity': '{{results.%s}}' % qfield['id'],
+            'range_auto': True
+        },
+    }
 
 charts = {
     'primary_filter_groups': ['data'],
     'base_filter_groups': ['scenario'],
+    'quantity_fields': quantity_fields.values(),
     'category_fields': [
         {
             'id': 'substrates',
@@ -111,10 +135,24 @@ charts = {
                 'LABEL_ENTITY': {'ID': 'substrate_name', 'EXPRESSION': '{{results.substrate.name}}'},
             },
         },
-        # @TODO: Histograms for qfields here.
     ],
-    'quantity_fields': quantity_fields.values(),
 }
+
+# Add quantity field histograms to category fields.
+for qfield in quantity_fields.values():
+    charts['category_fields'].append({
+        'id': qfield['id'],
+        'label': qfield['label'],
+        'value_type': 'numeric',
+        'KEY': {
+            'KEY_ENTITY': {
+                'ID': '_cat_%s' % qfield['id'], 
+                'EXPRESSION': '{{results.%s}}' % qfield['id'],
+                'AS_HISTOGRAM': True,
+                'ALL_VALUES': True
+            },
+        },
+    })
 
 data_layers = []
 for f in sasi_fields:
@@ -177,9 +215,9 @@ for f in sasi_fields:
 maps = {
     "primary_filter_groups": ['data'],
     "base_filter_groups" : ['scenario'],
-    "max_extent" : [-79, 31, -65, 45], # @TODO: SET THIS BASED ON CONFIG.
-    "graticule_intervals": [2], # @TODO
-    "resolutions": [0.025, 0.0125, 0.00625, 0.003125, 0.0015625, 0.00078125], # @TODO
+    "max_extent" : {=map_parameters.max_extent=},
+    "graticule_intervals": {=map_parameters.graticule_intervals=},
+    "resolutions": {=map_parameters.resolutions=},
     "default_layer_options" : {
         "transitionEffect": 'resize'
     },

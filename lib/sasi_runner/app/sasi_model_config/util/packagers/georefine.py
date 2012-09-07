@@ -8,7 +8,8 @@ import os
 class GeoRefinePackager(object):
 
     def __init__(self, package_dir="", cells=[], energys=[],
-                 substrates=[], features=[], gears=[], results=[]): 
+                 substrates=[], features=[], gears=[], results=[],
+                 map_parameters=None): 
         self.package_dir = package_dir
         self.cells = cells
         self.energys = energys
@@ -16,9 +17,15 @@ class GeoRefinePackager(object):
         self.features = features
         self.gears = gears
         self.results = results
-        self.template_env = Environment(loader=PackageLoader(
-            'sasi_runner.app.sasi_model_config.util.packagers', 
-            'templates'))
+        self.map_parameters = map_parameters
+        self.template_env = Environment(
+            loader=PackageLoader(
+                'sasi_runner.app.sasi_model_config.util.packagers', 
+                'templates'
+            ),
+            variable_start_string='{=',
+            variable_end_string='=}'
+        )
 
     def create_package(self):
         self.create_package_dirs()
@@ -127,8 +134,9 @@ class GeoRefinePackager(object):
 
     def create_app_config_files(self):
         app_config_file = os.path.join(self.package_dir, "app_config.py")
-        app_config_fh = open(schema_file, "w")
+        app_config_fh = open(app_config_file, "w")
         app_config_template = self.template_env.get_template(
             os.path.join('georefine', 'app_config.py'))
-        app_config_fh.write(app_config_template.render())
+        app_config_fh.write(app_config_template.render(
+            map_parameters=self.map_parameters))
         app_config_fh.close()

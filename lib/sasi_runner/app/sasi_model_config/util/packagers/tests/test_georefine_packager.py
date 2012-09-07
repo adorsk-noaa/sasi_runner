@@ -1,6 +1,7 @@
 import unittest
 from sasi_runner.app.sasi_model_config.util.packagers import GeoRefinePackager
 import sasi_data.util.data_generators as data_generators
+import sasi_data.models as models
 import tempfile
 import shutil
 
@@ -22,6 +23,11 @@ class GeoRefinePackagerTest(unittest.TestCase):
         results = data_generators.generate_results(
             times=range(0,3), cells=cells, energies=energys,
             features=features, substrates=substrates, gears=gears)
+        map_parameters = models.MapParameters(
+            max_extent='[-70, 40, -60, 50]',
+            graticule_intervals='[2]',
+            resolutions='[0.025, 0.0125, 0.00625, 0.003125, 0.0015625, 0.00078125]'
+        )
 
         packager = GeoRefinePackager(
             package_dir=self.package_dir,
@@ -30,7 +36,8 @@ class GeoRefinePackagerTest(unittest.TestCase):
             substrates=substrates,
             features=features,
             gears=gears,
-            results=results
+            results=results,
+            map_parameters=map_parameters
         )
 
         packager.create_package()
