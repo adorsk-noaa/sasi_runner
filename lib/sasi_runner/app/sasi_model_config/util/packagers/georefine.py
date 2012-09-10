@@ -2,14 +2,14 @@ import sasi_data.exporters as exporters
 import sasi_data.processors as processors
 from jinja2 import Environment, PackageLoader
 import os
-
+import shutil
 
 
 class GeoRefinePackager(object):
 
     def __init__(self, package_dir="", cells=[], energys=[],
                  substrates=[], features=[], gears=[], results=[],
-                 map_parameters=None): 
+                 map_parameters=None, map_layers_dir=None): 
         self.package_dir = package_dir
         self.cells = cells
         self.energys = energys
@@ -18,6 +18,7 @@ class GeoRefinePackager(object):
         self.gears = gears
         self.results = results
         self.map_parameters = map_parameters
+        self.map_layers_dir = map_layers_dir
         self.template_env = Environment(
             loader=PackageLoader(
                 'sasi_runner.app.sasi_model_config.util.packagers', 
@@ -30,6 +31,7 @@ class GeoRefinePackager(object):
     def create_package(self):
         self.create_package_dirs()
         self.create_data_files()
+        self.copy_map_layers()
         self.create_schema_files()
         self.create_app_config_files()
         pass
@@ -123,6 +125,11 @@ class GeoRefinePackager(object):
                 objects=section['data'],
                 mappings=section['mappings']
             ).export()
+
+    def copy_map_layers(self):
+        target_dir = os.path.join(self.data_dir, "map_layers")
+        if os.path.isdir(self.map_layers_dir):
+            shutil.copytree(self.map_layers_dir, target_dir)
 
     def create_schema_files(self):
         schema_file = os.path.join(self.package_dir, "schema.py")

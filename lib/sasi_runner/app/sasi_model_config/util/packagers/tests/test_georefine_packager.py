@@ -3,6 +3,7 @@ from sasi_runner.app.sasi_model_config.util.packagers import GeoRefinePackager
 import sasi_data.util.data_generators as data_generators
 import sasi_data.models as models
 import tempfile
+import os
 import shutil
 
 
@@ -28,6 +29,13 @@ class GeoRefinePackagerTest(unittest.TestCase):
             graticule_intervals='[2]',
             resolutions='[0.025, 0.0125, 0.00625, 0.003125, 0.0015625, 0.00078125]'
         )
+        map_layers_dir = tempfile.mkdtemp()
+        for i in range(3):
+            layer_id = "layer%s" % i
+            layer_dir = os.path.join(map_layers_dir, layer_id)
+            os.mkdir(layer_dir)
+            data_generators.generate_map_layer(layer_id=layer_id,
+                                               layer_dir=layer_dir)
 
         packager = GeoRefinePackager(
             package_dir=self.package_dir,
@@ -37,7 +45,8 @@ class GeoRefinePackagerTest(unittest.TestCase):
             features=features,
             gears=gears,
             results=results,
-            map_parameters=map_parameters
+            map_parameters=map_parameters,
+            map_layers_dir=map_layers_dir
         )
 
         packager.create_package()
