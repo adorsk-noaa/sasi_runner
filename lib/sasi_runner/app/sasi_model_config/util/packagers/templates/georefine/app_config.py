@@ -227,13 +227,30 @@ maps = {
     },
 
     "data_layers": data_layers,
-    "base_layers": [
-        # @TODO: SET THIS FROM DATA.
+    {% for layer_category in ['base', 'overlay'] %}
+    "{= layer_category =}_layers": [
+        {% for layer in map_layers[layer_category] %}
+        {
+            {# direct attrs #}
+            {% for attr, value in layer.attrs.items() %}
+            '{= attr =}':{= value =},
+            {% endfor %}
+            {# wms parameters #}
+            'params': {
+                {% for attr, value in layer.wms_params.items() %}
+                '{= attr =}':{= value =},
+                {% endfor %}
+            },
+            {# options #}
+            'options': {
+                {% for attr, value in layer.options.items() %}
+                '{= attr =}':{= value =},
+                {% endfor %}
+            },
+        },
+        {% endfor %}
     ],
-
-    "overlay_layers": [
-        # @TODO: SET THIS FROM DATA.
-    ]
+    {% endfor %}
 }
 
 defaultInitialState = {
