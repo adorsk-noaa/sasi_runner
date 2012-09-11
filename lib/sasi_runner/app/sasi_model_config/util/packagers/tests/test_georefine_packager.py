@@ -9,12 +9,11 @@ import shutil
 
 
 class GeoRefinePackagerTest(unittest.TestCase):
-    def setUp(self):
-        self.target_dir = tempfile.mkdtemp(prefix="grTest.")
 
     def tearDown(self):
-        #shutil.rmtree(self.target_dir)
-        pass
+        if hasattr(self, 'target_dir') and self.target_dir:
+            pass
+            #shutil.rmtree(self.target_dir)
 
     def test_georefine_packager(self):
         cells = data_generators.generate_cell_grid()
@@ -31,7 +30,6 @@ class GeoRefinePackagerTest(unittest.TestCase):
         source_data_dir = data_generators.generate_data_dir()
 
         packager = GeoRefinePackager(
-            target_dir=self.target_dir,
             cells=cells,
             energys=energys,
             substrates=substrates,
@@ -41,8 +39,10 @@ class GeoRefinePackagerTest(unittest.TestCase):
             source_data_dir=source_data_dir
         )
 
-        packager.create_package()
+        archive_file = packager.create_package()
+        self.target_dir = packager.target_dir
         print self.target_dir
+        print archive_file
 
 if __name__ == '__main__':
     unittest.main()

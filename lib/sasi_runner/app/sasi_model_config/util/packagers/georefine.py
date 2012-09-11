@@ -4,14 +4,15 @@ from jinja2 import Environment, PackageLoader
 import os
 import csv
 import shutil
+from tarfile import TarFile
+import tempfile
 
 
 class GeoRefinePackager(object):
 
-    def __init__(self, target_dir="", cells=[], energys=[],
+    def __init__(self, cells=[], energys=[],
                  substrates=[], features=[], gears=[], results=[],
                  source_data_dir=""): 
-        self.target_dir = target_dir
         self.cells = cells
         self.energys = energys
         self.substrates = substrates
@@ -19,6 +20,8 @@ class GeoRefinePackager(object):
         self.gears = gears
         self.results = results
         self.source_data_dir = source_data_dir
+
+        self.target_dir = tempfile.mkdtemp(prefix="grp.")
 
         self.template_env = Environment(
             loader=PackageLoader(
@@ -35,7 +38,8 @@ class GeoRefinePackager(object):
         self.copy_map_layers()
         self.create_schema_files()
         self.create_app_config_files()
-        pass
+        archive_file = self.create_archive()
+        return archive_file
 
     def create_target_dirs(self):
         self.data_dir = os.path.join(self.target_dir, "data")
@@ -45,21 +49,21 @@ class GeoRefinePackager(object):
         # Define mappings, section by section.
         sections = [
             {
-                'id': 'cells',
+                'id': 'cell',
                 'data': self.cells,
                 'mappings': [
                     'id',
                     'type',
                     'type_id',
                     'area',
-                    {'source': 'geom', 'target': 'geom', 
+                    {'source': 'geom', 'target': 'geom_wkt', 
                      'processor': processors.sa_wkb_to_wkt
                     }
                 ]
             },
 
             {
-                'id': 'energys',
+                'id': 'energy',
                 'data': self.energys,
                 'mappings': [
                     'id',
@@ -69,7 +73,7 @@ class GeoRefinePackager(object):
             },
 
             {
-                'id': 'substrates',
+                'id': 'substrate',
                 'data': self.substrates,
                 'mappings': [
                     'id',
@@ -79,7 +83,7 @@ class GeoRefinePackager(object):
             },
 
             {
-                'id': 'features',
+                'id': 'feature',
                 'data': self.features,
                 'mappings': [
                     'id',
@@ -90,7 +94,7 @@ class GeoRefinePackager(object):
             },
 
             {
-                'id': 'gears',
+                'id': 'gear',
                 'data': self.gears,
                 'mappings': [
                     'id',
@@ -100,7 +104,7 @@ class GeoRefinePackager(object):
             },
 
             {
-                'id': 'results',
+                'id': 'result',
                 'data': self.results,
                 'mappings': [
                     'id',
@@ -212,3 +216,12 @@ class GeoRefinePackager(object):
         formatted_layer['wms_params'] = wms_params
 
         return formatted_layer
+
+    def create_archive(self):
+        os_hndl, tarfile = tempfile.mkstemp(suffix=".georefine.tar.gz")
+        tar = TarFile(tarfile, "w")
+        for item in os.listdir(self.target_dir):
+            path = os.path.join(self.target_dir, item)
+            tar.add(path, arcname=item)
+        tar.close()
+        return tarfile

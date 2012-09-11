@@ -2,21 +2,22 @@ sasipedia_base_url = "/georefine/static/sasipedia"
 
 # Quantity fields are used in facets and charts.
 quantity_fields = {
-    'results.cell.area:sum': { 
-        'id': 'results.cell.area:sum',
+    'result_cell_area:sum': { 
+        'id': 'result_cell_area_sum',
         'label': 'Cell Area',
         'info': 'Cell Area Info', #@TODO
         'value_type': 'numeric',
         'inner_query': {
-            'SELECT': [{'ID': 'cell_area', 'EXPRESSION': '{{results.cell.area}}/1000000.0'}],
+            'SELECT': [{'ID': 'cell_area', 'EXPRESSION': '{{result.cell.area}}/1000000.0'}],
             'GROUP_BY': [
-                '{{results.cell.id}}',
+                '{{result.cell.id}}',
                 {'ID': 'cell_area'}
             ],
         },
         'outer_query': {
             'SELECT': [{'ID': 'sum_cell_area', 'EXPRESSION': 'func.sum({{inner.cell_area}})'}],
         },
+        'key_entity_expression': '{{result.cell.area}}/1000000.0',
         'format': '%.1h km<sup>2</sup>'
     },
 }
@@ -31,7 +32,7 @@ sasi_fields = [
 ]
 
 for f in sasi_fields:
-    field_id = "results.%s:sum" % f[0]
+    field_id = "result_%s_sum" % f[0]
     quantity_fields[field_id] = {
         'id': field_id,
         'label': f[1],
@@ -39,13 +40,14 @@ for f in sasi_fields:
         'value_type': 'numeric',
         'inner_query': {
             'GROUP_BY': [
-                {'ID': f[0], 'EXPRESSION': "{{results.%s}}/1000000.0" % f[0]},
-                '{{results.id}}'
+                {'ID': f[0], 'EXPRESSION': "{{result.%s}}/1000000.0" % f[0]},
+                '{{result.id}}'
             ],
         },
         'outer_query': {
             'SELECT': [{'ID': "%s_sum" % f[0], 'EXPRESSION': "func.sum({{inner.%s}})" % f[0]}],
         },
+        'key_entity_expression': '{{result.%s}}/1000000.0' % f[0],
         'format': '%.1h km<sup>2</sup>'
     }
 
@@ -64,13 +66,16 @@ facets = {
                 'label': 'Timestep',
                 'type': 'timeSlider',
                 'KEY': {
-                    'KEY_ENTITY': {'ID': 'result_t', 'EXPRESSION': '{{results.t}}'},
+                    'KEY_ENTITY': {'ID': 'result_t', 'EXPRESSION': '{{result.t}}'},
                     'LABEL_ENTITY': {'ID': 'result_t'},
                 },
                 'value_type': 'numeric',
                 'choices': [],
                 'primary_filter_groups': ['scenario'],
-                'filter_entity': '{{results.t}}',
+                'filter_entity': {
+                    'TYPE': 'ENTITY', 
+                    'EXPRESSION': '{{result.t}}'
+                },
                 'noClose': True
             },
         },
@@ -82,13 +87,16 @@ facets = {
                 'type': 'list',
                 'KEY': {
                     'KEY_ENTITY': {'ID': 'substrate_id', 'EXPRESSION':
-                                   '{{results.substrate.id}}'},
+                                   '{{result.substrate.id}}'},
                     'LABEL_ENTITY': {'ID': 'substrate_name', 'EXPRESSION':
-                                     '{{results.substrate.label}}'},
+                                     '{{result.substrate.label}}'},
                 },
                 'primary_filter_groups': ['data'],
                 'base_filter_groups': ['scenario'],
-                'filter_entity': '{{results.substrate.id}}'
+                'filter_entity': {
+                    'TYPE': 'ENTITY', 
+                    'EXPRESSION': '{{result.substrate.id}}'
+                },
             },
         },
     }
@@ -104,15 +112,18 @@ for qfield in quantity_fields.values():
             'type': 'numeric',
             'KEY': {
                 'KEY_ENTITY': {
-                    'ID': 'facet%s_%s' % (qfield['id'], qfield['id']), 
-                    'EXPRESSION': '{{results.%s}}' % qfield['id'],
+                    'ID': 'facet%s_key_' % qfield['id'], 
+                    'EXPRESSION': qfield['key_entity_expression'],
                     'AS_HISTOGRAM': True,
                     'ALL_VALUES': True
                 },
             },
             'primary_filter_groups': ['data'],
             'base_filter_groups': ['scenario'],
-            'filter_entity': '{{results.%s}}' % qfield['id'],
+            'filter_entity': {
+                'TYPE': 'ENTITY', 
+                'EXPRESSION': qfield['key_entity_expression'],
+            },
             'range_auto': True
         },
     }
@@ -129,10 +140,11 @@ charts = {
             'KEY': {
                 'KEY_ENTITY': {
                     'ID': '_cat_substrate_id', 
-                    'EXPRESSION': '{{results.substrate.id}}',
+                    'EXPRESSION': '{{result.substrate.id}}',
                     'ALL_VALUES': True
                 },
-                'LABEL_ENTITY': {'ID': 'substrate_name', 'EXPRESSION': '{{results.substrate.name}}'},
+                'LABEL_ENTITY': {'ID': 'substrate_name', 
+                                 'EXPRESSION': '{{result.substrate.label}}'},
             },
         },
     ],
@@ -147,7 +159,7 @@ for qfield in quantity_fields.values():
         'KEY': {
             'KEY_ENTITY': {
                 'ID': '_cat_%s' % qfield['id'], 
-                'EXPRESSION': '{{results.%s}}' % qfield['id'],
+                'EXPRESSION': qfield['key_entity_expression'],
                 'AS_HISTOGRAM': True,
                 'ALL_VALUES': True
             },
@@ -171,17 +183,17 @@ for f in sasi_fields:
             'SELECT': [
                 {
                     'ID': "%s_data" % f[0], 
-                    'EXPRESSION': "func.sum({{results.%s}}/{{results.cell.area}})" % f[0]
+                    'EXPRESSION': "func.sum({{result.%s}}/{{result.cell.area}})" % f[0]
                 },
             ],
             'GROUP_BY': [
                 {
                     'ID': "%s_cell_id" % f[0], 
-                    'EXPRESSION': '{{results.cell.id}}'
+                    'EXPRESSION': '{{result.cell.id}}'
                 },
                 {
                     'ID': "%s_cell_geom" % f[0], 
-                    'EXPRESSION': 'RawColumn({{results.cell.geom}})'
+                    'EXPRESSION': 'RawColumn({{result.cell.geom}})'
                 }
             ],
         },
@@ -272,7 +284,7 @@ defaultInitialState = {
                 "type":"action",
                 "handler":"facets_facetsEditorSetQField",
                 "opts":{
-                    "id":"result.x:sum"
+                    "id":"result_cell_area_sum"
                 }
             },
             # Timestep facet.
@@ -419,7 +431,7 @@ defaultInitialState = {
                                         "id":"substrates"
                                     },
                                     "quantityField":{
-                                        "id":"result.cell.area:sum"
+                                        "id":"result_cell_area_sum"
                                     }
                                 }
                             }

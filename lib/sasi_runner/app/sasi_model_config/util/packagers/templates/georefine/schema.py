@@ -8,52 +8,52 @@ sources = {}
 ordered_sources = []
 metadata = MetaData()
 
-sources['cells'] = Table('cells', metadata,
+sources['cell'] = Table('cell', metadata,
         Column('id', Integer, primary_key=True),
         Column('z', Float),
         Column('area', Float),
         GeometryExtensionColumn('geom', MultiPolygon(2)),
         )
-GeometryDDL(sources['cells'])
-ordered_sources.append(sources['cells'])
+GeometryDDL(sources['cell'])
+ordered_sources.append({'id': 'cell', 'source': sources['cell']})
 
-sources['energys'] = Table('energys', metadata,
+sources['energy'] = Table('energy', metadata,
         Column('id', String, primary_key=True),
         Column('label', String),
         )
-ordered_sources.append(sources['energys'])
+ordered_sources.append({'id': 'energy', 'source': sources['energy']})
 
-sources['substrates'] = Table('substrates', metadata,
+sources['substrate'] = Table('substrate', metadata,
         Column('id', String, primary_key=True),
         Column('label', String),
         )
-ordered_sources.append(sources['substrates'])
+ordered_sources.append({'id': 'substrate', 'source': sources['substrate']})
 
-sources['features'] = Table('features', metadata,
+sources['feature'] = Table('feature', metadata,
         Column('id', String, primary_key=True),
         Column('label', String),
         Column('category', String),
         )
-ordered_sources.append(sources['features'])
+ordered_sources.append({'id': 'feature', 'source': sources['feature']})
 
-sources['gears'] = Table('gears', metadata,
+sources['gear'] = Table('gear', metadata,
         Column('id', String, primary_key=True),
         Column('label', String),
         )
-ordered_sources.append(sources['gears'])
+ordered_sources.append({'id': 'gear', 'source': sources['gear']})
 
-sources['results']= Table('results', metadata,
+sources['result']= Table('result', metadata,
         Column('id', Integer, primary_key=True),
         Column('t', Integer),
-        Column('energy_id', Integer, ForeignKey('energys.id')),
-        Column('cell_id', Integer, ForeignKey('cells.id')),
-        Column('gear_id', String, ForeignKey('gears.id')),
-        Column('substrate_id', String, ForeignKey('substrates.id')),
-        Column('feature_id', String, ForeignKey('features.id')),
+        Column('energy_id', String, ForeignKey('energy.id')),
+        Column('cell_id', Integer, ForeignKey('cell.id')),
+        Column('gear_id', String, ForeignKey('gear.id')),
+        Column('substrate_id', String, ForeignKey('substrate.id')),
+        Column('feature_id', String, ForeignKey('feature.id')),
         Column('a', Float),
         Column('x', Float),
         Column('y', Float),
         Column('z', Float),
         Column('znet', Float),
         )
-ordered_sources.append(sources['results'])
+ordered_sources.append({'id': 'result', 'source': sources['result']})
