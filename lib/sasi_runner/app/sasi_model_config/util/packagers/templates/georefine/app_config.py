@@ -193,7 +193,7 @@ for f in sasi_fields:
                 },
                 {
                     'ID': "%s_cell_geom" % f[0], 
-                    'EXPRESSION': 'RawColumn({{result.cell.geom}})'
+                    'EXPRESSION': '{{result.cell.geom}}'
                 }
             ],
         },
@@ -205,7 +205,7 @@ for f in sasi_fields:
                 },
                 {
                     'ID': "%s_geom" % f[0], 
-                    'EXPRESSION': "RawColumn({{inner.%s_cell_geom}})" % f[0]
+                    'EXPRESSION': "{{inner.%s_cell_geom}}" % f[0]
                 },
                 {
                     'ID': "%s_data" % f[0], 

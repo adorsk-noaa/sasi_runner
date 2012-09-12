@@ -204,7 +204,7 @@ class GeoRefinePackager(object):
 
         # Boolean attributes.
         for attr in ['disabled']:
-            if layer.get(attr) == None:
+            if not layer.get(attr):
                 formatted_layer['attrs'][attr] = 'False'
             else:
                 formatted_layer['attrs'][attr] = 'True'
@@ -215,8 +215,8 @@ class GeoRefinePackager(object):
             if layer.get(attr):
                 wms_params[attr] = "'%s'" % layer[attr]
         for attr in ['transparent']:
-            if not layer.get(attr) == None:
-                wms_params[attr] = True
+            if layer.get(attr):
+                wms_params[attr] = 'True'
 
         # For GeoRefine wms layers, set WMS layers param to be layer id.
         #@TODO: kludgy, clean this up later.
