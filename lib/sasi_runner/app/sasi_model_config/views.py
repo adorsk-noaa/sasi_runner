@@ -147,7 +147,7 @@ def edit(config_id=None, config=None):
     file_select_fields = [
         'substrates',
         'features',
-        'energies',
+        {'id': 'energys', 'label': 'Energies'},
         'gears',
         'habitats',
         'grid',
