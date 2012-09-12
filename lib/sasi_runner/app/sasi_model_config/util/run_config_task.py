@@ -1,5 +1,8 @@
 import sasi_runner.app.db as db
+import sasi_runner.app.sasi_file.models as sf_models
+import sasi_runner.app.sasi_file.views as sf_views
 import sasi_runner.app.sasi_model_config.models as smc_models
+import sasi_runner.app.sasi_result.models as sr_models
 import sasi_runner.app.sasi_model_config.util.tasks as tasks
 import sasi_runner.app.sasi_model_config.util.packagers as smc_packagers
 from sasi_data.dao.sasi_sa_dao import SASI_SqlAlchemyDAO
@@ -8,14 +11,16 @@ from sasi_model.sasi_model import SASI_Model
 import tempfile
 import zipfile
 import sasipedia
-
+from datetime import datetime
 import os
+import shutil
 
 
 class RunConfigTask(tasks.Task):
     def __init__(self, config=None, output_format=None):
         super(RunConfigTask, self).__init__()
         self.config = config
+        self.output_format = output_format
 
     def run(self):
         # Validate config.
@@ -32,7 +37,7 @@ class RunConfigTask(tasks.Task):
             #return
 
         # Make temp data dir.
-        data_dir= tempfile.mkdtemp(prefix="sasi_test.")
+        data_dir = tempfile.mkdtemp(prefix="sasi_test.")
 
         # Unpack config files to tmp dir.
         for file_attr in smc_models.file_attrs:
@@ -90,18 +95,63 @@ class RunConfigTask(tasks.Task):
         # Save the results.
         #dao.save_all(m.results)
 
-        # Format output package.
-        format_output_package(config, dao, output_format)
+        # Create output package.
+        tmp_package_file = get_output_package(
+            data_dir=data_dir, 
+            dao=dao, 
+            output_format=self.output_format
+        )
+
+        # Save the output package to the data dir.
+        #@TODO: GET THIS FROM CONFIG!
+        package_file_name = "%s.georefine_results.tar.gz" % self.config.title
+        files_dir = sf_views.uploads_dest
+        perm_package_file = os.path.join(files_dir, package_file_name)
+        shutil.move(tmp_package_file, perm_package_file)
 
         # Create results object.
-        # Generate results link.
-        return
+        package_size = os.stat(perm_package_file).st_size
+        result_file = sf_models.SASIFile(
+            filename=package_file_name,
+            category="%s results" % self.output_format,
+            path=perm_package_file,
+            size=package_size,
+            created=datetime.utcnow()
+        )
+        sasi_result = sr_models.SASIResult(
+            title="Da Title", 
+            result_file=result_file
+        )
+        db.session.add(sasi_result)
+        db.session.commit()
 
-def format_output_package(config=None, dao=None, output_format=None):
+        # Save result file id to task data.
+        self.update_status(
+            code='complete', 
+            data={'result_id': sasi_result.id}
+        )
+
+def get_output_package(data_dir="", dao=None, output_format=None):
     packager = None
-    if output_format == 'georefine':
-        packager = smc_packagers.GeoRefinePackager()
-    packager.create_package()
+    cells = dao.query('{{Cell}}')
+    energys = dao.query('{{Energy}}')
+    substrates = dao.query('{{Substrate}}')
+    features = dao.query('{{Feature}}')
+    gears = dao.query('{{Gear}}')
+    results = dao.query('{{Result}}')
 
-def get_run_config_task(config):
-    return RunConfigTask(config)
+    if output_format == 'georefine':
+        packager = smc_packagers.GeoRefinePackager(
+            cells=cells,
+            energys=energys,
+            substrates=substrates,
+            features=features,
+            gears=gears,
+            results=results,
+            source_data_dir=data_dir
+        )
+    package_file = packager.create_package()
+    return package_file
+
+def get_run_config_task(**kwargs):
+    return RunConfigTask(**kwargs)

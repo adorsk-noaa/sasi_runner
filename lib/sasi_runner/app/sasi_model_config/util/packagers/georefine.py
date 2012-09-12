@@ -20,6 +20,8 @@ class GeoRefinePackager(object):
         self.gears = gears
         self.results = results
         self.source_data_dir = source_data_dir
+        self.gr_data_dir = os.path.join(self.source_data_dir, "georefine",
+                                        "data")
 
         self.target_dir = tempfile.mkdtemp(prefix="grp.")
 
@@ -35,7 +37,7 @@ class GeoRefinePackager(object):
     def create_package(self):
         self.create_target_dirs()
         self.create_data_files()
-        self.copy_map_layers()
+        self.copy_georefine_data()
         self.create_schema_files()
         self.create_app_config_files()
         archive_file = self.create_archive()
@@ -131,11 +133,12 @@ class GeoRefinePackager(object):
                 mappings=section['mappings']
             ).export()
 
-    def copy_map_layers(self):
-        target_dir = os.path.join(self.data_dir, "map_layers")
-        source_dir = os.path.join(self.source_data_dir, 'map_layers')
-        if os.path.isdir(source_dir):
-            shutil.copytree(source_dir, target_dir)
+    def copy_georefine_data(self):
+        for section in ['map_layers', 'map_parameters']:
+            target_dir = os.path.join(self.data_dir, section)
+            source_dir = os.path.join(self.gr_data_dir, section)
+            if os.path.isdir(source_dir):
+                shutil.copytree(source_dir, target_dir)
 
     def create_schema_files(self):
         schema_file = os.path.join(self.target_dir, "schema.py")
@@ -165,14 +168,16 @@ class GeoRefinePackager(object):
 
     def get_map_parameters(self):
         map_parameters_file = os.path.join(
-            self.source_data_dir, "map_parameters", "data", "map_parameters.csv")
+            self.gr_data_dir, "map_parameters", "data", "map_parameters.csv"
+        )
         reader = csv.DictReader(open(map_parameters_file, "rb"))
         return reader.next()
 
     def get_map_layers(self):
         map_layers = {'base': [], 'overlay': []}
         map_layers_file = os.path.join(
-            self.source_data_dir, "map_layers", "data", "map_layers.csv")
+            self.gr_data_dir, "map_layers", "data", "map_layers.csv"
+        )
         reader = csv.DictReader(open(map_layers_file, "rb"))
         return [row for row in reader]
 

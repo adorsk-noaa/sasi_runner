@@ -12,8 +12,8 @@ file_attrs = [
     'grid',
     'va',
     'model_parameters',
-    'map_layers',
-    'fishing_efforts'
+    'fishing_efforts',
+    'georefine'
 ]
 class SASIModelConfig(object):
     def __init__(self, id=None, title="New Configuration", **kwargs): 

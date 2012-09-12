@@ -153,8 +153,8 @@ def edit(config_id=None, config=None):
         'grid',
         {'id': 'va', 'label': 'Vulnerability Assessment'},
         {'id': 'model_parameters', 'label': 'Model Parameters'},
-        {'id': 'map_layers', 'label': 'Map Layers'},
-        {'id': 'fishing_efforts', 'label': 'Fishing Efforts'}
+        {'id': 'fishing_efforts', 'label': 'Fishing Efforts'},
+        {'id': 'georefine', 'label': 'GeoRefine Data'}
     ]
     for field in file_select_fields:
         if isinstance(field, str):

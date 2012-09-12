@@ -18,7 +18,6 @@ uploads = UploadSet('sasifile', extensions=ARCHIVES + TEXT + IMAGES,
 
 upload_sets = [uploads]
 
-
 @bp.route('/', methods=['GET'])
 def hello():
     return "hello sasi file" 

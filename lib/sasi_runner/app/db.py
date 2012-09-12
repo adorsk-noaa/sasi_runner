@@ -8,11 +8,11 @@ engine = create_engine(sr_conf['DB_URI'], convert_unicode=True)
 metadata = MetaData()
 session = scoped_session(sessionmaker(bind=engine))
 
-def init_db():
-    metadata.create_all(bind=engine)
+def init_db(bind=engine):
+    metadata.create_all(bind=bind)
 
-def clear_db():
-	metadata.drop_all(bind=engine)
+def clear_db(bind=engine):
+	metadata.drop_all(bind=bind)
 
 def get_attr_target_class(clazz, attr):
     """

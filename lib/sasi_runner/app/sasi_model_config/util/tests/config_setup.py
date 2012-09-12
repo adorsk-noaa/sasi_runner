@@ -1,7 +1,7 @@
 from sasi_runner.app.sasi_file.models import SASIFile
 from sasi_runner.app.sasi_model_config.models import SASIModelConfig
 import sasi_runner.app.sasi_model_config.util.validation as validation
-from sasi_data.tests.generate_test_data import generate_data
+from sasi_data.util.data_generators import generate_data_dir
 import os
 import tempfile
 import zipfile
@@ -31,7 +31,7 @@ def generate_config():
     config = SASIModelConfig(id=get_id(), title="tst_config")
 
     target_dir = tempfile.mkdtemp(prefix="ctest.")
-    data_dir = generate_data()
+    data_dir = generate_data_dir()
     for section in [
         'substrates', 
         'features', 
@@ -42,7 +42,7 @@ def generate_config():
         'grid',
         'model_parameters',
         'fishing_efforts',
-        'map_layers',
+        'georefine',
     ]:
         section_dir = os.path.join(data_dir, section)
         os_handle, archivename = tempfile.mkstemp(prefix="%s." % section, suffix=".zip")

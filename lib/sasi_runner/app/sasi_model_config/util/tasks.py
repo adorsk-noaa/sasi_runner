@@ -16,7 +16,6 @@ def delete_task(task_id):
 class Task(Thread):
     def __init__(self):
         global registry
-        Thread.__init__(self)
         self.id = id(self)
         self.status = {
             'code': None,
@@ -24,6 +23,8 @@ class Task(Thread):
             'modified': None
         }
         registry[self.id] = self
+
+        Thread.__init__(self)
 
     def update_status(self, code=None, data=None):
         self.status['code'] = code
