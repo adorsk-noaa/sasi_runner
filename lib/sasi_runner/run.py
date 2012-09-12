@@ -21,4 +21,4 @@ prefix = flask_config.APPLICATION_ROOT
 app.wsgi_app = PrefixFix(app.wsgi_app, '/' + prefix)
 app.config['APPLICATION_ROOT'] = prefix
 app.config['DEBUG'] = True
-run_simple('localhost', 5000, app.wsgi_app, use_reloader=True, use_debugger=True)
+run_simple('localhost', 5001, app.wsgi_app, use_reloader=True, use_debugger=True)

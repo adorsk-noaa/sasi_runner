@@ -198,6 +198,10 @@ class GeoRefinePackager(object):
             if not layer.get(attr) == None:
                 formatted_layer['attrs'][attr] = "'%s'" % layer[attr]
 
+        # Layer source.
+        source = layer.get('source', 'georefine_wms_layer')
+        formatted_layer['attrs']['source'] = "'%s'" % source
+
         # Boolean attributes.
         for attr in ['disabled']:
             if layer.get(attr) == None:
@@ -213,7 +217,15 @@ class GeoRefinePackager(object):
         for attr in ['transparent']:
             if not layer.get(attr) == None:
                 wms_params[attr] = True
+
+        # For GeoRefine wms layers, set WMS layers param to be layer id.
+        #@TODO: kludgy, clean this up later.
+        if source == 'georefine_wms_layer':
+            wms_params['layers'] = "'%s'" % layer['id']
+
         formatted_layer['wms_params'] = wms_params
+
+
 
         return formatted_layer
 

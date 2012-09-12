@@ -172,7 +172,7 @@ for f in sasi_fields:
         "id": f[0],
         "name": "%s (density)" % f[1],
         "info": "info test",
-        "source": "local_getmap",
+        "source": "georefine_data_layer",
         "layer_type": 'WMS',
         "layer_category": 'data',
         "options": {},
