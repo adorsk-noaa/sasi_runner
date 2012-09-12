@@ -170,7 +170,7 @@ data_layers = []
 for f in sasi_fields:
     data_layer = {
         "id": f[0],
-        "name": "%s (density)" % f[1],
+        "label": "%s (density)" % f[1],
         "info": "info test",
         "source": "georefine_data_layer",
         "layer_type": 'WMS',
