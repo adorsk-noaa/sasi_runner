@@ -8,9 +8,14 @@ import sys
 import os
 import unittest
 import time
+import tempfile
 
 
 class RunConfigTaskTest(DBTestCase):
+
+    def get_engine_uri(self):
+        hndl, dbfile = tempfile.mkstemp(suffix=".tst.sqlite")
+        return  'sqlite:///%s?check_same_thread=False' % dbfile
 
     def setUp(self):
         super(RunConfigTaskTest, self).setUp()

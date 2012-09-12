@@ -9,8 +9,11 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 class DBTestCase(unittest.TestCase):
 
+    def get_engine_uri(self):
+        return 'sqlite://'
+
     def setUp(self):
-        self.engine = create_engine('sqlite://')
+        self.engine = create_engine(self.get_engine_uri())
         self.connection = self.engine.connect()
         self.connection.execute("SELECT InitSpatialMetaData()") 
         self.trans = self.connection.begin()
