@@ -1,10 +1,10 @@
-import sasi_runner.app.db as db
-import sasi_runner.app.sasi_file.models as sf_models
-import sasi_runner.app.sasi_file.views as sf_views
-import sasi_runner.app.sasi_model_config.models as smc_models
-import sasi_runner.app.sasi_result.models as sr_models
-import sasi_runner.app.sasi_model_config.util.tasks as tasks
-import sasi_runner.app.sasi_model_config.util.packagers as smc_packagers
+from sasi_runner.app import db as db
+from sasi_runner.app.sasi_file import models as sf_models
+from sasi_runner.app.sasi_file import views as sf_views
+from sasi_runner.app.sasi_model_config import models as smc_models
+from sasi_runner.app.sasi_result import models as sr_models
+from sasi_runner.app.sasi_model_config.util import tasks as tasks
+from sasi_runner.app.sasi_model_config.util import packagers as smc_packagers
 from sasi_data.dao.sasi_sa_dao import SASI_SqlAlchemyDAO
 from sasi_data.ingestors.sasi_ingestor import SASI_Ingestor
 from sasi_model.sasi_model import SASI_Model
@@ -17,12 +17,16 @@ import shutil
 
 
 class RunConfigTask(tasks.Task):
-    def __init__(self, config=None, output_format=None):
+    def __init__(self, config_id=None, output_format=None):
         super(RunConfigTask, self).__init__()
-        self.config = config
+        self.config_id = config_id
         self.output_format = output_format
 
     def run(self):
+        # Note: need to load config here, to avoid session/threading issues.
+        self.config = db.session.query(smc_models.SASIModelConfig)\
+                .get(self.config_id)
+
         # Validate config.
         # @TODO: Add this in later.
         #try:
@@ -152,6 +156,3 @@ def get_output_package(data_dir="", dao=None, output_format=None):
         )
     package_file = packager.create_package()
     return package_file
-
-def get_run_config_task(**kwargs):
-    return RunConfigTask(**kwargs)

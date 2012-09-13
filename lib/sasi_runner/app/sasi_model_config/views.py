@@ -3,6 +3,8 @@ from sasi_runner.app.sasi_model_config.models import SASIModelConfig
 from sasi_runner.app.sasi_file.models import SASIFile
 from sasi_runner.app.sasi_file.views import sasi_file_to_dict
 from sasi_runner.app.sasi_model_config.util import tasks as tasks
+from sasi_runner.app.sasi_model_config.util.run_config_task import (
+    RunConfigTask)
 
 from flask import Blueprint, request, jsonify, render_template, Markup
 from flask import url_for, json, redirect
@@ -57,16 +59,25 @@ def pre_run_config(config_id):
 
 @bp.route('/<int:config_id>/run', methods=['POST'])
 def run_config(config_id):
-    """ Start config run task and return status page with
-    task id."""
-    config = initialize_config(config_id)
-    assets = get_common_assets()
-    task_id = None
-    return render_template("run_status.html", assets=assets,
-                           task_id=task_id, config=config)
+    """ Start config run task and redirect to status page for task. """
+    output_format = request.form['output_format']
+    run_config_task = RunConfigTask(
+        config_id=config_id,
+        output_format=output_format
+    )
+    task_id = run_config_task.id
+    run_config_task.start()
+    return redirect(url_for('.run_status', task_id=task_id))
 
 @bp.route('/run_status/<int:task_id>/', methods=['GET'])
 def run_status(task_id):
+    task = tasks.get_task(task_id)
+    assets = get_common_assets()
+    return render_template("run_status.html", assets=assets,
+                           task_id=task_id, config=config)
+
+@bp.route('/task_status/<int:task_id>', methods=['GET'])
+def task_status(task_id):
     task = tasks.get_task(task_id)
     return jsonify(status=task.status)
 

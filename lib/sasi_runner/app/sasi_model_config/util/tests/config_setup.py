@@ -45,7 +45,7 @@ def generate_config():
         'georefine',
     ]:
         section_dir = os.path.join(data_dir, section)
-        os_handle, archivename = tempfile.mkstemp(prefix="%s." % section, suffix=".zip")
+        archivename = os.path.join(target_dir, "%s.zip" % section)
         zipdir(section_dir, archivename)
         setattr(config, section, SASIFile(
             id=get_id(),
