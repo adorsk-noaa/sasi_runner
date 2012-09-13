@@ -44,12 +44,17 @@ class RunConfigTest(DBTestCase):
             if match:
                 task_id = int(match.group(1))
                 task = tasks.get_task(task_id)
+                status_path = "%s/task_status/%s" % (
+                    self.base_path, task_id)
                 while task.status['code'] != 'complete':
+                    r = c.get(status_path)
+                    print r.data
                     print "task running, status: ", task.status
                     time.sleep(1)
+                r = c.get(status_path)
+                print r.data
+                    r = c.get(status_path)
                 print "task complete, status: ", task.status
-
-
 
 if __name__ == '__main__':
     unittest.main()

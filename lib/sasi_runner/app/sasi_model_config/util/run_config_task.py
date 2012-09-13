@@ -1,9 +1,9 @@
+from sasi_runner.app.tasks.task import Task
 from sasi_runner.app import db as db
 from sasi_runner.app.sasi_file import models as sf_models
 from sasi_runner.app.sasi_file import views as sf_views
 from sasi_runner.app.sasi_model_config import models as smc_models
 from sasi_runner.app.sasi_result import models as sr_models
-from sasi_runner.app.sasi_model_config.util import tasks as tasks
 from sasi_runner.app.sasi_model_config.util import packagers as smc_packagers
 from sasi_data.dao.sasi_sa_dao import SASI_SqlAlchemyDAO
 from sasi_data.ingestors.sasi_ingestor import SASI_Ingestor
@@ -16,13 +16,13 @@ import os
 import shutil
 
 
-class RunConfigTask(tasks.Task):
+class RunConfigTask(Task):
     def __init__(self, config_id=None, output_format=None):
         super(RunConfigTask, self).__init__()
         self.config_id = config_id
         self.output_format = output_format
 
-    def run(self):
+    def call(self):
         # Note: need to load config here, to avoid session/threading issues.
         self.config = db.session.query(smc_models.SASIModelConfig)\
                 .get(self.config_id)
@@ -100,7 +100,7 @@ class RunConfigTask(tasks.Task):
         #dao.save_all(m.results)
 
         # Create output package.
-        tmp_package_file = get_output_package(
+        tmp_package_file = self.get_output_package(
             data_dir=data_dir, 
             dao=dao, 
             output_format=self.output_format
@@ -130,29 +130,29 @@ class RunConfigTask(tasks.Task):
         db.session.commit()
 
         # Save result file id to task data.
-        self.update_status(
-            code='complete', 
-            data={'result_id': sasi_result.id}
-        )
+        self.set_status({
+            'code': 'complete', 
+            'data': {'result_id': sasi_result.id}
+        })
 
-def get_output_package(data_dir="", dao=None, output_format=None):
-    packager = None
-    cells = dao.query('{{Cell}}')
-    energys = dao.query('{{Energy}}')
-    substrates = dao.query('{{Substrate}}')
-    features = dao.query('{{Feature}}')
-    gears = dao.query('{{Gear}}')
-    results = dao.query('{{Result}}')
+    def get_output_package(self, data_dir="", dao=None, output_format=None):
+        packager = None
+        cells = dao.query('{{Cell}}')
+        energys = dao.query('{{Energy}}')
+        substrates = dao.query('{{Substrate}}')
+        features = dao.query('{{Feature}}')
+        gears = dao.query('{{Gear}}')
+        results = dao.query('{{Result}}')
 
-    if output_format == 'georefine':
-        packager = smc_packagers.GeoRefinePackager(
-            cells=cells,
-            energys=energys,
-            substrates=substrates,
-            features=features,
-            gears=gears,
-            results=results,
-            source_data_dir=data_dir
-        )
-    package_file = packager.create_package()
-    return package_file
+        if output_format == 'georefine':
+            packager = smc_packagers.GeoRefinePackager(
+                cells=cells,
+                energys=energys,
+                substrates=substrates,
+                features=features,
+                gears=gears,
+                results=results,
+                source_data_dir=data_dir
+            )
+        package_file = packager.create_package()
+        return package_file

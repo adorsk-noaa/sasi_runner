@@ -24,15 +24,13 @@ class RunConfigTaskTest(DBTestCase):
 
     def test_run_config_task(self):
         config = config_setup.generate_config()
-        task = rct.get_run_config_task(
-            config=config, 
+        db.session.add(config)
+        db.session.commit()
+        task = rct.RunConfigTask(
+            config_id=config.id, 
             output_format='georefine'
         )
-        task.start()
-        while task.status['code'] != 'complete':
-            print >> sys.stderr, "working"
-            time.sleep(1)
-        print >> sys.stderr, "complete, status is: ", task.status
+        task.call()
 
 if __name__ == '__main__':
     unittest.main()
