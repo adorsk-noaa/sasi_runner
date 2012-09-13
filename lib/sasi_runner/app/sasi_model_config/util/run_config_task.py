@@ -1,4 +1,4 @@
-from sasi_runner.app.tasks.models import Task
+from sasi_runner.app.tasks import models as tasks_models
 from sasi_runner.app import db as db
 from sasi_runner.app.sasi_file import models as sf_models
 from sasi_runner.app.sasi_file import views as sf_views
@@ -16,13 +16,28 @@ import os
 import shutil
 
 
-class RunConfigTask(Task):
-    def __init__(self, config_id=None, output_format=None):
-        super(RunConfigTask, self).__init__()
+def get_run_config_task(config_id=None, output_format=None):
+
+    """ Return a task which runs a config. """
+    def call(self):
+        """ The task's call method. 'self' is the task object. """
+        runner = ConfigRunner(
+            config_id=config_id,
+            output_format=output_format,
+            task=self
+        )
+
+        runner.run_config()
+
+    return tasks_models.Task(call=call)
+
+class ConfigRunner(object):
+    def __init__(self, config_id=None, output_format=None, task=None):
         self.config_id = config_id
         self.output_format = output_format
+        self.task = task
 
-    def call(self):
+    def run_config(self):
         # Note: need to load config here, to avoid session/threading issues.
         self.config = db.session.query(smc_models.SASIModelConfig)\
                 .get(self.config_id)
@@ -130,10 +145,9 @@ class RunConfigTask(Task):
         db.session.commit()
 
         # Save result file id to task data.
-        self.set_status({
-            'code': 'complete', 
-            'data': {'result_id': sasi_result.id}
-        })
+        if self.task:
+            self.task.set_data({'result_id': sasi_result.id}, commit=False)
+            self.task.set_status('complete')
 
     def get_output_package(self, data_dir="", dao=None, output_format=None):
         packager = None

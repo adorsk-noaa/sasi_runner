@@ -31,3 +31,6 @@ from sasi_runner.app.sasi_file.views import bp as sasi_file_bp
 from sasi_runner.app.sasi_file.views import upload_sets as sasi_file_upload_sets
 app.register_blueprint(sasi_file_bp)
 configure_uploads(app, sasi_file_upload_sets)
+
+from sasi_runner.app.tasks.views import bp as tasks_bp
+app.register_blueprint(tasks_bp)

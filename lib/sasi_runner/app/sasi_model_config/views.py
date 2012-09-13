@@ -3,7 +3,7 @@ from sasi_runner.app.sasi_model_config.models import SASIModelConfig
 from sasi_runner.app.sasi_file.models import SASIFile
 from sasi_runner.app.sasi_file.views import sasi_file_to_dict
 from sasi_runner.app.sasi_model_config.util.run_config_task import (
-    RunConfigTask)
+    get_run_config_task)
 from sasi_runner.app.tasks import util as tasks_util
 
 from flask import Blueprint, request, jsonify, render_template, Markup
@@ -63,26 +63,20 @@ def pre_run_config(config_id):
 def run_config(config_id):
     """ Start config run task and redirect to status page for task. """
     output_format = request.form['output_format']
-    task = PersistentTask(
-        task=RunConfigTask(
-            config_id=config_id,
-            output_format=output_format
-        )
+    task = get_run_config_task(
+        config_id=config_id,
+        output_format=output_format
     )
+    tasks_util.makeTaskPersistent(task)
     task_id = task.id
+    tasks_util.execute_task(task)
     return redirect(url_for('.run_status', task_id=task_id))
 
 @bp.route('/run_status/<int:task_id>/', methods=['GET'])
 def run_status(task_id):
-    task = tasks.get_task(task_id)
     assets = get_common_assets()
     return render_template("run_status.html", assets=assets,
                            task_id=task_id, config=config)
-
-@bp.route('/task_status/<int:task_id>', methods=['GET'])
-def task_status(task_id):
-    task = tasks.get_task(task_id)
-    return jsonify(status=task.status)
 
 @bp.route('/<int:config_id>', methods=['DELETE'])
 def delete_config(config_id):
