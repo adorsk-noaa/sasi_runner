@@ -15,10 +15,10 @@ class Task(object):
             call = call_stub
         self.call = types.MethodType(call, self)
 
-    def set_status(self, status):
+    def set_status(self, status, *args, **kwargs):
         self.status = status
 
-    def set_data(self, data):
+    def set_data(self, data, *args, **kwargs):
         self.data = data
 
 table = Table('tasks', db.metadata,

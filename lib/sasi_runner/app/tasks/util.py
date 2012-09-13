@@ -1,20 +1,24 @@
 """ Task utilities. """
+from sasi_runner.app import db as db
 import functools
 import types
 
 
 def makeTaskPersistent(task, dao=None):
 
-    def wrap_set_status(set_status_func):
-        @functools.wraps(set_status_func)
-        def wrapper(persist=True, *args, **kwargs):
-            set_status_func(*args, **kwargs)
-            if persist:
-                # Do persistence stuff here.
-                pass
+    # Wrap functions for persistence.
+    def persistence_wrapper(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            func(self, *args, **kwargs)
+            if kwargs.get('commit'):
+                db.session.add(self)
+                db.session.commit()
         return wrapper
-    new_set_status = wrap_set_status(task.set_status)
-    task.set_status = types.MethodType(new_set_status, task)
+
+    task.set_status = persistence_wrapper(task.set_status)
+    task.set_data = persistence_wrapper(task.set_data)
 
     # Do initial persistence.
-    task.id = id(task)
+    db.session.add(task)
+    db.session.commit()
