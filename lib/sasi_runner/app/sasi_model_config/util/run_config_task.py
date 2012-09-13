@@ -1,4 +1,4 @@
-from sasi_runner.app.tasks.task import Task
+from sasi_runner.app.tasks.models import Task
 from sasi_runner.app import db as db
 from sasi_runner.app.sasi_file import models as sf_models
 from sasi_runner.app.sasi_file import views as sf_views

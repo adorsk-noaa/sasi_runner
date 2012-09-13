@@ -1,5 +1,6 @@
 import unittest
-from sasi_runner.app.util import tasks as tasks
+from sasi_runner.app.tasks import models as tasks_models
+from sasi_runner.app.tasks import util as tasks_util
 
 
 class TaskTest(unittest.TestCase):
@@ -11,7 +12,7 @@ class TaskTest(unittest.TestCase):
 
     def test_persistent_task(self):
         task = self.get_dummy_task()
-        tasks.makeTaskPersistent(task)
+        tasks_util.makeTaskPersistent(task)
         print task.id
         task.call()
         assert task.status == "testing"
@@ -19,7 +20,7 @@ class TaskTest(unittest.TestCase):
     def get_dummy_task(self):
         def call(self):
             self.set_status("testing")
-        return tasks.Task(call=call)
+        return tasks_models.Task(call=call)
 
 if __name__ == '__main__':
     unittest.main()

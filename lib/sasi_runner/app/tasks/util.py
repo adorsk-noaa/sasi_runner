@@ -1,18 +1,7 @@
-""" Task utilities for asynchronous execution. """
+""" Task utilities. """
 import functools
 import types
 
-class Task(object):
-    """ Task object. Represents a unit of work. """
-    def __init__(self, call=None):
-        self.status = {}
-        if not call:
-            def call_stub(self): pass
-            call = call_stub
-        self.call = types.MethodType(call, self)
-
-    def set_status(self, status=None, **kwargs):
-        self.status = status
 
 def makeTaskPersistent(task, dao=None):
 
