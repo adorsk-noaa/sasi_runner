@@ -8,8 +8,8 @@ from sqlalchemy.orm import mapper
 class Task(object):
     """ Task object. Represents a unit of work. """
     def __init__(self, call=None):
-        self.status = "uninitialized"
-        self.data = None
+        self.status = 'pending'
+        self.data = {}
         if not call:
             def call_stub(self): pass
             call = call_stub

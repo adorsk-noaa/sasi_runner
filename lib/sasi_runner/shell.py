@@ -5,6 +5,6 @@ import os
 import readline
 from pprint import pprint
 
-import app
+from sasi_runner import app
 
 os.environ['PYTHONINSPECT'] = 'True'

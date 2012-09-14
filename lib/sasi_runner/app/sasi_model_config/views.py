@@ -75,8 +75,43 @@ def run_config(config_id):
 @bp.route('/run_status/<int:task_id>/', methods=['GET'])
 def run_status(task_id):
     assets = get_common_assets()
-    return render_template("run_status.html", assets=assets,
-                           task_id=task_id, config=config)
+
+    task = tasks_util.get_task(task_id)
+    if not task:
+        # Handle case when task does not exist.
+        # @TODO: Flesh this out.
+        return "No task!"
+    else:
+        stage_defs = {
+            'validating': {'label': 'validating configuration...'},
+            'metadata': {'label': 'generating metadata...'},
+            'model': {'label': 'running model...'},
+            'formatting': {'label': 'formatting results...'},
+            'assembling': {'label': 'assembling output file...'},
+        }
+        json_stage_defs = json.dumps(stage_defs)
+
+        task_status_data = {
+            'status': {
+                'code': task.status,
+            },
+            'stages': task.data.get('stages', {})
+        }
+        json_status = json.dumps(task_status_data)
+
+        run_status_js = render_template(
+            "js/run_status.js",
+            task_id=task_id,
+            json_status="{}",
+            json_stage_defs=json_stage_defs
+        )
+
+        return render_template(
+            "run_status.html", 
+            assets=assets,
+            task_id=task_id, 
+            run_status_js=Markup(run_status_js)
+        )
 
 @bp.route('/<int:config_id>', methods=['DELETE'])
 def delete_config(config_id):
