@@ -6,48 +6,74 @@ import types
 import futures
 
 def get_task(task_id):
-    task = db.session.query(Task).get(task_id)
+    task = db.session().query(Task).get(task_id)
     return task
 
 def makeTaskPersistent(task):
 
-    # Wrap functions for persistence.
-    def persistence_wrapper(func):
+    # Wrapper to set up session for task.
+    def call_wrapper(func):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
+            session = db.session()
+            if not self in session:
+                session.add(self)
+            try:
+                func(*args, **kwargs)
+            except Exception as e:
+                session.close()
+                raise e
+        return wrapper
+
+    task.call = types.MethodType(
+        call_wrapper(task.call), task)
+
+    # Wrapper to add commits for persistence.
+    def commit_wrapper(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            print "commit_wrapper, ", args, kwargs
             func(*args, **kwargs)
             if kwargs.get('commit', True):
-                # Note: need to merge for compatibility w/ threading. 
-                db.session.merge(self)
-                db.session.commit()
+                session = db.session()
+                if not self in session:
+                    session.add(self)
+                session.commit()
         return wrapper
 
     task.set_status = types.MethodType(
-        persistence_wrapper(task.set_status), task)
+        commit_wrapper(task.set_status), task)
 
     task.set_data = types.MethodType(
-        persistence_wrapper(task.set_data), task)
+        commit_wrapper(task.set_data), task)
 
     # Do initial persistence.
-    db.session.add(task)
-    db.session.commit()
+    session = db.session()
+    session.add(task)
+    session.commit()
 
 def execute_task(task):
     executor = futures.ThreadPoolExecutor(max_workers=5)
-    task.set_status('running')
     future = executor.submit(task.call)
     executor.shutdown(wait=False)
-    def on_future_done(future_):
-        # Note: need to merge for compatibility w/ threading. 
-        db.session.merge(task)
-        e = future_.exception()
-        if e:
-            task.data['error'] = "Error: %s" % e
-            task.set_data(task.data)
-            task.set_status('rejected')
-        else:
-            task.set_status('resolved')
+    def on_future_done(future_, task=task):
+        # Check session for compatibility w/ threading. 
+        session = db.session()
+        if not task in session:
+            session.add(task)
+        try:
+            e = future_.exception()
+            if e:
+                set_task_error(task, str(e))
+            else:
+                task.set_status('resolved')
+        except Exception as e:
+            set_task_error(task, str(e))
 
     future.add_done_callback(on_future_done)
     return future
 
+def set_task_error(task, error_msg):
+    task.data['error'] = "Error: %s" % error_msg
+    task.set_data(task.data)
+    task.set_status('rejected')

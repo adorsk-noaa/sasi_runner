@@ -68,13 +68,32 @@ def run_config(config_id):
         output_format=output_format
     )
     tasks_util.makeTaskPersistent(task)
-    task_id = task.id
+    # Load any lazy-loaded attributes.
+    db.session().refresh(task)
+    # Detach the task from the current session.
+    # This is necessary in order to allow sessions in the task's
+    # thread to work with the task.
+    db.session.expunge(task)
+
     tasks_util.execute_task(task)
-    return redirect(url_for('.run_status', task_id=task_id))
+
+    return redirect(url_for('.run_status', task_id=task.id))
 
 @bp.route('/run_status/<int:task_id>/', methods=['GET'])
 def run_status(task_id):
     assets = get_common_assets()
+
+    tracker_style_asset = format_link_asset(
+        rel='stylesheet/less',
+        href=url_for(
+            'static', 
+            filename=('sasi_assets/js/task_status'
+                     '/src/styles/TaskStatus-example.less'
+                     )
+        ),
+        type_='text/less'
+    )
+    assets['styles'].append(tracker_style_asset)
 
     task = tasks_util.get_task(task_id)
     if not task:

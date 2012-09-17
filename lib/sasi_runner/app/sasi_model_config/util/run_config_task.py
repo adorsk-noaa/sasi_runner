@@ -21,21 +21,30 @@ def get_run_config_task(config_id=None, output_format=None):
     """ Return a task which runs a config. """
     def call(self):
         """ The task's call method. 'self' is the task object. """
-        # Initialize task data.
-        # For the run config task, data will consist of a set
-        # of 'stages', representing the state of subtasks within
-        # the task.
-        # @TODO; rename for better semantics?  Queue?
-        self.data['stages'] = {}
-        self.set_data(self.data)
+        try:
+            # Add transaction stuff here.
 
-        # Run the config.
-        runner = ConfigRunner(
-            config_id=config_id,
-            output_format=output_format,
-            task=self
-        )
-        runner.run_config()
+            # Initialize task data.
+            # For the run config task, data will consist of a set
+            # of 'stages', representing the state of subtasks within
+            # the task.
+            # @TODO; rename for better semantics?  Queue?
+            self.data['stages'] = {}
+            self.set_data(self.data)
+
+            # Run the config.
+            runner = ConfigRunner(
+                config_id=config_id,
+                output_format=output_format,
+                task=self
+            )
+            runner.run_config()
+
+        # Rollback session if there was an error.
+        except Exception as e:
+            print "e was: ", e, type(e)
+            raise e
+
 
     return tasks_models.Task(call=call)
 
