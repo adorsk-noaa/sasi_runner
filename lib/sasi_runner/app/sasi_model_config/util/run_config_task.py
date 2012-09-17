@@ -14,6 +14,8 @@ import sasipedia
 from datetime import datetime
 import os
 import shutil
+import sys
+from sqlalchemy.orm import sessionmaker
 
 
 def get_run_config_task(config_id=None, output_format=None):
@@ -23,6 +25,10 @@ def get_run_config_task(config_id=None, output_format=None):
         """ The task's call method. 'self' is the task object. """
         try:
             # Add transaction stuff here.
+            run_connection = db.session().connection().engine.connect()
+            run_trans = run_connection.begin()
+            run_sessionmaker = sessionmaker()
+            run_session = run_sessionmaker(bind=run_connection)
 
             # Initialize task data.
             # For the run config task, data will consist of a set
@@ -34,29 +40,37 @@ def get_run_config_task(config_id=None, output_format=None):
 
             # Run the config.
             runner = ConfigRunner(
+                run_session=run_session,
                 config_id=config_id,
                 output_format=output_format,
                 task=self
             )
             runner.run_config()
 
+            run_session.close()
+
         # Rollback session if there was an error.
         except Exception as e:
-            print "e was: ", e, type(e)
+            import traceback
+            print '-' * 60
+            traceback.print_exc(file=sys.stdout)
+            print '-' * 60
+            run_trans.rollback()
             raise e
 
 
     return tasks_models.Task(call=call)
 
 class ConfigRunner(object):
-    def __init__(self, config_id=None, output_format=None, task=None):
+    def __init__(self, run_session=None, config_id=None, output_format=None, task=None):
+        self.run_session = run_session
         self.config_id = config_id
         self.output_format = output_format
         self.task = task
 
     def run_config(self):
         # Note: need to load config here, to avoid session/threading issues.
-        self.config = db.session.query(smc_models.SASIModelConfig)\
+        self.config = db.session().query(smc_models.SASIModelConfig)\
                 .get(self.config_id)
 
         # Validate config.
@@ -91,7 +105,7 @@ class ConfigRunner(object):
         sasipedia.generate_sasipedia(targetDir=metadata_dir, dataDir=data_dir)
 
         # Setup SASI DAO.
-        dao = SASI_SqlAlchemyDAO(session=db.session)
+        dao = SASI_SqlAlchemyDAO(session=self.run_session)
 
         # Ingest data.
         sasi_ingestor = SASI_Ingestor(dao=dao)
@@ -154,17 +168,23 @@ class ConfigRunner(object):
             size=package_size,
             created=datetime.utcnow()
         )
+
         sasi_result = sr_models.SASIResult(
             title="Da Title", 
             result_file=result_file
         )
-        db.session.add(sasi_result)
-        db.session.commit()
+
+        # Save the result to the app db session, 
+        # rather than the local run session.
+        # Otherwise it will not be commited.
+        app_session = db.session()
+        app_session.add(sasi_result)
+        app_session.commit()
 
         # Save result file id to task data.
         if self.task:
-            task.data['result_id'] = sasi_result.id
-            self.task.set_data(task.data)
+            self.task.data['result_id'] = sasi_result.id
+            self.task.set_data(self.task.data)
 
     def get_output_package(self, data_dir="", dao=None, output_format=None):
         packager = None

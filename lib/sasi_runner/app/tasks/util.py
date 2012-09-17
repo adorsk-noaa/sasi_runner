@@ -32,7 +32,6 @@ def makeTaskPersistent(task):
     def commit_wrapper(func):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
-            print "commit_wrapper, ", args, kwargs
             func(*args, **kwargs)
             if kwargs.get('commit', True):
                 session = db.session()
