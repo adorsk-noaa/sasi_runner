@@ -96,14 +96,23 @@ class ConfigRunner(object):
         stages['unpacking'] = {'status': {'code': 'running'}}
         self.task.set_data(task_data)
         try:
-            data_dir = tempfile.mkdtemp(prefix="sasi_test.")
-            for file_attr in smc_models.file_attrs:
-                sasi_file = getattr(self.config, file_attr)
-                if sasi_file:
-                    zfile = zipfile.ZipFile(sasi_file.path)
-                    zfile.extractall(data_dir)
-            stages['unpacking']['status']['code'] = 'resolved'
-            self.task.set_data(task_data)
+            data_container_dir = tempfile.mkdtemp(prefix="sasi_test.")
+            data_dir = os.path.join(data_container_dir, "sasi_config")
+            os.mkdir(data_dir)
+            # Bundled.
+            if self.config.bundle:
+                zfile = zipfile.ZipFile(self.config.bundle.path)
+                zfile.extractall(data_container_dir)
+
+            # Individual files.
+            else:
+                for file_attr in smc_models.file_attrs:
+                    sasi_file = getattr(self.config, file_attr)
+                    if sasi_file:
+                        zfile = zipfile.ZipFile(sasi_file.path)
+                        zfile.extractall(data_dir)
+                stages['unpacking']['status']['code'] = 'resolved'
+                self.task.set_data(task_data)
         except Exception as e:
             stages['unpacking']['status']['code'] = 'rejected'
             self.task.set_data(task_data)

@@ -13,9 +13,10 @@ def get_id():
     id_ += 1
     return id_
 
-def zipdir(basedir, archivename):
+def zipdir(basedir, archivename, basename=None):
     z = zipfile.ZipFile(archivename, "w", zipfile.ZIP_DEFLATED)
-    basename = os.path.basename(basedir)
+    if not basename:
+        basename = os.path.basename(basedir)
     for root, dirs, files in os.walk(basedir):
         for fn in files:
             absfn = os.path.join(root, fn)
@@ -32,7 +33,7 @@ def generate_config(bundled=True):
     # Bundle style.
     if bundled:
         hndl, archivename = tempfile.mkstemp(prefix="sr_bundle.", suffix=".zip")
-        zipdir(data_dir, archivename)
+        zipdir(data_dir, archivename, basename="sasi_config")
         config.bundle = SASIFile(
             id=get_id(),
             path=archivename,
