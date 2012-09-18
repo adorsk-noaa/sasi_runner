@@ -4,7 +4,7 @@ from jinja2 import Environment, PackageLoader
 import os
 import csv
 import shutil
-from tarfile import TarFile
+import tarfile
 import tempfile
 
 
@@ -235,10 +235,10 @@ class GeoRefinePackager(object):
         return formatted_layer
 
     def create_archive(self):
-        os_hndl, tarfile = tempfile.mkstemp(suffix=".georefine.tar.gz")
-        tar = TarFile(tarfile, "w")
+        os_hndl, tmp_file = tempfile.mkstemp(suffix=".georefine.tar.gz")
+        tar = tarfile.open(tmp_file, "w:gz")
         for item in os.listdir(self.target_dir):
             path = os.path.join(self.target_dir, item)
             tar.add(path, arcname=item)
         tar.close()
-        return tarfile
+        return tmp_file

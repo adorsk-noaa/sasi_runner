@@ -101,13 +101,16 @@ def run_status(task_id):
         # @TODO: Flesh this out.
         return "No task!"
     else:
-        stage_defs = {
-            'validating': {'label': 'validating configuration...'},
-            'metadata': {'label': 'generating metadata...'},
-            'model': {'label': 'running model...'},
-            'formatting': {'label': 'formatting results...'},
-            'assembling': {'label': 'assembling output file...'},
-        }
+        stage_defs = [
+            {'id': 'validating', 'label': 'validating configuration...'},
+            {'id': 'unpacking', 'label': 'unpacking files...'},
+            {'id': 'reading', 'label': 'reading files...'},
+            {'id': 'model', 'label': 'running model...'},
+            {'id': 'results', 'label': 'saving model results...'},
+            {'id': 'metadata', 'label': 'generating metadata...'},
+            {'id': 'formatting', 'label': 'formatting results...'},
+            {'id': 'assembling', 'label': 'assembling output file...'},
+        ]
         json_stage_defs = json.dumps(stage_defs)
 
         task_status_data = {
