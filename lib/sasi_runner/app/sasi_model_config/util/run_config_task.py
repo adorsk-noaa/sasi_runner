@@ -47,9 +47,12 @@ def get_run_config_task(config_id=None, output_format=None):
             print '-' * 60
             traceback.print_exc(file=sys.stdout)
             print '-' * 60
+            run_session.close()
             run_trans.rollback()
             raise e
 
+        run_trans.rollback()
+        run_session.close()
 
     return tasks_models.Task(call=call)
 
@@ -160,7 +163,7 @@ class ConfigRunner(object):
         stages['results'] = {'status': {'code': 'running'}}
         self.task.set_data(task_data)
         try:
-            dao.save_all(m.results)
+            dao.save_dicts('Result', m.results, verbose=True)
             stages['results']['status']['code'] = 'resolved'
             self.task.set_data(task_data)
         except Exception as e:

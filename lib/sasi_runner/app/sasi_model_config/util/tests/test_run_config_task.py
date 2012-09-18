@@ -13,20 +13,18 @@ import tempfile
 
 class RunConfigTaskTest(DBTestCase):
 
+    # Note: can't use sqlite for this test, due to db locking
+    # for multi-threading.
     def get_engine_uri(self):
-        hndl, dbfile = tempfile.mkstemp(suffix=".tst.sqlite")
-        return  'sqlite:///%s?check_same_thread=False' % dbfile
-
-    def setUp(self):
-        super(RunConfigTaskTest, self).setUp()
-        db.clear_db(bind=self.connection)
-        db.init_db(bind=self.connection)
+        return 'postgresql://test:test@localhost/gis_test'
+    
+    def spatializeDB(self): pass
 
     def test_run_config_task(self):
         config = config_setup.generate_config()
         db.session.add(config)
         db.session.commit()
-        task = rct.RunConfigTask(
+        task = rct.get_run_config_task(
             config_id=config.id, 
             output_format='georefine'
         )

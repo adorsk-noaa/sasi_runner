@@ -35,7 +35,7 @@ def generate_config():
     for section in [
         'substrates', 
         'features', 
-        'energies', 
+        'energys', 
         'gears',
         'va',
         'habitats',

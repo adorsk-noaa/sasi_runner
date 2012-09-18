@@ -15,14 +15,15 @@ import re
 
 class RunConfigTest(DBTestCase):
 
+    # Note: can't use sqlite for this test, due to db locking
+    # for multi-threading.
     def get_engine_uri(self):
-        hndl, dbfile = tempfile.mkstemp(prefix="rct.", suffix=".sqlite")
-        return  'sqlite:///%s?check_same_thread=False' % dbfile
+        return 'postgresql://test:test@localhost/gis_test'
+    
+    def spatializeDB(self): pass
 
     def setUp(self):
         super(RunConfigTest, self).setUp()
-        db.clear_db(bind=self.connection)
-        db.init_db(bind=self.connection)
         self.base_path = '/config'
 
     def test_run_config_task(self):
@@ -44,9 +45,8 @@ class RunConfigTest(DBTestCase):
             if match:
                 task_id = int(match.group(1))
                 task = tasks_util.get_task(task_id)
-                print "t is: ", task
                 status_path = "/tasks/%s/status" % (task_id)
-                while task.status != 'complete':
+                while task.status in ['resolved','rejected']:
                     r = c.get(status_path)
                     print r.data
                     print "task running, status: ", task.status

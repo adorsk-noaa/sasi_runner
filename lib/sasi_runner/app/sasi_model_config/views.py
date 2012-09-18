@@ -1,7 +1,7 @@
 from sasi_runner.app import app, db
 from sasi_runner.app.sasi_model_config.models import SASIModelConfig
 from sasi_runner.app.sasi_file.models import SASIFile
-from sasi_runner.app.sasi_file.views import sasi_file_to_dict
+from sasi_runner.app.sasi_file import views as sf_views
 from sasi_runner.app.sasi_model_config.util.run_config_task import (
     get_run_config_task)
 from sasi_runner.app.tasks import util as tasks_util
@@ -131,7 +131,7 @@ def run_status(task_id):
             "run_status.html", 
             assets=assets,
             task_id=task_id, 
-            run_status_js=Markup(run_status_js)
+            run_status_js=Markup(run_status_js),
         )
 
 @bp.route('/<int:config_id>', methods=['DELETE'])
@@ -306,7 +306,7 @@ def render_file_select_widget(field):
     category = field['widget_options'].get('category')
     files = db.session.query(SASIFile).filter(SASIFile.category ==
                                               category).all()
-    file_dicts = [sasi_file_to_dict(f) for f in files]
+    file_dicts = [sf_views.sasi_file_to_dict(f) for f in files]
     files_json = json.dumps(file_dicts)
 
     selected_file = field.get('value')
