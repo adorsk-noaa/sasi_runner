@@ -110,6 +110,7 @@ def run_status(task_id):
             {'id': 'metadata', 'label': 'generating metadata...'},
             {'id': 'formatting', 'label': 'formatting results...'},
             {'id': 'assembling', 'label': 'assembling output file...'},
+            {'id': 'links', 'label': 'generating links...'},
         ]
         json_stage_defs = json.dumps(stage_defs)
 

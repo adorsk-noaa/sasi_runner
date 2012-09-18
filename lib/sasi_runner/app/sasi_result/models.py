@@ -9,6 +9,17 @@ class SASIResult(object):
         self.title = title
         self.result_file = result_file
 
+    def to_dict(self):
+        result_dict = {}
+        for attr in ['id', 'title']:
+            result_dict[attr] = getattr(self, attr, None)
+        if self.result_file:
+            file_id = self.result_file.id
+        else:
+            file_id = None
+        result_dict['file_id'] = file_id
+        return result_dict
+
 table = Table('sasi_result', db.metadata,
               Column('id', Integer, primary_key=True),
               Column('title', String),

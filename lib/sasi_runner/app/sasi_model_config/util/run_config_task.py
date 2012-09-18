@@ -233,8 +233,8 @@ class ConfigRunner(object):
             app_session.commit()
 
             # Save result file id to task data.
-            self.task.data['result_id'] = sasi_result.id
-            self.task.set_data(self.task.data)
+            task_data['result'] = sasi_result.to_dict()
+            self.task.set_data(task_data)
 
             stages['assembling']['status']['code'] = 'resolved'
             self.task.set_data(task_data)

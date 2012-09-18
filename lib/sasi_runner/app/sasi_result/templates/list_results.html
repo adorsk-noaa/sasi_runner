@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% set title="SASI Results" %}
+{% block title %} {{title}} {% endblock %}
+
+
+{% block styles %}
+
+{{ super() }}
+
+{% for style in assets.styles %}
+{{style}}
+{% endfor %}
+
+{% endblock %}
+
+
+{% block scripts %}
+
+{{ super() }}
+
+{% for script in assets.scripts %}
+{{script}}
+{% endfor %}
+
+
+<script type="text/javascript">
+    require(["jquery","use!backbone","use!underscore", "use!DataTables"],
+    function($, Backbone, _, DataTables){
+
+        // Setup table.
+        var dataTable = $('.result-table').dataTable({
+            sDom: 't',
+            aoColumnDefs: [
+                {
+                    aTargets: ['actions'],
+                    bSortable: false
+                }
+            ],
+            bPaginate: false,
+            bAutoWidth: false
+        });
+
+        // Setup action handlers.
+        var actionHandlers = {
+            delete: function(result_id, tr){
+                var url = '{{ url_for('.delete_result', result_id=-99999) }}';
+                url = url.replace('-99999', result_id);
+                var deferred = $.ajax({
+                    url: url,
+                    type: 'DELETE',
+                });
+
+                deferred.then(function(){
+                    // Remove the row.
+                    $(tr).fadeOut(750, function(){
+                        setTimeout(500, function(){
+                            dataTable.fnDeleteRow(tr);
+                        });
+                    });
+                });
+
+                deferred.fail(function(){
+                    // Handle errors.
+                    console.log("delete error");
+                });
+            }
+        };
+
+
+        $('.action-link').on('click', function(event){
+            var $link = $(event.delegateTarget);
+            var $row = $link.closest('tr');
+
+            var action = $link.data('action_id');
+            var result_id = $row.data('result_id');
+
+            var handler = actionHandlers[action];
+            if (handler){
+                handler(result_id, $row.get(0));
+            }
+        });
+    });
+</script>
+
+{% endblock %}
+
+
+{% block content %}
+{{ super() }}
+
+<div class="sasi-result-result-list">
+    <div class="inner">
+        <h2 class="header">{{title}}</h2>
+        <div class="body">
+            <div class="inner">
+
+                <div class="result-table-container">
+                    <table class="result-table">
+                        <thead>
+                            <th class="name">Name</th>
+                            <th class="actions">Actions</th>
+                        </thead>
+                        <tbody>
+                            {% for result in results %}
+                            <tr data-resultid="{{result.id}}">
+                                <td class="name-cell">
+                                    <div class="inner">
+                                        {{result.title}}
+                                    </div>
+                                </td>
+                                <td class="actions-cell">
+                                    <div class="inner">
+                                        {% for action in actions %}
+                                        <div class="action {{action.id}}">
+                                            <a class="action-link" href="javascript:{}" data-action_id="{{action.id}}">
+                                                <div class="action-icon {{action.id}}"></div>
+                                                <div class="action-text">{{action.label}}</div>
+                                            </a>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
