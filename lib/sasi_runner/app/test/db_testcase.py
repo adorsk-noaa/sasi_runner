@@ -22,6 +22,9 @@ class DBTestCase(unittest.TestCase):
         app.config['TESTING'] = True
         self.client = app.test_client()
 
+    def setUpTables(self):
+        db.init_db(bind=self.connection)
+
     def tearDown(self):
         self.trans.rollback()
         db.session.close

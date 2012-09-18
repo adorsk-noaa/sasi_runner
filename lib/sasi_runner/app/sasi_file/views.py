@@ -56,6 +56,8 @@ def sasi_file_to_dict(sasi_file):
         if isinstance(value, datetime):
             value = value.isoformat()
         file_dict[attr] = value
+    saved_filename = os.path.basename(sasi_file.path)
+    file_dict['url'] = uploads.url(saved_filename)
     return file_dict
 
 @bp.route('/uploadForm', methods=['GET'])
@@ -67,3 +69,9 @@ def uploadForm():
     </form>
     """ % url_for('sasi_file.uploadTest')
     return Markup(html)
+
+@bp.route('/<file_id>/', methods=['GET'])
+def getFileData(file_id):
+    f = db.session.query(SASIFile).get(file_id)
+    file_dict = sasi_file_to_dict(f)
+    return jsonify(file_dict)
