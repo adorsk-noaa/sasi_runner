@@ -62,6 +62,12 @@ class ConfigRunner(object):
         self.config_id = config_id
         self.output_format = output_format
         self.task = task
+        self.num_stages = 9
+        self.stage_counter = 0
+
+    def increment_task_progress(self, task_data):
+        self.stage_counter += 1
+        task_data['progress'] = (1.0 * self.stage_counter/self.num_stages) * 100
 
     def run_config(self):
         # Note: need to load config here, to avoid session/threading issues.
@@ -76,6 +82,7 @@ class ConfigRunner(object):
         task_data = {}
         stages = {}
         task_data['stages'] = stages
+        task_data['progress'] = 0
 
         # Validate config.
         stages['validating'] = {'status': {'code': 'running'}}
@@ -85,6 +92,7 @@ class ConfigRunner(object):
             pass
             #validation.validate_config(self.config)
             stages['validating']['status']['code'] = 'resolved'
+            self.increment_task_progress(task_data)
             self.task.set_data(task_data)
         except Exception as e:
             stages['validating']['status']['code'] = 'rejected'
@@ -112,6 +120,7 @@ class ConfigRunner(object):
                         zfile = zipfile.ZipFile(sasi_file.path)
                         zfile.extractall(data_dir)
                 stages['unpacking']['status']['code'] = 'resolved'
+                self.increment_task_progress(task_data)
                 self.task.set_data(task_data)
         except Exception as e:
             stages['unpacking']['status']['code'] = 'rejected'
@@ -126,6 +135,7 @@ class ConfigRunner(object):
             sasi_ingestor = SASI_Ingestor(dao=dao)
             sasi_ingestor.ingest(data_dir=data_dir)
             stages['reading']['status']['code'] = 'resolved'
+            self.increment_task_progress(task_data)
             self.task.set_data(task_data)
         except Exception as e:
             stages['reading']['status']['code'] = 'rejected'
@@ -162,6 +172,7 @@ class ConfigRunner(object):
             )
             m.run()
             stages['model']['status']['code'] = 'resolved'
+            self.increment_task_progress(task_data)
             self.task.set_data(task_data)
         except Exception as e:
             stages['model']['status']['code'] = 'rejected'
@@ -174,6 +185,7 @@ class ConfigRunner(object):
         try:
             dao.save_dicts('Result', m.results, verbose=True)
             stages['results']['status']['code'] = 'resolved'
+            self.increment_task_progress(task_data)
             self.task.set_data(task_data)
         except Exception as e:
             stages['results']['status']['code'] = 'rejected'
@@ -190,6 +202,7 @@ class ConfigRunner(object):
             os.mkdir(metadata_dir)
             sasipedia.generate_sasipedia(targetDir=metadata_dir, dataDir=data_dir)
             stages['metadata']['status']['code'] = 'resolved'
+            self.increment_task_progress(task_data)
             self.task.set_data(task_data)
         except e:
             stages['metadata']['status']['code'] = 'rejected'
@@ -206,6 +219,7 @@ class ConfigRunner(object):
                 output_format=self.output_format
             )
             stages['formatting']['status']['code'] = 'resolved'
+            self.increment_task_progress(task_data)
             self.task.set_data(task_data)
         except Exception as e:
             stages['formatting']['status']['code'] = 'rejected'
@@ -249,6 +263,7 @@ class ConfigRunner(object):
             self.task.set_data(task_data)
 
             stages['assembling']['status']['code'] = 'resolved'
+            self.increment_task_progress(task_data)
             self.task.set_data(task_data)
         except Exception as e:
             stages['assembling']['status']['code'] = 'rejected'
