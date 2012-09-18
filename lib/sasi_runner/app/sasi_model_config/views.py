@@ -113,18 +113,16 @@ def run_status(task_id):
         ]
         json_stage_defs = json.dumps(stage_defs)
 
-        task_status_data = {
-            'status': {
-                'code': task.status,
-            },
-            'stages': task.data.get('stages', {})
+        initial_task_data = {
+            'status': task.status,
+            'data': task.data
         }
-        json_status = json.dumps(task_status_data)
+        json_initial_task_data = json.dumps(initial_task_data)
 
         run_status_js = render_template(
             "js/run_status.js",
             task_id=task_id,
-            json_status="{}",
+            json_initial_task_data=json_initial_task_data,
             json_stage_defs=json_stage_defs
         )
 
