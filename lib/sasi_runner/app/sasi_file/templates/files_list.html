@@ -25,8 +25,8 @@
 
 
 <script type="text/javascript">
-    require(["jquery","use!backbone","use!underscore", "use!DataTables"],
-    function($, Backbone, _, DataTables){
+    require(["jquery","use!backbone","use!underscore", "use!DataTables", "use!qtip", "Util"],
+    function($, Backbone, _, DataTables, qtip, Util){
 
         $(document).ready(function(){
 
@@ -41,6 +41,10 @@
                 },
                 {
                     aTargets: ['size'],
+                    fnRender: function(o, value){
+                        return Util.util.friendlyBytes(value);
+                    },
+                    sType: 'numeric'
                 },
                 {
                     aTargets: ['category'],
@@ -65,7 +69,7 @@
 
         // Setup action handlers.
         var actionHandlers = {
-            delete: function(file_id, tr){
+            delete: function(file_id, tr, $launcher){
                 var url = '{{ url_for('.delete_file', file_id=-99999) }}';
                 url = url.replace('-99999', file_id);
                 var deferred = $.ajax({
@@ -82,9 +86,24 @@
                     });
                 });
 
-                deferred.fail(function(){
-                    // Handle errors.
-                    console.log("delete error");
+                deferred.fail(function(jqXHR, textStatus, errorThrown){
+                    $launcher.qtip({
+                        content: {
+                            text: '<div><div>Error, could not delete file: </div>' 
+                            + '<div>' + jqXHR.responseText + '</div></div>'
+                        },
+                        position: {
+                            viewport: $(window)
+                        },
+                        show: {
+                            event: 'click',
+                            ready: true
+                        },
+                        hide: {
+                            event: 'unfocus',
+                        },
+
+                    });
                 });
             },
         };
@@ -98,7 +117,7 @@
 
             var handler = actionHandlers[action];
             if (handler){
-                handler(row_id, $row.get(0));
+                handler(row_id, $row.get(0), $link);
             }
         });
 
@@ -112,7 +131,7 @@
 {% block content %}
 {{ super() }}
 
-<div class="sasi-file-list-file">
+<div class="sasi-file-list-files">
     <div class="inner">
         <h2 class="header">{{title}}</h2>
         <div class="body">

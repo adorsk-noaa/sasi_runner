@@ -42,6 +42,15 @@ def list_files(category_id=None):
     else:
         assets = get_common_assets()
 
+        # qtip.css
+        qtip_css = app_util.format_link_asset(
+            rel='stylesheet/less', 
+            href=url_for(
+                'static', 
+                filename='static/sasi_assets/js/jquery.qtip/jquery.qtip.css'
+            )
+        )
+
         return render_template(
             "files_list.html", 
             file_dicts=file_dicts,
@@ -52,21 +61,31 @@ def list_files(category_id=None):
 def delete_file(file_id):
     f = initialize_file(file_id)
     if f:
-        print "configs is: ", f.sasi_configs
-        """
-        try:
-            os.remove(f.path)
-        except Exception as e:
-            # Handle file stuff here.
-            # @TODO: add 404 stuff here?
-            pass
-        """
+        if f.configs:
+            #@ TODO: use template for this.
+            configs_list = '<ul>'
+            for c in f.configs:
+                config_li = '<li><a href="%s" target="_blank">%s</a>' % (
+                    url_for('sasi_model_config.edit', config_id=c.id),
+                    c.title
+                )
+                configs_list += config_li + "\n"
+            configs_list += '</ul>'
+            return Markup(configs_list), 500
         try:
             db.session.delete(f)
             db.session.commit()
         except Exception as e:
             # @TODO: add 404 stuff here.
             raise e
+        
+        try:
+            os.remove(f.path)
+        except Exception as e:
+            # Handle file stuff here.
+            # @TODO: add 404 stuff here?
+            pass
+
         return "deleted"
     #@TODO: 404 this.
     return "File does not exist."
