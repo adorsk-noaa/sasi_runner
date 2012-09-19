@@ -52,8 +52,21 @@ def list_files(category_id=None):
 def delete_file(file_id):
     f = initialize_file(file_id)
     if f:
-        db.session.delete(f)
-        db.session.commit()
+        print "configs is: ", f.sasi_configs
+        """
+        try:
+            os.remove(f.path)
+        except Exception as e:
+            # Handle file stuff here.
+            # @TODO: add 404 stuff here?
+            pass
+        """
+        try:
+            db.session.delete(f)
+            db.session.commit()
+        except Exception as e:
+            # @TODO: add 404 stuff here.
+            raise e
         return "deleted"
     #@TODO: 404 this.
     return "File does not exist."

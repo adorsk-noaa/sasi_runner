@@ -47,7 +47,9 @@ table = Table('sasi_model_config', db.metadata,
 
 relationships = {}
 for attr in file_attrs + ['bundle']:
-    relationships[attr] = relationship(sasi_file_models.SASIFile, 
-        primaryjoin=(table.c[attr + "_file"]==sasi_file_models.table.c.id))
+    relationships[attr] = relationship(
+        sasi_file_models.SASIFile, 
+        primaryjoin=(table.c[attr + "_file"]==sasi_file_models.table.c.id),
+    )
 
 mapper(SASIModelConfig, table, properties=relationships)
