@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% set title="SASI Results" %}
+{% set title="Files" %}
 {% block title %} {{title}} {% endblock %}
 
 
@@ -29,7 +29,7 @@
     function($, Backbone, _, DataTables){
 
         // Setup table.
-        var dataTable = $('.result-table').dataTable({
+        var dataTable = $('.files-table').dataTable({
             sDom: 't',
             aoColumnDefs: [
                 {
@@ -43,9 +43,9 @@
 
         // Setup action handlers.
         var actionHandlers = {
-            delete: function(result_id, tr){
-                var url = '{{ url_for('.delete_result', result_id=-99999) }}';
-                url = url.replace('-99999', result_id);
+            delete: function(file_id, tr){
+                var url = '{{ url_for('.delete_file', file_id=-99999) }}';
+                url = url.replace('-99999', file_id);
                 var deferred = $.ajax({
                     url: url,
                     type: 'DELETE',
@@ -73,11 +73,11 @@
             var $row = $link.closest('tr');
 
             var action = $link.data('action_id');
-            var result_id = $row.data('result_id');
+            var row_id = $row.data('row_id');
 
             var handler = actionHandlers[action];
             if (handler){
-                handler(result_id, $row.get(0));
+                handler(row_id, $row.get(0));
             }
         });
     });
@@ -89,24 +89,24 @@
 {% block content %}
 {{ super() }}
 
-<div class="sasi-result-result-list">
+<div class="sasi-files-file-list">
     <div class="inner">
         <h2 class="header">{{title}}</h2>
         <div class="body">
             <div class="inner">
 
-                <div class="result-table-container">
-                    <table class="result-table">
+                <div class="file-table-container">
+                    <table class="file-table">
                         <thead>
                             <th class="name">Name</th>
                             <th class="actions">Actions</th>
                         </thead>
                         <tbody>
-                            {% for result in results %}
-                            <tr data-resultid="{{result.id}}">
+                            {% for file_dict in file_dicts %}
+                            <tr data-row_id="{{file_dict['id']}}">
                                 <td class="name-cell">
                                     <div class="inner">
-                                        {{result.title}}
+                                        {{file_dict['filename']}}
                                     </div>
                                 </td>
                                 <td class="actions-cell">

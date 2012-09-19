@@ -1,9 +1,10 @@
 from sasi_runner.app import app, db
+from sasi_runner.app import util as app_util
 from sasi_runner.config import config as sr_config
 from sasi_runner.app.sasi_file.models import SASIFile
 
 from flask import Blueprint, request, Response, json, jsonify, render_template
-from flask import Markup, url_for
+from flask import Markup, url_for, redirect
 from flaskext.uploads import UploadSet, ARCHIVES, TEXT, IMAGES
 import os
 from datetime import datetime
@@ -19,10 +20,61 @@ uploads = UploadSet('sasifile', extensions=ARCHIVES + TEXT + IMAGES,
 upload_sets = [uploads]
 
 @bp.route('/', methods=['GET'])
-def hello():
-    return "hello sasi file" 
+@bp.route('/category/<category_id>/', methods=['GET'])
+def list_files(category_id=None):
+    q = db.session.query(SASIFile)
+    if category_id:
+        q = q.filter(SASIFile.category == category_id)
+    files = q.all()
 
-@bp.route('/category/<category_id>/', methods=['POST'])
+    file_dicts = []
+    for f in files:
+        file_dicts.append(sasi_file_to_dict(f))
+
+    # JSON.
+    if app_util.request_wants_json():
+        return Response(
+            json.dumps(file_dicts, indent=2), 
+            mimetype='application/json'
+        )
+    
+    # Page.
+    else:
+        assets = get_common_assets()
+        actions = [
+            'delete'
+        ]
+        for i in range(len(actions)):
+            action = actions[i]
+            actions[i] = {'id': action, 'label': action}
+
+        return render_template(
+            "files_list.html", 
+            file_dicts=file_dicts,
+            assets=assets, 
+            actions=actions
+        ) 
+
+@bp.route('/<int:file_id>', methods=['DELETE'])
+def delete_file(file_id):
+    f = initialize_file(file_id)
+    if f:
+        db.session.delete(f)
+        db.session.commit()
+        return "deleted"
+    #@TODO: 404 this.
+    return "File does not exist."
+
+@bp.route('/<int:file_id>/download', methods=['GET'])
+def download_file(file_id):
+    f = initialize_file(file_id)
+    if f:
+        return redirect(get_file_download_url(f))
+    else:
+        #@TODO: 404 this.
+        return "File does not exist."
+
+@bp.route('/category/<category_id>/file/', methods=['POST'])
 def uploadCategoryFile(category_id):
     if 'sasi_file' in request.files:
         filename = uploads.save(request.files['sasi_file'])
@@ -49,29 +101,44 @@ def getCategoryFiles(category_id):
 
     return Response(json.dumps(file_dicts, indent=2), mimetype='application/json')
 
-def sasi_file_to_dict(sasi_file):
-    file_dict = {}
-    for attr in ['id', 'filename', 'category', 'size', 'created']:
-        value = getattr(sasi_file, attr, None)
-        if isinstance(value, datetime):
-            value = value.isoformat()
-        file_dict[attr] = value
+def get_file_download_url(sasi_file):
     saved_filename = os.path.basename(sasi_file.path)
-    file_dict['url'] = uploads.url(saved_filename)
+    return uploads.url(saved_filename)
+
+def sasi_file_to_dict(sasi_file):
+    file_dict = sasi_file.to_dict()
+    file_dict['url'] = get_file_download_url(sasi_file)
     return file_dict
 
-@bp.route('/uploadForm', methods=['GET'])
-def uploadForm():
-    html = """
-    <form method=POST enctype=multipart/form-data action="%s">
-    <input type=file name=sasi_file>
-    <input type=submit name=submit>
-    </form>
-    """ % url_for('sasi_file.uploadTest')
-    return Markup(html)
-
-@bp.route('/<file_id>/', methods=['GET'])
+@bp.route('/file/<file_id>/', methods=['GET'])
 def getFileData(file_id):
     f = db.session.query(SASIFile).get(file_id)
     file_dict = sasi_file_to_dict(f)
     return jsonify(file_dict)
+
+def get_common_assets():
+    return {
+        'styles': [
+            # jquery-ui css
+            app_util.format_link_asset(rel='stylesheet', href=url_for('static', 
+                filename=('sasi_assets/js/jquery.ui/styles/'
+                          'jquery-ui-1.8.18.custom.css')))
+        ],
+
+        'scripts': [
+            # require.js
+            app_util.format_script_asset(src=url_for('static', 
+                filename='js/require_config.js')),
+
+            app_util.format_script_asset(src=url_for('static',
+                filename='sasi_assets/js/require.js/require.js')),
+        ],
+
+    }
+
+def initialize_file(file_id=None):
+    """
+    Helper function to load a file.
+    """
+    f = db.session.query(SASIFile).get(file_id)
+    return f

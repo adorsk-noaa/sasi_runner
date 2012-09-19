@@ -3,7 +3,6 @@ from sasi_runner.app import db as db
 from sasi_runner.app.sasi_file import models as sf_models
 from sasi_runner.app.sasi_file import views as sf_views
 from sasi_runner.app.sasi_model_config import models as smc_models
-from sasi_runner.app.sasi_result import models as sr_models
 from sasi_runner.app.sasi_model_config.util import packagers as smc_packagers
 from sasi_data.dao.sasi_sa_dao import SASI_SqlAlchemyDAO
 from sasi_data.ingestors.sasi_ingestor import SASI_Ingestor
@@ -108,7 +107,7 @@ class ConfigRunner(object):
             data_dir = os.path.join(data_container_dir, "sasi_config")
             os.mkdir(data_dir)
             # Bundled.
-            if self.config.bundle:
+            if hasattr(self.config, 'bundle') and self.config.bundle:
                 zfile = zipfile.ZipFile(self.config.bundle.path)
                 zfile.extractall(data_container_dir)
 
@@ -236,7 +235,7 @@ class ConfigRunner(object):
             perm_package_file = os.path.join(files_dir, package_file_name)
             shutil.move(tmp_package_file, perm_package_file)
 
-            # Create results object.
+            # Create file object.
             package_size = os.stat(perm_package_file).st_size
             result_file = sf_models.SASIFile(
                 filename=package_file_name,
@@ -246,20 +245,15 @@ class ConfigRunner(object):
                 created=datetime.utcnow()
             )
 
-            sasi_result = sr_models.SASIResult(
-                title="Da Title", 
-                result_file=result_file
-            )
-
-            # Save the result to the app db session, 
+            # Save the file to the app db session, 
             # rather than the local run session.
             # Otherwise it will not be commited.
             app_session = db.session()
-            app_session.add(sasi_result)
+            app_session.add(result_file)
             app_session.commit()
 
             # Save result file id to task data.
-            task_data['result'] = sasi_result.to_dict()
+            task_data['result_file'] = result_file.to_dict()
             self.task.set_data(task_data)
 
             stages['assembling']['status']['code'] = 'resolved'
