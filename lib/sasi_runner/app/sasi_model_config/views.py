@@ -174,7 +174,7 @@ def is_file_attr(attr):
     return attr in [
         'bundle',
         'substrates',
-        'energys',
+        'energies',
         'features',
         'gears',
         'habitats',
@@ -222,7 +222,7 @@ def edit(config_id=None, config=None):
     file_select_fields = [
         'substrates',
         'features',
-        {'id': 'energys', 'label': 'Energies'},
+        {'id': 'energies', 'label': 'Energies'},
         'gears',
         'habitats',
         'grid',
@@ -246,7 +246,11 @@ def edit(config_id=None, config=None):
     # Render fields.
     rendered_fields = []
     for field in fields:
-        field.setdefault('value', getattr(config, field['id']))
+        if is_file_attr(field['id']):
+            value = config.files.get(field['id'])
+        else:
+            value = getattr(config, field['id'], None)
+        field.setdefault('value', value)
         rendered_field = render_field(field)
         rendered_fields.append(rendered_field)
 

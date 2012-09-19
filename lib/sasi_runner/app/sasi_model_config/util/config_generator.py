@@ -49,7 +49,7 @@ def generate_config(bundled=True):
         for section in [
             'substrates', 
             'features', 
-            'energys', 
+            'energies', 
             'gears',
             'va',
             'habitats',

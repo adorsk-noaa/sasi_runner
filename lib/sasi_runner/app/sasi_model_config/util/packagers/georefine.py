@@ -10,11 +10,11 @@ import tempfile
 
 class GeoRefinePackager(object):
 
-    def __init__(self, cells=[], energys=[],
+    def __init__(self, cells=[], energies=[],
                  substrates=[], features=[], gears=[], results=[],
                  source_data_dir=""): 
         self.cells = cells
-        self.energys = energys
+        self.energies = energies
         self.substrates = substrates
         self.features = features
         self.gears = gears
@@ -66,7 +66,7 @@ class GeoRefinePackager(object):
 
             {
                 'id': 'energy',
-                'data': self.energys,
+                'data': self.energies,
                 'mappings': [
                     'id',
                     'label',

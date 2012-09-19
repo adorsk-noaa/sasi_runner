@@ -61,7 +61,7 @@ class ConfigRunner(object):
         self.config_id = config_id
         self.output_format = output_format
         self.task = task
-        self.num_stages = 9
+        self.num_stages = 8
         self.stage_counter = 0
 
     def increment_task_progress(self, task_data):
@@ -268,7 +268,7 @@ class ConfigRunner(object):
     def get_output_package(self, data_dir="", dao=None, output_format=None):
         packager = None
         cells = dao.query('{{Cell}}')
-        energys = dao.query('{{Energy}}')
+        energies = dao.query('{{Energy}}')
         substrates = dao.query('{{Substrate}}')
         features = dao.query('{{Feature}}')
         gears = dao.query('{{Gear}}')
@@ -277,7 +277,7 @@ class ConfigRunner(object):
         if output_format == 'georefine':
             packager = smc_packagers.GeoRefinePackager(
                 cells=cells,
-                energys=energys,
+                energies=energies,
                 substrates=substrates,
                 features=features,
                 gears=gears,
