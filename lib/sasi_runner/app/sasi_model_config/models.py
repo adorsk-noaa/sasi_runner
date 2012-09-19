@@ -1,55 +1,66 @@
 from sasi_runner.app import db 
-from sasi_runner.app.sasi_file import models as sasi_file_models
+from sasi_runner.app.sasi_file.models import SASIFile
 from sqlalchemy import Table, Column, Integer, String, ForeignKey
-from sqlalchemy.orm import mapper, relationship
+from sqlalchemy.orm import mapper, relationship, backref
+from sqlalchemy.orm.collections import attribute_mapped_collection
+from sqlalchemy.ext.associationproxy import association_proxy
 
-file_attrs = [
-    'substrates',
-    'energys',
-    'features',
-    'gears',
-    'habitats',
-    'grid',
-    'va',
-    'model_parameters',
-    'fishing_efforts',
-    'georefine'
-]
+
 class SASIModelConfig(object):
-    def __init__(self, id=None, title="New Configuration", bundle=None, **kwargs): 
+
+    # '_fileds_dict' will be populated by mapping of SASIMOdelConfig_SASI_FILE.
+    files = association_proxy(
+        '_files_dict', 'file', creator=lambda k, v: SASIModelConfig_SASIFile(k, v)
+    )
+
+    def __init__(self, id=None, title="New Configuration"): 
         self.id = id
         self.title = title
-        self.bundle = None
-        for attr in file_attrs:
-            setattr(self, attr, kwargs.get(attr))
 
     def clone(self):
         """
         Clone a config, w/out cloning its id.
         """
         clone = SASIModelConfig()
-        for attr in file_attrs + ['title', 'bundle']:
-            setattr(clone, attr, getattr(self, attr))
+        clone.title = self.title
+        if self.files:
+            clone.files = self.files.copy()
         return clone
 
+class SASIModelConfig_SASIFile(object):
+    """ Association class. """
+    def __init__(self, file_type=None, file_=None, config=None):
+        self.file_type = file_type
+        self.file = file_
+        self.config = config
 
-file_columns = []
-for attr in file_attrs + ['bundle']:
-    column = Column(attr + "_file", Integer,
-                    ForeignKey(sasi_file_models.table.c.id))
-    file_columns.append(column)
-
-table = Table('sasi_model_config', db.metadata,
+configs_table = Table('sasi_model_config', db.metadata,
               Column('id', Integer, primary_key=True),
               Column('title', String),
-              *file_columns
              )
 
-relationships = {}
-for attr in file_attrs + ['bundle']:
-    relationships[attr] = relationship(
-        sasi_file_models.SASIFile, 
-        primaryjoin=(table.c[attr + "_file"]==sasi_file_models.table.c.id),
-    )
+configs_files_table = Table(
+    'sasi_model_config__sasi_file', db.metadata,
+    Column('config_id', Integer, ForeignKey('sasi_model_config.id'), primary_key=True),
+    Column('file_id', Integer, ForeignKey('sasi_file.id'), primary_key=True),
+    Column('file_type', String, primary_key=True),
+)
 
-mapper(SASIModelConfig, table, properties=relationships)
+mapper(SASIModelConfig, configs_table)
+mapper(
+    SASIModelConfig_SASIFile, configs_files_table, 
+    properties={
+        'config': relationship(
+            SASIModelConfig,
+            backref=backref(
+                '_files_dict', 
+                cascade="all, delete-orphan",
+                collection_class=attribute_mapped_collection('file_type'),
+            )
+        ),
+        'file': relationship(
+            SASIFile, 
+            backref=backref('_configs', cascade="all, delete-orphan")
+        ),
+    }
+)

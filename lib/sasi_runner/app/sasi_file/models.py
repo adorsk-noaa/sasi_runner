@@ -1,10 +1,14 @@
 from sasi_runner.app import db
 from sqlalchemy import Table, Column, Integer, String, DateTime
 from sqlalchemy.orm import mapper
+from sqlalchemy.ext.associationproxy import association_proxy
 from datetime import datetime
 
 
 class SASIFile(object):
+    # '_configs' will be set via backref in SASIModelConfig mapping.
+    configs = association_proxy('_configs', 'config')
+
     def __init__(self, id=None, path=None, filename=None, category=None,
                  size=None, created=None):
         self.id = id

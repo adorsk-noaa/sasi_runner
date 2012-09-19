@@ -106,17 +106,18 @@ class ConfigRunner(object):
             data_container_dir = tempfile.mkdtemp(prefix="sasi_test.")
             data_dir = os.path.join(data_container_dir, "sasi_config")
             os.mkdir(data_dir)
+
             # Bundled.
-            if hasattr(self.config, 'bundle') and self.config.bundle:
-                zfile = zipfile.ZipFile(self.config.bundle.path)
+            bundle_file = self.config.files.get('bundle')
+            if bundle_file:
+                zfile = zipfile.ZipFile(bundle_file.path)
                 zfile.extractall(data_container_dir)
 
             # Individual files.
             else:
-                for file_attr in smc_models.file_attrs:
-                    sasi_file = getattr(self.config, file_attr)
-                    if sasi_file:
-                        zfile = zipfile.ZipFile(sasi_file.path)
+                for file_ in self.config.files.values():
+                    if file_:
+                        zfile = zipfile.ZipFile(file_.path)
                         zfile.extractall(data_dir)
                 stages['unpacking']['status']['code'] = 'resolved'
                 self.increment_task_progress(task_data)

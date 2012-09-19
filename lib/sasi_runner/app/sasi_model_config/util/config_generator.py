@@ -34,7 +34,7 @@ def generate_config(bundled=True):
     if bundled:
         hndl, archivename = tempfile.mkstemp(prefix="sr_bundle.", suffix=".zip")
         zipdir(data_dir, archivename, basename="sasi_config")
-        config.bundle = SASIFile(
+        config.files['bundle'] = SASIFile(
             id=get_id(),
             path=archivename,
             filename=os.path.basename(archivename),
@@ -61,13 +61,13 @@ def generate_config(bundled=True):
             section_dir = os.path.join(data_dir, section)
             archivename = os.path.join(target_dir, "%s.zip" % section)
             zipdir(section_dir, archivename)
-            setattr(config, section, SASIFile(
+            config.files[section] = SASIFile(
                 id=get_id(),
                 path=archivename,
                 filename=section + ".zip",
                 category=section,
                 size=12345,
                 created=None
-            ))
+            )
 
     return config

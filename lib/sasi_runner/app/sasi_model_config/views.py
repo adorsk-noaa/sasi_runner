@@ -148,14 +148,15 @@ def save_config(config_id):
 
     # Update config w/ form values.
     for attr, value in request.form.items():
-        if hasattr(config, attr):
-            # If attribute is a file attribute,
-            # get file from the db.
-            if is_file_attr(attr):
-                if value:
-                    value = db.session.query(SASIFile).get(value)
-                else:
-                    value = None
+        # If attribute is a file attribute,
+        # get file from the db.
+        if is_file_attr(attr):
+            if value:
+                value = db.session.query(SASIFile).get(value)
+            else:
+                value = None
+            config.files[attr] = value
+        elif hasattr(config, attr):
             setattr(config, attr, value)
 
     # Save the config.
@@ -170,9 +171,19 @@ def is_file_attr(attr):
     Helper function to determine if an attribute is a file
     attribute.
     """
-    target_class = db.get_attr_target_class(
-        SASIModelConfig, attr)
-    return (target_class == SASIFile)
+    return attr in [
+        'bundle',
+        'substrates',
+        'energys',
+        'features',
+        'gears',
+        'habitats',
+        'grid',
+        'va',
+        'model_parameters',
+        'fishing_efforts',
+        'georefine'
+    ]
 
 def initialize_config(config_id=None):
     """
