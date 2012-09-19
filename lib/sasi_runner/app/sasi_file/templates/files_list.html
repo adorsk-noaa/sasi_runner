@@ -28,10 +28,30 @@
     require(["jquery","use!backbone","use!underscore", "use!DataTables"],
     function($, Backbone, _, DataTables){
 
+        $(document).ready(function(){
+
+
         // Setup table.
-        var dataTable = $('.files-table').dataTable({
+        var $fileTable = $('.file-table');
+        var dataTable = $fileTable.dataTable({
             sDom: 't',
             aoColumnDefs: [
+                {
+                    aTargets: ['name'],
+                },
+                {
+                    aTargets: ['size'],
+                },
+                {
+                    aTargets: ['category'],
+                },
+                {
+                    aTargets: ['created'],
+                    fnRender: function(o, value){
+                        return new Date(value).toLocaleString();
+                    },
+                    sType: 'date'
+                },
                 {
                     aTargets: ['actions'],
                     bSortable: false
@@ -40,6 +60,8 @@
             bPaginate: false,
             bAutoWidth: false
         });
+
+        $fileTable.css('visibility', 'visible');
 
         // Setup action handlers.
         var actionHandlers = {
@@ -64,9 +86,8 @@
                     // Handle errors.
                     console.log("delete error");
                 });
-            }
+            },
         };
-
 
         $('.action-link').on('click', function(event){
             var $link = $(event.delegateTarget);
@@ -80,6 +101,8 @@
                 handler(row_id, $row.get(0));
             }
         });
+
+        });
     });
 </script>
 
@@ -89,36 +112,51 @@
 {% block content %}
 {{ super() }}
 
-<div class="sasi-files-file-list">
+<div class="sasi-file-list-file">
     <div class="inner">
         <h2 class="header">{{title}}</h2>
         <div class="body">
             <div class="inner">
 
                 <div class="file-table-container">
-                    <table class="file-table">
+                    <table class="file-table" style="visibility: hidden;">
                         <thead>
                             <th class="name">Name</th>
+                            <th class="category">Category</th>
+                            <th class="size">Size</th>
+                            <th class="created">Created</th>
                             <th class="actions">Actions</th>
                         </thead>
                         <tbody>
                             {% for file_dict in file_dicts %}
-                            <tr data-row_id="{{file_dict['id']}}">
-                                <td class="name-cell">
-                                    <div class="inner">
-                                        {{file_dict['filename']}}
-                                    </div>
+                            <tr class="file-row" data-row_id="{{file_dict['id']}}">
+                                <td class="{{attr}}-filename">
+                                    <a href="{{file_dict['url']}}">{{file_dict['filename']}}</a>
                                 </td>
+                                {% for attr in [
+                                'category',
+                                'size',
+                                'created'
+                                ] %}
+                                <td class="{{attr}}-cell">
+                                    {{file_dict[attr]}}
+                                </td>
+                                {% endfor %}
                                 <td class="actions-cell">
-                                    <div class="inner">
-                                        {% for action in actions %}
-                                        <div class="action {{action.id}}">
-                                            <a class="action-link" href="javascript:{}" data-action_id="{{action.id}}">
-                                                <div class="action-icon {{action.id}}"></div>
-                                                <div class="action-text">{{action.label}}</div>
-                                            </a>
-                                        </div>
-                                        {% endfor %}
+                                    {% for action in [{'id': 'delete', 'label': 'delete'}] %}
+                                    <div class="action {{action.id}}">
+                                        <a class="action-link" href="javascript:{}" data-action_id="{{action.id}}">
+                                            <div class="action-icon {{action.id}}"></div>
+                                            <div class="action-text">{{action.label}}</div>
+                                        </a>
+                                    </div>
+                                    {% endfor %}
+                                    {# download action is just a link #}
+                                    <div class="action download">
+                                        <a class="action-link" href="{{file_dict['url']}}" data-action_id="download">
+                                            <div class="action-icon download"></div>
+                                            <div class="action-text">download</div>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>

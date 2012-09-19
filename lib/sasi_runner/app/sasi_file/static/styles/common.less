@@ -1,0 +1,26 @@
+@padding_tighter: 3px;
+@padding_tight: 5px;
+@padding_normal: 7px;
+@padding_loose: 10px;
+@padding_looser: 15px;
+
+.action {
+    .action-icon{
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        background-repeat: no-repeat;
+        background-position: center;
+
+        &.edit{ background-image: url('images/edit_16x16.png') }
+        &.run{ background-image: url('images/run_16x16.png') }
+        &.clone{ background-image: url('images/clone_16x16.png') }
+        &.delete{ background-image: url('images/delete_16x16.png') }
+        &.cancel{ background-image: url('images/delete_16x16.png') }
+        &.download{ background-image: url('images/download_16x16.png') }
+    }
+
+    .action-text{
+        display: inline;
+    }
+}
