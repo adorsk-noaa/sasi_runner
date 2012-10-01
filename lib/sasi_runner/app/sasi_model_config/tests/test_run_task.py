@@ -3,7 +3,7 @@ from sasi_runner.app.test.db_testcase import DBTestCase
 from sasi_runner.app import db
 from sasi_runner.app.sasi_file.models import SASIFile
 from sasi_runner.app.sasi_model_config.models import SASIModelConfig
-from sasi_runner.app.sasi_model_config.util.tests import config_setup as config_setup 
+from sasi_runner.app.sasi_model_config.util import config_generator
 from sasi_runner.app.tasks import util as tasks_util
 import time
 
@@ -27,7 +27,7 @@ class RunConfigTest(DBTestCase):
         self.base_path = '/config'
 
     def test_run_config_task(self):
-        config = config_setup.generate_config()
+        config = config_generator.generate_config()
         db.session.add(config)
         db.session.commit()
         path = "%s/%s/run" % (

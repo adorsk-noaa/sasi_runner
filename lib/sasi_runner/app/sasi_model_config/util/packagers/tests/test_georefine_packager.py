@@ -17,12 +17,12 @@ class GeoRefinePackagerTest(unittest.TestCase):
 
     def test_georefine_packager(self):
         cells = data_generators.generate_cell_grid()
-        energies = data_generators.generate_energies()
+        energys = data_generators.generate_energys()
         features = data_generators.generate_features()
         substrates = data_generators.generate_substrates()
         gears = data_generators.generate_gears()
         results = data_generators.generate_results(
-            times=range(0,3), cells=cells, energies=energies,
+            times=range(0,3), cells=cells, energys=energys,
             features=features, substrates=substrates, gears=gears)
 
         # Directory for GeoRefine-specific data files.
@@ -31,7 +31,7 @@ class GeoRefinePackagerTest(unittest.TestCase):
 
         packager = GeoRefinePackager(
             cells=cells,
-            energies=energies,
+            energies=energys,
             substrates=substrates,
             features=features,
             gears=gears,
