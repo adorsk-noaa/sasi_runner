@@ -1,7 +1,8 @@
-sasipedia_base_url = "/georefine/static/sasipedia"
+# This object will contain the app config.
+app_config = {}
 
 # Quantity fields are used in facets and charts.
-quantity_fields = {
+app_config['quantity_fields'] = {
     'result_cell_area:sum': { 
         'id': 'result_cell_area_sum',
         'label': 'Cell Area',
@@ -33,7 +34,7 @@ sasi_fields = [
 
 for f in sasi_fields:
     field_id = "result_%s_sum" % f[0]
-    quantity_fields[field_id] = {
+    app_config['quantity_fields'][field_id] = {
         'id': field_id,
         'label': f[1],
         'info': 'da info', #@TODO
@@ -51,14 +52,14 @@ for f in sasi_fields:
         'format': '%.1h km<sup>2</sup>'
     }
 
-filter_groups = [
+app_config['filter_groups'] = [
     {'id': 'scenario'},
     {'id': 'data'}
 ]
 
 
-facets = {
-    "quantity_fields": quantity_fields.values(),
+app_config['facets'] = {
+    "quantity_fields": app_config['quantity_fields'].values(),
     "definitions" : {
         'timestep': {
             'id': 'timestep',
@@ -103,8 +104,8 @@ facets = {
 }
 
 # Add quantity field facet definitions.
-for qfield in quantity_fields.values():
-    facets['definitions'][qfield['id']] = {
+for qfield in app_config['quantity_fields'].values():
+    app_config['facets']['definitions'][qfield['id']] = {
         'id': qfield['id'],
         'facetDef': {
             'label': qfield['label'],
@@ -128,10 +129,10 @@ for qfield in quantity_fields.values():
         },
     }
 
-charts = {
+app_config['charts'] = {
     'primary_filter_groups': ['data'],
     'base_filter_groups': ['scenario'],
-    'quantity_fields': quantity_fields.values(),
+    'quantity_fields': app_config['quantity_fields'].values(),
     'category_fields': [
         {
             'id': 'substrates',
@@ -151,8 +152,8 @@ charts = {
 }
 
 # Add quantity field histograms to category fields.
-for qfield in quantity_fields.values():
-    charts['category_fields'].append({
+for qfield in app_config['quantity_fields'].values():
+    app_config['charts']['category_fields'].append({
         'id': qfield['id'],
         'label': qfield['label'],
         'value_type': 'numeric',
@@ -166,7 +167,7 @@ for qfield in quantity_fields.values():
         },
     })
 
-data_layers = []
+app_config['data_layers'] = []
 for f in sasi_fields:
     data_layer = {
         "id": f[0],
@@ -222,9 +223,9 @@ for f in sasi_fields:
         },
     "disabled": True 
     }
-    data_layers.append(data_layer)
+    app_config['data_layers'].append(data_layer)
 
-maps = {
+app_config['maps'] = {
     "primary_filter_groups": ['data'],
     "base_filter_groups" : ['scenario'],
     "max_extent" : {=map_parameters.max_extent=},
@@ -238,7 +239,7 @@ maps = {
         "disabled": True,
     },
 
-    "data_layers": data_layers,
+    "data_layers": app_config['data_layers'],
     {% for layer_category in ['base', 'overlay'] %}
     "{= layer_category =}_layers": [
         {% for layer in map_layers[layer_category] %}
@@ -265,15 +266,15 @@ maps = {
     {% endfor %}
 }
 
-defaultInitialState = {
-    'filterGroups': filter_groups,
+app_config['defaultInitialState'] = {
+    'filterGroups': app_config['filter_groups'],
     'facetsEditor': {
-        'quantity_fields': quantity_fields,
+        'quantity_fields': app_config['quantity_fields'],
         'summary_bar': {
             'primary_filter_groups': ['data'],
             'base_filter_groups': ['scenario']
         },
-        'predefined_facets': facets['definitions'].values()
+        'predefined_facets': app_config['facets']['definitions'].values()
     },
 
     'initialActionQueue': {

@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship, mapper
 from sqlalchemy import MetaData
 from geoalchemy import *
 
-
 sources = {}
 ordered_sources = []
 metadata = MetaData()
@@ -57,3 +56,10 @@ sources['result']= Table('result', metadata,
         Column('znet', Float),
         )
 ordered_sources.append({'id': 'result', 'source': sources['result']})
+
+# This dictionary contains the schema objects GeoRefine will use.
+schema = {
+    'sources': sources,
+    'ordered_sources': ordered_sources,
+    'metadata': metadata
+}
