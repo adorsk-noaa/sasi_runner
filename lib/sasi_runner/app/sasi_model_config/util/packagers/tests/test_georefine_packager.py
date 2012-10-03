@@ -29,6 +29,9 @@ class GeoRefinePackagerTest(unittest.TestCase):
         # The source dir. #@TODO: better name for this?
         source_data_dir = data_generators.generate_data_dir()
 
+        metadata_dir = tempfile.mkdtemp(prefix="gr_md.")
+        open(os.path.join(metadata_dir, "foo.html"), "wb").write("Hi")
+
         packager = GeoRefinePackager(
             cells=cells,
             energies=energys,
@@ -36,7 +39,8 @@ class GeoRefinePackagerTest(unittest.TestCase):
             features=features,
             gears=gears,
             results=results,
-            source_data_dir=source_data_dir
+            source_data_dir=source_data_dir,
+            metadata_dir=metadata_dir
         )
 
         archive_file = packager.create_package()

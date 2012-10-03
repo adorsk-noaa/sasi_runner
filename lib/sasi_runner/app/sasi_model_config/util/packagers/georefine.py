@@ -12,7 +12,7 @@ class GeoRefinePackager(object):
 
     def __init__(self, cells=[], energies=[],
                  substrates=[], features=[], gears=[], results=[],
-                 source_data_dir=""): 
+                 source_data_dir=None, metadata_dir=None): 
         self.cells = cells
         self.energies = energies
         self.substrates = substrates
@@ -20,6 +20,7 @@ class GeoRefinePackager(object):
         self.gears = gears
         self.results = results
         self.source_data_dir = source_data_dir
+        self.metadata_dir = metadata_dir
         self.gr_data_dir = os.path.join(self.source_data_dir, "georefine",
                                         "data")
 
@@ -40,6 +41,7 @@ class GeoRefinePackager(object):
         self.copy_georefine_data()
         self.create_schema_files()
         self.create_app_config_files()
+        self.create_static_files()
         archive_file = self.create_archive()
         return archive_file
 
@@ -165,6 +167,22 @@ class GeoRefinePackager(object):
             )
         )
         app_config_fh.close()
+
+    def create_static_files(self):
+        # Create dir.
+        static_files_dir = os.path.join(self.target_dir, 'public_html')
+
+        # Copy metadata into dir.
+        if os.path.isdir(self.metadata_dir):
+            shutil.copytree(
+                self.metadata_dir, 
+                os.path.join(static_files_dir, 'sasipedia')
+            )
+
+        # Set permissions.
+        for root, dirs, files in os.walk(static_files_dir):  
+            for item in dirs + files:  
+                os.chmod(os.path.join(root, item), 0755)
 
     def get_map_parameters(self):
         map_parameters_file = os.path.join(

@@ -215,6 +215,7 @@ class ConfigRunner(object):
         try:
             tmp_package_file = self.get_output_package(
                 data_dir=data_dir, 
+                metadata_dir=metadata_dir,
                 dao=dao, 
                 output_format=self.output_format
             )
@@ -265,7 +266,7 @@ class ConfigRunner(object):
             self.task.set_data(task_data)
             raise e
 
-    def get_output_package(self, data_dir="", dao=None, output_format=None):
+    def get_output_package(self, data_dir=None, metadata_dir=None, dao=None, output_format=None):
         packager = None
         cells = dao.query('__Cell')
         energies = dao.query('__Energy')
@@ -282,7 +283,8 @@ class ConfigRunner(object):
                 features=features,
                 gears=gears,
                 results=results,
-                source_data_dir=data_dir
+                source_data_dir=data_dir,
+                metadata_dir=metadata_dir
             )
         package_file = packager.create_package()
         return package_file
