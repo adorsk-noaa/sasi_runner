@@ -146,13 +146,13 @@ class ConfigRunner(object):
         stages['model'] = {'status': {'code': 'running'}}
         self.task.set_data(task_data)
         try:
-            parameters = dao.query('{{ModelParameters}}').one()
-            cells = dao.query('{{Cell}}').all()
-            substrates = dao.query('{{Substrate}}').all()
-            features = dao.query('{{Feature}}').all()
-            gears = dao.query('{{Gear}}').all()
-            vas = dao.query('{{VA}}').all()
-            efforts = dao.query('{{Effort}}').all()
+            parameters = dao.query('__ModelParameters').one()
+            cells = dao.query('__Cell').all()
+            substrates = dao.query('__Substrate').all()
+            features = dao.query('__Feature').all()
+            gears = dao.query('__Gear').all()
+            vas = dao.query('__VA').all()
+            efforts = dao.query('__Effort').all()
             taus = {}
             omegas = {}
             for i in range(1,4):
@@ -267,12 +267,12 @@ class ConfigRunner(object):
 
     def get_output_package(self, data_dir="", dao=None, output_format=None):
         packager = None
-        cells = dao.query('{{Cell}}')
-        energies = dao.query('{{Energy}}')
-        substrates = dao.query('{{Substrate}}')
-        features = dao.query('{{Feature}}')
-        gears = dao.query('{{Gear}}')
-        results = dao.query('{{Result}}')
+        cells = dao.query('__Cell')
+        energies = dao.query('__Energy')
+        substrates = dao.query('__Substrate')
+        features = dao.query('__Feature')
+        gears = dao.query('__Gear')
+        results = dao.query('__Result')
 
         if output_format == 'georefine':
             packager = smc_packagers.GeoRefinePackager(
