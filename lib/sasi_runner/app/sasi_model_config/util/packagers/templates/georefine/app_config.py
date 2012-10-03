@@ -84,7 +84,11 @@ app_config['facets'] = {
             'id': 'substrates',
             'facetDef': {
                 'label': 'Substrates',
-                'info': 'Info test',
+                'info': ('<p>See this link:'
+                         ' <a href="'
+                         '{{PROJECT_STATIC_DIR}}/sasipedia#substrates/index.html'
+                         '" target="_blank">Substrates</a></p>'
+                        ),
                 'type': 'list',
                 'KEY': {
                     'KEY_ENTITY': {'ID': 'substrate_id', 'EXPRESSION':
