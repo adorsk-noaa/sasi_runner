@@ -37,7 +37,7 @@ for f in sasi_fields:
     app_config['quantity_fields'][field_id] = {
         'id': field_id,
         'label': f[1],
-        'info': 'da info', #@TODO
+        'info': 'da info {{PROJECT_STATIC_DIR}}',
         'value_type': 'numeric',
         'inner_query': {
             'GROUP_BY': [
