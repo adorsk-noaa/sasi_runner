@@ -61,5 +61,5 @@ ordered_sources.append({'id': 'result', 'source': sources['result']})
 schema = {
     'sources': sources,
     'ordered_sources': ordered_sources,
-    'metadata': metadata
+    'metadata': metadata,
 }

@@ -9,16 +9,16 @@ app_config['quantity_fields'] = {
         'info': 'Cell Area Info', #@TODO
         'value_type': 'numeric',
         'inner_query': {
-            'SELECT': [{'ID': 'cell_area', 'EXPRESSION': '{{result.cell.area}}/1000000.0'}],
+            'SELECT': [{'ID': 'cell_area', 'EXPRESSION': '__result__cell__area'}],
             'GROUP_BY': [
-                '{{result.cell.id}}',
+                '__result__cell__id',
                 {'ID': 'cell_area'}
             ],
         },
         'outer_query': {
-            'SELECT': [{'ID': 'sum_cell_area', 'EXPRESSION': 'func.sum({{inner.cell_area}})'}],
+            'SELECT': [{'ID': 'sum_cell_area', 'EXPRESSION': 'func.sum(__inner__cell_area)'}],
         },
-        'key_entity_expression': '{{result.cell.area}}/1000000.0',
+        'key_entity_expression': '__result__cell__area',
         'format': '%.1h km<sup>2</sup>'
     },
 }
@@ -41,14 +41,14 @@ for f in sasi_fields:
         'value_type': 'numeric',
         'inner_query': {
             'GROUP_BY': [
-                {'ID': f[0], 'EXPRESSION': "{{result.%s}}/1000000.0" % f[0]},
-                '{{result.id}}'
+                {'ID': f[0], 'EXPRESSION': '__result__%s' % f[0]},
+                '__result__id'
             ],
         },
         'outer_query': {
-            'SELECT': [{'ID': "%s_sum" % f[0], 'EXPRESSION': "func.sum({{inner.%s}})" % f[0]}],
+            'SELECT': [{'ID': "%s_sum" % f[0], 'EXPRESSION': "func.sum(__inner__%s)" % f[0]}],
         },
-        'key_entity_expression': '{{result.%s}}/1000000.0' % f[0],
+        'key_entity_expression': '__result__%s' % f[0],
         'format': '%.1h km<sup>2</sup>'
     }
 
@@ -67,7 +67,7 @@ app_config['facets'] = {
                 'label': 'Timestep',
                 'type': 'timeSlider',
                 'KEY': {
-                    'KEY_ENTITY': {'ID': 'result_t', 'EXPRESSION': '{{result.t}}'},
+                    'KEY_ENTITY': {'ID': 'result_t', 'EXPRESSION': '__result__t'},
                     'LABEL_ENTITY': {'ID': 'result_t'},
                 },
                 'value_type': 'numeric',
@@ -75,7 +75,7 @@ app_config['facets'] = {
                 'primary_filter_groups': ['scenario'],
                 'filter_entity': {
                     'TYPE': 'ENTITY', 
-                    'EXPRESSION': '{{result.t}}'
+                    'EXPRESSION': '__result__t'
                 },
                 'noClose': True
             },
@@ -88,15 +88,15 @@ app_config['facets'] = {
                 'type': 'list',
                 'KEY': {
                     'KEY_ENTITY': {'ID': 'substrate_id', 'EXPRESSION':
-                                   '{{result.substrate.id}}'},
+                                   '__result__substrate__id'},
                     'LABEL_ENTITY': {'ID': 'substrate_name', 'EXPRESSION':
-                                     '{{result.substrate.label}}'},
+                                     '__result__substrate__label'},
                 },
                 'primary_filter_groups': ['data'],
                 'base_filter_groups': ['scenario'],
                 'filter_entity': {
                     'TYPE': 'ENTITY', 
-                    'EXPRESSION': '{{result.substrate.id}}'
+                    'EXPRESSION': '__result__substrate__id'
                 },
             },
         },
@@ -141,11 +141,11 @@ app_config['charts'] = {
             'KEY': {
                 'KEY_ENTITY': {
                     'ID': '_cat_substrate_id', 
-                    'EXPRESSION': '{{result.substrate.id}}',
+                    'EXPRESSION': '__result__substrate__id',
                     'ALL_VALUES': True
                 },
                 'LABEL_ENTITY': {'ID': 'substrate_name', 
-                                 'EXPRESSION': '{{result.substrate.label}}'},
+                                 'EXPRESSION': '__result__substrate__label'},
             },
         },
     ],
@@ -184,17 +184,17 @@ for f in sasi_fields:
             'SELECT': [
                 {
                     'ID': "%s_data" % f[0], 
-                    'EXPRESSION': "func.sum({{result.%s}}/{{result.cell.area}})" % f[0]
+                    'EXPRESSION': "func.sum(__result__%s/__result__cell__area)" % f[0]
                 },
             ],
             'GROUP_BY': [
                 {
                     'ID': "%s_cell_id" % f[0], 
-                    'EXPRESSION': '{{result.cell.id}}'
+                    'EXPRESSION': '__result__cell__id'
                 },
                 {
                     'ID': "%s_cell_geom" % f[0], 
-                    'EXPRESSION': '{{result.cell.geom}}'
+                    'EXPRESSION': '__result__cell__geom'
                 }
             ],
         },
@@ -202,15 +202,15 @@ for f in sasi_fields:
             'SELECT': [
                 {
                     'ID': "%s_geom_id" % f[0], 
-                    'EXPRESSION': "{{inner.%s_cell_id}}" % f[0]
+                    'EXPRESSION': "__inner__%s_cell_id" % f[0]
                 },
                 {
                     'ID': "%s_geom" % f[0], 
-                    'EXPRESSION': "{{inner.%s_cell_geom}}" % f[0]
+                    'EXPRESSION': "__inner__%s_cell_geom" % f[0]
                 },
                 {
                     'ID': "%s_data" % f[0], 
-                    'EXPRESSION': "{{inner.%s_data}}" % f[0]
+                    'EXPRESSION': "__inner__%s_data" % f[0]
                 },
             ]
         },
