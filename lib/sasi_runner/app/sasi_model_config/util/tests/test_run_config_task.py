@@ -29,6 +29,7 @@ class RunConfigTaskTest(DBTestCase):
             output_format='georefine'
         )
         task.call()
+        print db.session.query(SASIFile).get(1).path
 
 if __name__ == '__main__':
     unittest.main()
