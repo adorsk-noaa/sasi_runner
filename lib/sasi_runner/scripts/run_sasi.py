@@ -16,33 +16,50 @@ import os
 import shutil
 import zipfile
 from sqlalchemy.orm import sessionmaker
+import sys
+import select
+import logging
 
+
+logger = logging.getLogger()
+logger.addHandler(logging.StreamHandler())
 
 # Setup argument handling.
 argparser = argparse.ArgumentParser(description='Run SASI model.')
-argparser.add_argument('-c', required=True, help='config file')
+argparser.add_argument('-c', help='config file')
 argparser.add_argument('-o', help='output file')
 argparser.add_argument('-f', help='output format')
 
 def main():
     # Read args.
     args = argparser.parse_args()
-    config_file = args.c
-    config = json.load(open(config_file, 'rb'))
+
+    # Read config.
+    try:
+        if select.select([sys.stdin,],[],[],0.0)[0]:
+            config_json = sys.stdin.read()
+        else:
+            if not args.c:
+                raise Exception(("No config file provided. Pipe config in via"
+                                 " STDIN or use the '-c' flag."))
+            config_json = open(args.c, "rb").read()
+        config = json.loads(config_json)
+    except Exception as e:
+        print >> sys.stderr, "Could not read config: ", e
+        logger.exception(e)
+        exit()
 
     output_file = args.o or config.get('output_file')
     output_format = args.f or config.get('output_format') or 'georefine'
     input_files = config['input_files']
 
     run_sasi(
-        config=config,
+        input_files=input_files,
         output_file=output_file,
         output_format=output_format
     )
 
 def run_sasi(input_files=None, output_file=None, output_format=None):
-
-
     # Create build dir.
     build_dir = tempfile.mkdtemp(prefix="rsBuild.")
 
