@@ -7,6 +7,7 @@ from sasi_data.ingestors.sasi_ingestor import SASI_Ingestor
 from sasi_runner.app import db as db
 from sasi_runner.app.sasi_model_config.util import packagers as smc_packagers
 from sasi_model.sasi_model import SASI_Model
+from georefine.app.projects.util import services as project_services
 import task_manager
 import sasipedia
 import tempfile
@@ -20,19 +21,12 @@ import select
 
 class RunSasiTask(task_manager.Task):
 
-    def __init__(self, input_file={}, output_file=None,
-                 output_format='georefine', **kwargs):
+    def __init__(self, input_file=None, **kwargs):
         super(RunSasiTask, self).__init__(**kwargs)
+        if not kwargs.get('data', None):
+            self.data = {}
         self.logger.debug("RunSasiTask.__init__")
-        #self.input_file = input_file
-        #@TODO: TESTING!!!
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        test_input_file = os.path.join(this_dir, 'test_data', 'bundle.zip')
-        self.input_file = test_input_file
-        #@TODO: TESTING!!!
-        #self.output_file = output_file
-        self.output_file = '/tmp/run_sasi_task.tar.gz'
-        self.output_format = output_format
+        self.input_file = input_file
 
     def call(self):
         self.progress = 1
@@ -105,22 +99,27 @@ class RunSasiTask(task_manager.Task):
         except Exception as e:
             raise e
 
-        # Create output package.
+        # Create georefine package.
         try:
-            tmp_package_file = self.get_output_package(
+            georefine_package_file = self.get_output_package(
                 data_dir=data_dir, 
                 metadata_dir=metadata_dir,
                 dao=dao, 
-                output_format=self.output_format
+                output_format='georefine'
             )
         except Exception as e:
             raise e
 
-        # Move the output package to the output_file path.
-        shutil.move(tmp_package_file, self.output_file)
+        # Create georefine project from package.
+        try:
+            project = project_services.create_project(georefine_package_file)
+            self.data['project_id'] = project.id
+        except Exception as e:
+            raise e
 
         self.progress = 100
-        self.message = "SASI Run completed, output file is: %s" % self.output_file
+        self.message = "SASI Run completed, georefine project id is: '%s'" % (
+            project.id)
 
     def get_output_package(self, data_dir=None, metadata_dir=None, dao=None, output_format=None):
         cells = dao.query('__Cell')
