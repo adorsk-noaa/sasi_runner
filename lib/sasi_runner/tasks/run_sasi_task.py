@@ -120,6 +120,7 @@ class RunSasiTask(task_manager.Task):
         self.progress = 100
         self.message = "SASI Run completed, georefine project id is: '%s'" % (
             project.id)
+        self.status = 'resolved'
 
     def get_output_package(self, data_dir=None, metadata_dir=None, dao=None, output_format=None):
         cells = dao.query('__Cell')
