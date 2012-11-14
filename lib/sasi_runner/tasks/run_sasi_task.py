@@ -17,20 +17,27 @@ import zipfile
 from sqlalchemy.orm import sessionmaker
 import sys
 import select
+import logging
 
 
 class RunSasiTask(task_manager.Task):
 
     def __init__(self, input_file=None, **kwargs):
         super(RunSasiTask, self).__init__(**kwargs)
+        self.logger.debug("RunSasiTask.__init__")
         if not kwargs.get('data', None):
             self.data = {}
-        self.logger.debug("RunSasiTask.__init__")
         self.input_file = input_file
+
+        self.message_logger = logging.getLogger("Task%s_msglogger" % id(self))
+        main_log_handler = task_manager.LoggerLogHandler(self.logger)
+        main_log_handler.setFormatter(
+            logging.Formatter('MSG: %(message)s'))
+        self.message_logger.addHandler(main_log_handler)
 
     def call(self):
         self.progress = 1
-        self.message = "Starting SASI Run."
+        self.message_logger.info("Starting SASI Run.")
 
         # Create build dir.
         build_dir = tempfile.mkdtemp(prefix="rsBuild.")
@@ -49,14 +56,17 @@ class RunSasiTask(task_manager.Task):
 
         # Read in data.
         try:
+            ingest_logger = self.get_logger_for_state('Ingest')
             dao = SASI_SqlAlchemyDAO(session=session)
-            sasi_ingestor = SASI_Ingestor(dao=dao)
+            sasi_ingestor = SASI_Ingestor(dao=dao, logger=ingest_logger)
             sasi_ingestor.ingest(data_dir=data_dir)
         except Exception as e:
+            self.logger.exception(e)
             raise e
 
         # Run the model.
         try:
+            run_model_logger = self.get_logger_for_state('Running Model')
             parameters = dao.query('__ModelParameters').one()
             cells = dao.query('__Cell').all()
             substrates = dao.query('__Substrate').all()
@@ -66,7 +76,7 @@ class RunSasiTask(task_manager.Task):
             efforts = dao.query('__Effort').all()
             taus = {}
             omegas = {}
-            for i in range(1,4):
+            for i in range(0,4):
                 taus[i] = getattr(parameters, "t_%s" % i)
                 omegas[i] = getattr(parameters, "w_%s" % i)
             m = SASI_Model(
@@ -79,10 +89,11 @@ class RunSasiTask(task_manager.Task):
                 features=features,
                 efforts=efforts,
                 vas=vas,
-                opts={'verbose': True}
+                logger=run_model_logger
             )
             m.run()
         except Exception as e:
+            self.logger.exception("Error running model: %s" % e)
             raise e
 
         # Save the results.
@@ -143,3 +154,12 @@ class RunSasiTask(task_manager.Task):
             )
         package_file = packager.create_package()
         return package_file
+
+    def get_logger_for_state(self, label=None):
+        logger = logging.getLogger("%s_%s" % (id(self), label))
+        formatter = logging.Formatter(label + ':: %(message)s.')
+        log_handler = task_manager.LoggerLogHandler(self.message_logger)
+        log_handler.setFormatter(formatter)
+        logger.addHandler(log_handler)
+        return logger
+
