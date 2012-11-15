@@ -6,13 +6,24 @@ import csv
 import shutil
 import tarfile
 import tempfile
+import logging
 
+class LoggerLogHandler(logging.Handler):
+    """ Custom log handler that logs messages to another
+    logger. This can be used to chain together loggers. """
+    def __init__(self, logger=None, **kwargs):
+        logging.Handler.__init__(self, **kwargs)
+        self.logger = logger
+
+    def emit(self, record):
+        self.logger.log(record.levelno, self.format(record))
 
 class GeoRefinePackager(object):
 
     def __init__(self, cells=[], energies=[],
                  substrates=[], features=[], gears=[], results=[],
-                 source_data_dir=None, metadata_dir=None): 
+                 source_data_dir=None, metadata_dir=None,
+                 logger=logging.getLogger()): 
         self.cells = cells
         self.energies = energies
         self.substrates = substrates
@@ -21,6 +32,8 @@ class GeoRefinePackager(object):
         self.results = results
         self.source_data_dir = source_data_dir
         self.metadata_dir = metadata_dir
+        self.logger = logger
+
         self.gr_data_dir = os.path.join(self.source_data_dir, "georefine",
                                         "data")
 
@@ -129,10 +142,16 @@ class GeoRefinePackager(object):
 
         for section in sections:
             csv_file = os.path.join(self.data_dir, "%s.csv" % section['id'])
+
+            base_msg = "Exporting '%s'..." % section['id']
+            section_logger = self.get_logger_for_section(
+                section['id'], base_msg)
+
             exporters.CSV_Exporter(
                 csv_file=csv_file,
                 objects=section['data'],
-                mappings=section['mappings']
+                mappings=section['mappings'],
+                logger=section_logger,
             ).export()
 
     def copy_georefine_data(self):
@@ -260,3 +279,11 @@ class GeoRefinePackager(object):
             tar.add(path, arcname=item)
         tar.close()
         return tmp_file
+
+    def get_logger_for_section(self, section_id=None, base_msg=None):
+        logger = logging.getLogger("%s_%s" % (id(self), section_id))
+        formatter = logging.Formatter(base_msg + ' %(message)s.')
+        log_handler = LoggerLogHandler(self.logger)
+        log_handler.setFormatter(formatter)
+        logger.addHandler(log_handler)
+        return logger

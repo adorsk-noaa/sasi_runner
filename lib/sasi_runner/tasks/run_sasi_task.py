@@ -20,6 +20,10 @@ import select
 import logging
 
 
+from pympler import tracker
+mem_tracker = tracker.SummaryTracker()
+mem_tracker.print_diff()
+
 class RunSasiTask(task_manager.Task):
 
     def __init__(self, input_file=None, **kwargs):
@@ -37,7 +41,7 @@ class RunSasiTask(task_manager.Task):
 
     def call(self):
         self.progress = 1
-        self.message_logger.info("Starting SASI Run.")
+        self.message_logger.info("Starting...")
 
         # Create build dir.
         build_dir = tempfile.mkdtemp(prefix="rsBuild.")
@@ -56,17 +60,21 @@ class RunSasiTask(task_manager.Task):
 
         # Read in data.
         try:
-            ingest_logger = self.get_logger_for_state('Ingest')
+            base_msg = "Ingesting..."
+            ingest_logger = self.get_logger_for_stage('ingest', base_msg)
+            self.message_logger.info(base_msg)
             dao = SASI_SqlAlchemyDAO(session=session)
             sasi_ingestor = SASI_Ingestor(dao=dao, logger=ingest_logger)
             sasi_ingestor.ingest(data_dir=data_dir)
         except Exception as e:
-            self.logger.exception(e)
+            self.logger.exception("Error ingesting")
             raise e
 
         # Run the model.
         try:
-            run_model_logger = self.get_logger_for_state('Running Model')
+            base_msg = "Starting model run..."
+            run_model_logger = self.get_logger_for_stage('run_model', base_msg)
+            self.message_logger.info(base_msg)
             parameters = dao.query('__ModelParameters').one()
             cells = dao.query('__Cell').all()
             substrates = dao.query('__Substrate').all()
@@ -96,50 +104,75 @@ class RunSasiTask(task_manager.Task):
             self.logger.exception("Error running model: %s" % e)
             raise e
 
+        mem_tracker.print_diff()
+
         # Save the results.
         try:
-            dao.save_dicts('Result', m.results, verbose=True)
+            base_msg = "Saving results..."
+            save_results_logger = self.get_logger_for_stage('save_results', base_msg)
+            self.message_logger.info(base_msg)
+            #dao.save_dicts('Result', m.results, logger=save_results_logger)
         except Exception as e:
+            self.logger.exception("Error saving results")
             raise e
 
         # Generate metadata.
         try:
+            base_msg = "Generating metadata..."
+            metadata_logger = self.get_logger_for_stage('metadata', base_msg)
+            self.message_logger.info(base_msg)
             metadata_dir = os.path.join(build_dir, "metadata")
             os.mkdir(metadata_dir)
             sasipedia.generate_sasipedia(targetDir=metadata_dir, dataDir=data_dir)
         except Exception as e:
+            self.logger.exception("Error generating metadata.")
             raise e
 
         # Create georefine package.
         try:
+            base_msg = "Generating GeoRefine package..."
+            georefine_package_logger = self.get_logger_for_stage(
+                'georefine_package', base_msg)
+            self.message_logger.info(base_msg)
             georefine_package_file = self.get_output_package(
                 data_dir=data_dir, 
                 metadata_dir=metadata_dir,
                 dao=dao, 
-                output_format='georefine'
+                output_format='georefine',
+                logger=georefine_package_logger
             )
         except Exception as e:
+            self.logger.exception("Error generating georefine package.")
             raise e
 
         # Create georefine project from package.
+        """
         try:
-            project = project_services.create_project(georefine_package_file)
+            base_msg = "Uploading GeoRefine project..."
+            georefine_upload_logger = self.get_logger_for_stage(
+                'georefine_upload', base_msg)
+            self.message_logger.info(base_msg)
+            project = project_services.create_project(georefine_package_file,
+                                                      logger=georefine_upload_logger)
             self.data['project_id'] = project.id
         except Exception as e:
+            self.logger.exception("Error generating georefine package.")
             raise e
+        """
 
         self.progress = 100
-        self.message = "SASI Run completed, georefine project id is: '%s'" % (
-            project.id)
+        self.message_logger.info("SASI Run completed, georefine project id is: '%s'" % (
+            project.id))
         self.status = 'resolved'
 
-    def get_output_package(self, data_dir=None, metadata_dir=None, dao=None, output_format=None):
-        cells = dao.query('__Cell')
-        energies = dao.query('__Energy')
-        substrates = dao.query('__Substrate')
-        features = dao.query('__Feature')
-        gears = dao.query('__Gear')
-        results = dao.query('__Result')
+    def get_output_package(self, data_dir=None, metadata_dir=None, dao=None,
+                           output_format=None, logger=logging.getLogger()):
+        cells = dao.query('__Cell').all()
+        energies = dao.query('__Energy').all()
+        substrates = dao.query('__Substrate').all()
+        features = dao.query('__Feature').all()
+        gears = dao.query('__Gear').all()
+        results = dao.query('__Result').all()
 
         if output_format == 'georefine':
             packager = smc_packagers.GeoRefinePackager(
@@ -150,14 +183,15 @@ class RunSasiTask(task_manager.Task):
                 gears=gears,
                 results=results,
                 source_data_dir=data_dir,
-                metadata_dir=metadata_dir
+                metadata_dir=metadata_dir,
+                logger=logger,
             )
         package_file = packager.create_package()
         return package_file
 
-    def get_logger_for_state(self, label=None):
-        logger = logging.getLogger("%s_%s" % (id(self), label))
-        formatter = logging.Formatter(label + ':: %(message)s.')
+    def get_logger_for_stage(self, stage_id=None, base_msg=None):
+        logger = logging.getLogger("%s_%s" % (id(self), stage_id))
+        formatter = logging.Formatter(base_msg + ' %(message)s.')
         log_handler = task_manager.LoggerLogHandler(self.message_logger)
         log_handler.setFormatter(formatter)
         logger.addHandler(log_handler)
