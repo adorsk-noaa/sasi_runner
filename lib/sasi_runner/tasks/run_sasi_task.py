@@ -20,10 +20,6 @@ import select
 import logging
 
 
-from pympler import tracker
-mem_tracker = tracker.SummaryTracker()
-mem_tracker.print_diff()
-
 class RunSasiTask(task_manager.Task):
 
     def __init__(self, input_file=None, **kwargs):
@@ -103,8 +99,6 @@ class RunSasiTask(task_manager.Task):
         except Exception as e:
             self.logger.exception("Error running model: %s" % e)
             raise e
-
-        mem_tracker.print_diff()
 
         # Save the results.
         try:
