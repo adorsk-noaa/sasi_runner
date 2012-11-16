@@ -8,6 +8,7 @@ import tarfile
 import tempfile
 import logging
 
+
 class LoggerLogHandler(logging.Handler):
     """ Custom log handler that logs messages to another
     logger. This can be used to chain together loggers. """
@@ -20,16 +21,9 @@ class LoggerLogHandler(logging.Handler):
 
 class GeoRefinePackager(object):
 
-    def __init__(self, cells=[], energies=[],
-                 substrates=[], features=[], gears=[], results=[],
-                 source_data_dir=None, metadata_dir=None,
+    def __init__(self, data, source_data_dir=None, metadata_dir=None,
                  logger=logging.getLogger()): 
-        self.cells = cells
-        self.energies = energies
-        self.substrates = substrates
-        self.features = features
-        self.gears = gears
-        self.results = results
+        self.data = data
         self.source_data_dir = source_data_dir
         self.metadata_dir = metadata_dir
         self.logger = logger
@@ -67,7 +61,7 @@ class GeoRefinePackager(object):
         sections = [
             {
                 'id': 'cell',
-                'data': self.cells,
+                'data': self.data['cell'],
                 'mappings': [
                     'id',
                     'type',
@@ -81,7 +75,7 @@ class GeoRefinePackager(object):
 
             {
                 'id': 'energy',
-                'data': self.energies,
+                'data': self.data['energy'],
                 'mappings': [
                     'id',
                     'label',
@@ -91,7 +85,7 @@ class GeoRefinePackager(object):
 
             {
                 'id': 'substrate',
-                'data': self.substrates,
+                'data': self.data['substrate'],
                 'mappings': [
                     'id',
                     'label',
@@ -101,7 +95,7 @@ class GeoRefinePackager(object):
 
             {
                 'id': 'feature',
-                'data': self.features,
+                'data': self.data['feature'],
                 'mappings': [
                     'id',
                     'label',
@@ -112,7 +106,7 @@ class GeoRefinePackager(object):
 
             {
                 'id': 'gear',
-                'data': self.gears,
+                'data': self.data['gear'],
                 'mappings': [
                     'id',
                     'label',
@@ -122,7 +116,7 @@ class GeoRefinePackager(object):
 
             {
                 'id': 'result',
-                'data': self.results,
+                'data': self.data['result'],
                 'mappings': [
                     'id',
                     't',
@@ -144,12 +138,13 @@ class GeoRefinePackager(object):
             csv_file = os.path.join(self.data_dir, "%s.csv" % section['id'])
 
             base_msg = "Exporting '%s'..." % section['id']
+            self.logger.info(base_msg)
             section_logger = self.get_logger_for_section(
                 section['id'], base_msg)
 
             exporters.CSV_Exporter(
                 csv_file=csv_file,
-                objects=section['data'],
+                data=section['data'],
                 mappings=section['mappings'],
                 logger=section_logger,
             ).export()

@@ -11,9 +11,10 @@ logger.setLevel(logging.DEBUG)
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 
-#class RunSasiTaskTestCase(DBTestCase):
-class RunSasiTaskTestCase(unittest.TestCase):
+
+class RunSasiTaskTestCase(DBTestCase):
     def test_run_sasi_task(self):
+
         #task = RunSasiTask(input_file="%s/../test_data/bundle.zip" % this_dir)
         task = RunSasiTask(
             input_file="%s/../test_data/bundle_actual_nominal.zip" % this_dir, 

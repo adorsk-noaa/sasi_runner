@@ -15,8 +15,6 @@ import os
 import shutil
 import zipfile
 from sqlalchemy.orm import sessionmaker
-import sys
-import select
 import logging
 
 
@@ -72,12 +70,6 @@ class RunSasiTask(task_manager.Task):
             run_model_logger = self.get_logger_for_stage('run_model', base_msg)
             self.message_logger.info(base_msg)
             parameters = dao.query('__ModelParameters').one()
-            cells = dao.query('__Cell').all()
-            substrates = dao.query('__Substrate').all()
-            features = dao.query('__Feature').all()
-            gears = dao.query('__Gear').all()
-            vas = dao.query('__VA').all()
-            efforts = dao.query('__Effort').all()
             taus = {}
             omegas = {}
             for i in range(0,4):
@@ -89,25 +81,12 @@ class RunSasiTask(task_manager.Task):
                 dt=parameters.time_step,
                 taus=taus,
                 omegas=omegas,
-                cells=cells,
-                features=features,
-                efforts=efforts,
-                vas=vas,
+                dao=dao,
                 logger=run_model_logger
             )
             m.run()
         except Exception as e:
             self.logger.exception("Error running model: %s" % e)
-            raise e
-
-        # Save the results.
-        try:
-            base_msg = "Saving results..."
-            save_results_logger = self.get_logger_for_stage('save_results', base_msg)
-            self.message_logger.info(base_msg)
-            #dao.save_dicts('Result', m.results, logger=save_results_logger)
-        except Exception as e:
-            self.logger.exception("Error saving results")
             raise e
 
         # Generate metadata.
@@ -139,6 +118,8 @@ class RunSasiTask(task_manager.Task):
             self.logger.exception("Error generating georefine package.")
             raise e
 
+        return
+
         # Create georefine project from package.
         """
         try:
@@ -161,21 +142,24 @@ class RunSasiTask(task_manager.Task):
 
     def get_output_package(self, data_dir=None, metadata_dir=None, dao=None,
                            output_format=None, logger=logging.getLogger()):
-        cells = dao.query('__Cell').all()
-        energies = dao.query('__Energy').all()
-        substrates = dao.query('__Substrate').all()
-        features = dao.query('__Feature').all()
-        gears = dao.query('__Gear').all()
-        results = dao.query('__Result').all()
+
+        #self.engine_logger.setLevel(logging.INFO)
+
+        # Assemble data for packager.
+        data = {}
+        data_categories = ['cell', 'energy', 'substrate', 'feature', 'gear',
+                           'result']
+        for category in data_categories:
+            items_q = dao.query('__' + category.capitalize(),
+                                format_='query_obj')
+            data[category] = {
+                'items': items_q,
+                'num_items': items_q.count()
+            }
 
         if output_format == 'georefine':
             packager = smc_packagers.GeoRefinePackager(
-                cells=cells,
-                energies=energies,
-                substrates=substrates,
-                features=features,
-                gears=gears,
-                results=results,
+                data=data,
                 source_data_dir=data_dir,
                 metadata_dir=metadata_dir,
                 logger=logger,
