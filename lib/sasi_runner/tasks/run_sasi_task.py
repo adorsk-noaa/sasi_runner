@@ -20,12 +20,13 @@ import logging
 
 class RunSasiTask(task_manager.Task):
 
-    def __init__(self, input_file=None, **kwargs):
+    def __init__(self, input_file=None, config={}, **kwargs):
         super(RunSasiTask, self).__init__(**kwargs)
         self.logger.debug("RunSasiTask.__init__")
         if not kwargs.get('data', None):
             self.data = {}
         self.input_file = input_file
+        self.config = config
 
         self.message_logger = logging.getLogger("Task%s_msglogger" % id(self))
         main_log_handler = task_manager.LoggerLogHandler(self.logger)
@@ -58,7 +59,8 @@ class RunSasiTask(task_manager.Task):
             ingest_logger = self.get_logger_for_stage('ingest', base_msg)
             self.message_logger.info(base_msg)
             dao = SASI_SqlAlchemyDAO(session=session)
-            sasi_ingestor = SASI_Ingestor(dao=dao, logger=ingest_logger)
+            sasi_ingestor = SASI_Ingestor(dao=dao, logger=ingest_logger,
+                                          config=self.config.get('ingest'))
             sasi_ingestor.ingest(data_dir=data_dir)
         except Exception as e:
             self.logger.exception("Error ingesting")
@@ -69,6 +71,7 @@ class RunSasiTask(task_manager.Task):
             base_msg = "Starting model run..."
             run_model_logger = self.get_logger_for_stage('run_model', base_msg)
             self.message_logger.info(base_msg)
+            run_model_config = self.config.get('run_model', {})
             parameters = dao.query('__ModelParameters').one()
             taus = {}
             omegas = {}
@@ -82,9 +85,10 @@ class RunSasiTask(task_manager.Task):
                 taus=taus,
                 omegas=omegas,
                 dao=dao,
-                logger=run_model_logger
+                logger=run_model_logger,
+                config=run_model_config,
             )
-            m.run()
+            m.run(commit_interval=run_model_config['commit_interval'])
         except Exception as e:
             self.logger.exception("Error running model: %s" % e)
             raise e
@@ -141,7 +145,8 @@ class RunSasiTask(task_manager.Task):
         self.status = 'resolved'
 
     def get_output_package(self, data_dir=None, metadata_dir=None, dao=None,
-                           output_format=None, logger=logging.getLogger()):
+                           output_format=None, logger=logging.getLogger(),
+                           batch_size=1e5):
 
         #self.engine_logger.setLevel(logging.INFO)
 
@@ -152,8 +157,9 @@ class RunSasiTask(task_manager.Task):
         for category in data_categories:
             items_q = dao.query('__' + category.capitalize(),
                                 format_='query_obj')
+            batched_items = dao.orm_dao.get_batched_results(items_q, batch_size)
             data[category] = {
-                'items': items_q,
+                'items': batched_items,
                 'num_items': items_q.count()
             }
 

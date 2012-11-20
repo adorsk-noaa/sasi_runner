@@ -15,10 +15,24 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 class RunSasiTaskTestCase(DBTestCase):
     def test_run_sasi_task(self):
 
-        #task = RunSasiTask(input_file="%s/../test_data/bundle.zip" % this_dir)
         task = RunSasiTask(
             input_file="%s/../test_data/bundle_actual_nominal.zip" % this_dir, 
-            logger=logger
+            logger=logger,
+            config={
+                'ingest': {
+                    'sections': {
+                        'habitats': {
+                            #'limit': 1000,
+                        },
+                        'grid': {
+                            #'limit': 1000,
+                        }
+                    }
+                },
+                'run_model': {
+                    'commit_interval': 1000,
+                }
+            }
         )
         task.call()
 
