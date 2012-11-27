@@ -27,10 +27,6 @@ class GeoRefinePackager(object):
         self.source_data_dir = source_data_dir
         self.metadata_dir = metadata_dir
         self.logger = logger
-
-        self.gr_data_dir = os.path.join(self.source_data_dir, "georefine",
-                                        "data")
-
         self.target_dir = tempfile.mkdtemp(prefix="grp.")
 
         self.template_env = Environment(
@@ -45,7 +41,7 @@ class GeoRefinePackager(object):
     def create_package(self):
         self.create_target_dirs()
         self.create_data_files()
-        self.copy_georefine_data()
+        self.copy_map_data()
         self.create_schema_files()
         self.create_app_config_files()
         self.create_static_files()
@@ -149,10 +145,10 @@ class GeoRefinePackager(object):
                 logger=section_logger,
             ).export()
 
-    def copy_georefine_data(self):
+    def copy_map_data(self):
         for section in ['map_layers', 'map_parameters']:
             target_dir = os.path.join(self.data_dir, section)
-            source_dir = os.path.join(self.gr_data_dir, section)
+            source_dir = os.path.join(self.source_data_dir, section)
             if os.path.isdir(source_dir):
                 shutil.copytree(source_dir, target_dir)
 
@@ -200,7 +196,7 @@ class GeoRefinePackager(object):
 
     def get_map_parameters(self):
         map_parameters_file = os.path.join(
-            self.gr_data_dir, "map_parameters", "data", "map_parameters.csv"
+            self.data_dir, "map_parameters", "data", "map_parameters.csv"
         )
         reader = csv.DictReader(open(map_parameters_file, "rb"))
         return reader.next()
@@ -208,7 +204,7 @@ class GeoRefinePackager(object):
     def get_map_layers(self):
         map_layers = {'base': [], 'overlay': []}
         map_layers_file = os.path.join(
-            self.gr_data_dir, "map_layers", "data", "map_layers.csv"
+            self.data_dir, "map_layers", "data", "map_layers.csv"
         )
         reader = csv.DictReader(open(map_layers_file, "rb"))
         return [row for row in reader]

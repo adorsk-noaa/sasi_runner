@@ -14,19 +14,25 @@ import tempfile
 import os
 import shutil
 import zipfile
-from sqlalchemy.orm import sessionmaker
 import logging
+from sqlalchemy.orm import sessionmaker
 
 
 class RunSasiTask(task_manager.Task):
 
-    def __init__(self, input_file=None, config={}, **kwargs):
+    def __init__(self, input_file=None, config={}, get_connection=None, **kwargs):
         super(RunSasiTask, self).__init__(**kwargs)
         self.logger.debug("RunSasiTask.__init__")
         if not kwargs.get('data', None):
             self.data = {}
         self.input_file = input_file
         self.config = config
+
+        # Assign get_session function.
+        if not get_connection:
+            def get_connection():
+                return db.session().connection().engine.connect()
+        self.get_connection = get_connection
 
         self.message_logger = logging.getLogger("Task%s_msglogger" % id(self))
         main_log_handler = task_manager.LoggerLogHandler(self.logger)
@@ -41,10 +47,9 @@ class RunSasiTask(task_manager.Task):
         # Create build dir.
         build_dir = tempfile.mkdtemp(prefix="rsBuild.")
 
-        # Get transactional session.
-        connection = db.session().connection().engine.connect()
-        trans = connection.begin()
-        session = sessionmaker(bind=connection)()
+        con = self.get_connection()
+        trans = con.begin()
+        session = sessionmaker()(bind=con)
 
         # Assemble data dir from file.
         data_dir = tempfile.mkdtemp(prefix="run_sasi.")

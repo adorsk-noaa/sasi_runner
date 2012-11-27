@@ -16,16 +16,19 @@ class RunSasiTaskTestCase(DBTestCase):
     def test_run_sasi_task(self):
 
         task = RunSasiTask(
-            input_file="%s/../test_data/bundle_actual_nominal.zip" % this_dir, 
+            input_file="%s/../test_data/reduced.zip" % this_dir, 
             logger=logger,
             config={
                 'ingest': {
                     'sections': {
+                        'gears': {
+                            'limit': 1,
+                        },
                         'habitats': {
                             #'limit': 1000,
                         },
                         'grid': {
-                            #'limit': 1000,
+                            #'limit': 100,
                         }
                     }
                 },
