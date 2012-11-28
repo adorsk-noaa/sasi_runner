@@ -34,10 +34,7 @@ class GeoRefinePackager(object):
         self.output_file = output_file
 
         self.template_env = Environment(
-            loader=PackageLoader(
-                'sasi_runner.app.sasi_model_config.util.packagers', 
-                'templates'
-            ),
+            loader=PackageLoader('sasi_runner.packagers', 'templates'),
             variable_start_string='{=',
             variable_end_string='=}'
         )

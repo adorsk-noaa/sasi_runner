@@ -4,8 +4,7 @@ Task for running SASI.
 
 from sasi_data.dao.sasi_sa_dao import SASI_SqlAlchemyDAO
 from sasi_data.ingestors.sasi_ingestor import SASI_Ingestor
-from sasi_runner.app import db as db
-from sasi_runner.app.sasi_model_config.util import packagers as smc_packagers
+from sasi_runner import packagers as packagers
 from sasi_model.sasi_model import SASI_Model
 from georefine.app.projects.util import services as project_services
 import task_manager
@@ -15,12 +14,24 @@ import os
 import shutil
 import zipfile
 import logging
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 
+class LoggerLogHandler(logging.Handler):
+    """ Custom log handler that logs messages to another
+    logger. This can be used to chain together loggers. """
+    def __init__(self, logger=None, **kwargs):
+        logging.Handler.__init__(self, **kwargs)
+        self.logger = logger
+
+    def emit(self, record):
+        self.logger.log(record.levelno, self.format(record))
+
 class RunSasiTask(task_manager.Task):
 
-    def __init__(self, input_path=None, output_file=None, config={}, get_connection=None, **kwargs):
+    def __init__(self, input_path=None, output_file=None, config={}, 
+                 get_connection=None, **kwargs):
         super(RunSasiTask, self).__init__(**kwargs)
         self.logger.debug("RunSasiTask.__init__")
         if not kwargs.get('data', None):
@@ -35,7 +46,8 @@ class RunSasiTask(task_manager.Task):
         # Assign get_session function.
         if not get_connection:
             def get_connection():
-                return db.session().connection().engine.connect()
+                engine = create_engine('sqlite://')
+                return engine.connect()
         self.get_connection = get_connection
 
         self.message_logger = logging.getLogger("Task%s_msglogger" % id(self))
@@ -56,7 +68,7 @@ class RunSasiTask(task_manager.Task):
         session = sessionmaker()(bind=con)
 
         # If input_path is a file, assemble data dir.
-        if os.path.is_file(self.input_path):
+        if os.path.isfile(self.input_path):
             data_dir = tempfile.mkdtemp(prefix="run_sasi.")
             with zipfile.ZipFile(self.input_path, 'r') as zfile:
                 zfile.extractall(data_dir)
@@ -137,7 +149,7 @@ class RunSasiTask(task_manager.Task):
             self.logger.exception("Error generating georefine package.")
             raise e
 
-        return
+        shutil.rmtree(build_dir)
 
         self.progress = 100
         self.message_logger.info("SASI Run completed, output file is:'%s'" % (
@@ -146,7 +158,7 @@ class RunSasiTask(task_manager.Task):
 
     def get_output_package(self, data_dir=None, metadata_dir=None, dao=None,
                            output_format=None, logger=logging.getLogger(),
-                           batch_size=1e5):
+                           batch_size=1e5,output_file=None):
 
         #self.engine_logger.setLevel(logging.INFO)
 
@@ -164,12 +176,12 @@ class RunSasiTask(task_manager.Task):
             }
 
         if output_format == 'georefine':
-            packager = smc_packagers.GeoRefinePackager(
+            packager = packagers.GeoRefinePackager(
                 data=data,
                 source_data_dir=data_dir,
                 metadata_dir=metadata_dir,
                 logger=logger,
-                output_file=self.output_file,
+                output_file=output_file,
             )
         package_file = packager.create_package()
         return package_file
@@ -177,7 +189,7 @@ class RunSasiTask(task_manager.Task):
     def get_logger_for_stage(self, stage_id=None, base_msg=None):
         logger = logging.getLogger("%s_%s" % (id(self), stage_id))
         formatter = logging.Formatter(base_msg + ' %(message)s.')
-        log_handler = task_manager.LoggerLogHandler(self.message_logger)
+        log_handler = LoggerLogHandler(self.message_logger)
         log_handler.setFormatter(formatter)
         logger.addHandler(log_handler)
         return logger

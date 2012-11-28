@@ -1,5 +1,5 @@
 import unittest
-from sasi_runner.app.sasi_model_config.util.packagers import GeoRefinePackager
+from sasi_runner.packagers import GeoRefinePackager
 import sasi_data.util.data_generators as data_generators
 import sasi_data.models as models
 import csv
