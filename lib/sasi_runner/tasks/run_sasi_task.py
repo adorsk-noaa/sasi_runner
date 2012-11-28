@@ -6,16 +6,16 @@ from sasi_data.dao.sasi_sa_dao import SASI_SqlAlchemyDAO
 from sasi_data.ingestors.sasi_ingestor import SASI_Ingestor
 from sasi_runner import packagers as packagers
 from sasi_model.sasi_model import SASI_Model
-from georefine.app.projects.util import services as project_services
-import task_manager
 import sasipedia
+import task_manager
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 import tempfile
 import os
 import shutil
 import zipfile
 import logging
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 
 class LoggerLogHandler(logging.Handler):
