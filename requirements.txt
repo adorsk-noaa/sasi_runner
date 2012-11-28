@@ -1,6 +1,0 @@
-sasi_data
-sasi_model
-sasipedia
-task_manager
-sqlalchemy
-jinja2

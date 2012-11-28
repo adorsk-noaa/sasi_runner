@@ -1,7 +1,12 @@
 py2.7
+jy2.7
 logs
 
+assets
+cache
+
 *.py[co]
+*.class
 
 # Packages
 *.egg
@@ -28,3 +33,4 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+
