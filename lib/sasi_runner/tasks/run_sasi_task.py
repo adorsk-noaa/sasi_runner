@@ -20,13 +20,17 @@ from sqlalchemy.orm import sessionmaker
 
 class RunSasiTask(task_manager.Task):
 
-    def __init__(self, input_file=None, config={}, get_connection=None, **kwargs):
+    def __init__(self, input_path=None, output_file=None, config={}, get_connection=None, **kwargs):
         super(RunSasiTask, self).__init__(**kwargs)
         self.logger.debug("RunSasiTask.__init__")
         if not kwargs.get('data', None):
             self.data = {}
-        self.input_file = input_file
+        self.input_path = input_path
         self.config = config
+
+        if not output_file:
+            os_hndl, output_file = tempfile.mkstemp(suffix=".georefine.tar.gz")
+        self.output_file = output_file
 
         # Assign get_session function.
         if not get_connection:
@@ -51,10 +55,13 @@ class RunSasiTask(task_manager.Task):
         trans = con.begin()
         session = sessionmaker()(bind=con)
 
-        # Assemble data dir from file.
-        data_dir = tempfile.mkdtemp(prefix="run_sasi.")
-        with zipfile.ZipFile(self.input_file, 'r') as zfile:
-            zfile.extractall(data_dir)
+        # If input_path is a file, assemble data dir.
+        if os.path.is_file(self.input_path):
+            data_dir = tempfile.mkdtemp(prefix="run_sasi.")
+            with zipfile.ZipFile(self.input_path, 'r') as zfile:
+                zfile.extractall(data_dir)
+        else:
+            data_dir = self.input_path
 
         # @TODO: add validation here?
 
@@ -78,11 +85,13 @@ class RunSasiTask(task_manager.Task):
             self.message_logger.info(base_msg)
             run_model_config = self.config.get('run_model', {})
             parameters = dao.query('__ModelParameters').one()
+
             taus = {}
             omegas = {}
             for i in range(0,4):
                 taus[i] = getattr(parameters, "t_%s" % i)
                 omegas[i] = getattr(parameters, "w_%s" % i)
+
             m = SASI_Model(
                 t0=parameters.time_start,
                 tf=parameters.time_end,
@@ -121,7 +130,8 @@ class RunSasiTask(task_manager.Task):
                 metadata_dir=metadata_dir,
                 dao=dao, 
                 output_format='georefine',
-                logger=georefine_package_logger
+                logger=georefine_package_logger,
+                output_file=self.output_file,
             )
         except Exception as e:
             self.logger.exception("Error generating georefine package.")
@@ -129,24 +139,9 @@ class RunSasiTask(task_manager.Task):
 
         return
 
-        # Create georefine project from package.
-        """
-        try:
-            base_msg = "Uploading GeoRefine project..."
-            georefine_upload_logger = self.get_logger_for_stage(
-                'georefine_upload', base_msg)
-            self.message_logger.info(base_msg)
-            project = project_services.create_project(georefine_package_file,
-                                                      logger=georefine_upload_logger)
-            self.data['project_id'] = project.id
-        except Exception as e:
-            self.logger.exception("Error generating georefine package.")
-            raise e
-        """
-
         self.progress = 100
-        self.message_logger.info("SASI Run completed, georefine project id is: '%s'" % (
-            project.id))
+        self.message_logger.info("SASI Run completed, output file is:'%s'" % (
+            self.output_file))
         self.status = 'resolved'
 
     def get_output_package(self, data_dir=None, metadata_dir=None, dao=None,
@@ -174,6 +169,7 @@ class RunSasiTask(task_manager.Task):
                 source_data_dir=data_dir,
                 metadata_dir=metadata_dir,
                 logger=logger,
+                output_file=self.output_file,
             )
         package_file = packager.create_package()
         return package_file

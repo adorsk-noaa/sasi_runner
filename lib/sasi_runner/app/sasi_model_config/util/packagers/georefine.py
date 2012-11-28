@@ -22,12 +22,16 @@ class LoggerLogHandler(logging.Handler):
 class GeoRefinePackager(object):
 
     def __init__(self, data, source_data_dir=None, metadata_dir=None,
-                 logger=logging.getLogger()): 
+                 logger=logging.getLogger(), output_file=None): 
         self.data = data
         self.source_data_dir = source_data_dir
         self.metadata_dir = metadata_dir
         self.logger = logger
         self.target_dir = tempfile.mkdtemp(prefix="grp.")
+        
+        if not output_file:
+            os_hndl, output_file = tempfile.mkstemp(suffix=".georefine.tar.gz")
+        self.output_file = output_file
 
         self.template_env = Environment(
             loader=PackageLoader(
@@ -45,7 +49,8 @@ class GeoRefinePackager(object):
         self.create_schema_files()
         self.create_app_config_files()
         self.create_static_files()
-        archive_file = self.create_archive()
+        archive_file = self.create_archive(self.output_file)
+        shutil.rmtree(self.target_dir)
         return archive_file
 
     def create_target_dirs(self):
@@ -262,14 +267,13 @@ class GeoRefinePackager(object):
 
         return formatted_layer
 
-    def create_archive(self):
-        os_hndl, tmp_file = tempfile.mkstemp(suffix=".georefine.tar.gz")
-        tar = tarfile.open(tmp_file, "w:gz")
+    def create_archive(self, output_file):
+        tar = tarfile.open(output_file, "w:gz")
         for item in os.listdir(self.target_dir):
             path = os.path.join(self.target_dir, item)
             tar.add(path, arcname=item)
         tar.close()
-        return tmp_file
+        return output_file
 
     def get_logger_for_section(self, section_id=None, base_msg=None):
         logger = logging.getLogger("%s_%s" % (id(self), section_id))

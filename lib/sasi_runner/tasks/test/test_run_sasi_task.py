@@ -16,7 +16,7 @@ class RunSasiTaskTestCase(DBTestCase):
     def test_run_sasi_task(self):
 
         task = RunSasiTask(
-            input_file="%s/../test_data/reduced.zip" % this_dir, 
+            input_path="%s/../test_data/reduced_test_data" % this_dir, 
             logger=logger,
             config={
                 'ingest': {
