@@ -278,4 +278,5 @@ class GeoRefinePackager(object):
         log_handler = LoggerLogHandler(self.logger)
         log_handler.setFormatter(formatter)
         logger.addHandler(log_handler)
+        logger.setLevel(self.logger.level)
         return logger

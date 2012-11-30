@@ -51,10 +51,11 @@ class RunSasiTask(task_manager.Task):
         self.get_connection = get_connection
 
         self.message_logger = logging.getLogger("Task%s_msglogger" % id(self))
-        main_log_handler = task_manager.LoggerLogHandler(self.logger)
+        main_log_handler = LoggerLogHandler(self.logger)
         main_log_handler.setFormatter(
-            logging.Formatter('MSG: %(message)s'))
+            logging.Formatter('%(message)s'))
         self.message_logger.addHandler(main_log_handler)
+        self.message_logger.setLevel(self.logger.level)
 
     def call(self):
         self.progress = 1
@@ -192,5 +193,6 @@ class RunSasiTask(task_manager.Task):
         log_handler = LoggerLogHandler(self.message_logger)
         log_handler.setFormatter(formatter)
         logger.addHandler(log_handler)
+        logger.setLevel(self.message_logger.level)
         return logger
 
