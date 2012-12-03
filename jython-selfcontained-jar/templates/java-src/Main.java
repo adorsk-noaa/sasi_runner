@@ -35,8 +35,8 @@ public class Main {
   public static void main(String[] args) throws Exception {
 
     // Get .jar's folder.
-    String path = Main.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-    String decodedPath = URLDecoder.decode(path, "UTF-8");
+    String rawBaseDir = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
+    String baseDir = URLDecoder.decode(rawBaseDir, "UTF-8");
 
     XTrustProvider.install();
 
@@ -56,11 +56,13 @@ public class Main {
     InteractiveConsole interp = newInterpreter(interactive);
     systemState.__setattr__("_jy_interpreter", Py.java2py(interp));
 
-    // Run add ./Lib/site-packages to path, relative to jar and run entrypoint.
-    String site_packages_path = new File(new File(decodedPath, "Lib").getPath(), "site-packages").getPath();
+    // Run add ./python-lib to path, relative to jar and run entrypoint.
+    String pythonLibPath = URLDecoder.decode(new File(baseDir, "python-lib").getPath(), "UTF-8");
     String py_code = "try:\n" + 
       " import site\n" +
-      " site.addsitedir('" + site_packages_path + "')\n" +
+      " site.addsitedir('" + pythonLibPath + "')\n" +
+      " import sys\n" +
+      " print 'sp is: ', sys.path\n" +
       " import entrypoint\n" +
       " entrypoint.main()\n" +
       "except SystemExit: pass";

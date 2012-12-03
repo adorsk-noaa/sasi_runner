@@ -39,12 +39,14 @@ assets = {
     'sqlalchemy' : {
         'type': 'hg',
         'source': 'https://adorsk@bitbucket.org/adorsk/sqlalchemy',
+        #@TODO: implement refspec for h2+zxjdbc branch.
         'path': 'lib/sqlalchemy',
     },
     'geoalchemy': {
         'type': 'git',
         'source': 'https://github.com/adorsk/geoalchemy.git',
         'path': 'geoalchemy',
+        'refspec': 'geodb'
     },
     'sasi_runner' : {
         'type': 'git',

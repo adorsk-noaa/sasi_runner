@@ -6,6 +6,8 @@ from java.awt import Component
 import os
 import tempfile
 import logging
+from sqlalchemy import create_engine
+import shutil
 
 
 class FnLogHandler(logging.Handler):
@@ -13,6 +15,7 @@ class FnLogHandler(logging.Handler):
     def __init__(self, fn, **kwargs):
         logging.Handler.__init__(self, **kwargs)
         self.fn = fn
+
     def emit(self, record):
         try:
             self.fn(self.format(record))
@@ -21,6 +24,8 @@ class FnLogHandler(logging.Handler):
 
 class JythonGui(object):
     def __init__(self):
+        self.tmp_dir = tempfile.mkdtemp(prefix="sasi_runner.")
+        self.db_file = os.path.join(self.tmp_dir, "sasi_runner.db")
 
         self.selected_input_file = None
         self.selected_output_file = None
@@ -101,14 +106,29 @@ class JythonGui(object):
         except Exception as e:
             self.log_msg("ERROR: '%s'" % e)
 
-        logger = logging.getLogger()
+
+        logger = logging.getLogger('sasi_runner_gui')
         logger.addHandler(logging.StreamHandler())
+        def log_fn(msg):
+            self.log_msg(msg)
+        logger.addHandler(FnLogHandler(log_fn))
         logger.setLevel(logging.DEBUG)
 
+        def get_connection():
+            engine = create_engine('h2+zxjdbc:////%s' % self.db_file)
+            con = engine.connect()
+            javaCon = con.connection.__connection__
+            from geodb.GeoDB import InitGeoDB
+            InitGeoDB(javaCon)
+            return con
+
         task = RunSasiTask(
-            input_path=self.selected_input_file.path,
-            output_file=self.selected_output_file.path,
-            logger=FnLogHandler(self.log_msg),
+            #input_path=self.selected_input_file.path,
+            #output_file=self.selected_output_file.path,
+            input_path="/home/adorsk/projects/sasi_runner/lib/sasi_runner/tasks/test_data/reduced_test_data",
+            output_file="/home/adorsk/Desktop/foo.tar.gz",
+            logger=logger,
+            get_connection=get_connection,
             config={
                 'run_model': {
                     'commit_interval': 1000,
@@ -116,6 +136,7 @@ class JythonGui(object):
             }
         )
         task.call()
+        shutil.rmtree(self.tmp_dir)
 
     def validateParameters(self):
         return True

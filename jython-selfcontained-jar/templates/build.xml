@@ -14,8 +14,6 @@
 	<target name="init" description="Initialisation">
 		<mkdir dir="${dist}"/>
 		<mkdir dir="${build}"/>
-    <mkdir dir="${build}/Lib"/>
-    <mkdir dir="${build}/Lib/site-packages"/>
 	</target>
 
 	<target name="clean" description="cleanup all of the temporary files and directories">
@@ -29,31 +27,60 @@
 	</target>
 	
 	<target name="assemble" description="assemble the jython standaolne JAR">
+
 		  <!-- Setup the Python Libs -->
-      <copy todir="${dist}/Lib/site-packages">
+      <copy todir="${dist}/python-lib">
 			<fileset dir="${python-lib}">
 			  <include name="**/*"/>
 			</fileset>
 		  </copy>
+
 		  <!-- Setup the Python sources -->
-      <copy todir="${build}/Lib/">
+      <copy todir="${dist}/python-lib/">
 			<fileset dir="${python-src}">
 			  <include name="**/*"/>
 			</fileset>
 		  </copy>
-		  <!-- package the new JAR -->	  
-		  <jar destfile="${dist}/${ant.project.name}.jar" basedir="${build}">
-			<zipgroupfileset dir="${java-lib}" includes="*.jar"  excludes="${jython-jar}"/>
-			<manifest>
-			  <attribute name="Main-Class" value="Main"/>
-			</manifest>
-		  </jar>
-		  <!-- Copy Config in dist -->
-		  <copy todir="${dist}">
-		  	<fileset dir="${etc}">
+
+      <!-- Copy Config in dist -->
+      <copy todir="${dist}">
+        <fileset dir="${etc}">
+          <include name="**/*"/>
+        </fileset>
+      </copy>
+
+		  <!-- Setup the java libs -->
+      <copy todir="${dist}/java-lib/">
+			<fileset dir="${java-lib}">
 			  <include name="**/*"/>
 			</fileset>
 		  </copy>
+
+      <!-- setup manifest classpath to include libjars -->
+      <path id="dist.classpath">
+        <fileset dir="${dist}/java-lib">
+          <include name="**/*.jar"/>
+        </fileset>
+      </path>
+
+      <pathconvert property="manifest.classpath" pathsep=" ">
+        <path refid="dist.classpath"/>
+        <mapper>
+          <chainedmapper>
+            <flattenmapper/>
+            <globmapper from="*.jar" to="java-lib/*.jar"/>
+          </chainedmapper>
+        </mapper>
+      </pathconvert>
+
+      <!-- package the new JAR -->	  
+		  <jar destfile="${dist}/${ant.project.name}.jar" basedir="${build}">
+			<manifest>
+			  <attribute name="Main-Class" value="Main"/>
+        <attribute name="Class-Path" value="${manifest.classpath}"/>
+			</manifest>
+		  </jar>
+
 	</target>
 	
 	<target name="all" depends="init, build, assemble" description="Runs the two targets"/>

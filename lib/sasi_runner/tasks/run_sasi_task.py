@@ -85,7 +85,7 @@ class RunSasiTask(task_manager.Task):
             self.message_logger.info(base_msg)
             dao = SASI_SqlAlchemyDAO(session=session)
             sasi_ingestor = SASI_Ingestor(dao=dao, logger=ingest_logger,
-                                          config=self.config.get('ingest'))
+                                          config=self.config.get('ingest', {}))
             sasi_ingestor.ingest(data_dir=data_dir)
         except Exception as e:
             self.logger.exception("Error ingesting")
