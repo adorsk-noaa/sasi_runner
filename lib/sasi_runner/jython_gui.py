@@ -19,7 +19,7 @@ class FnLogHandler(logging.Handler):
         except:
             self.handleError(record)
 
-class SwingTest(object):
+class JythonGui(object):
     def __init__(self):
 
         self.selected_input_file = None
@@ -121,7 +121,7 @@ class SwingTest(object):
         return True
 
 def main():
-    SwingTest()
+    JythonGui()
 
 if __name__ == '__main__':
     main()
