@@ -117,8 +117,13 @@ class RunSasiTask(task_manager.Task):
             }
 
             if 'batch_size' not in run_model_config:
-                model_kwargs['batch_size'] = self.get_batch_size(dao,
-                                                                 self.max_mem)
+                # Just use a default batch size, rather than one calculated on
+                # memory. After a certain size, limiting factor becomes write
+                # speed, which doesn't vary much once batches are past a certain
+                # size. In addition, smaller, regular batch sizes can make the
+                # logging output easier for users to understand.
+                #model_kwargs['batch_size'] = self.get_batch_size(dao, self.max_mem)
+                model_kwargs['batch_size'] = 100
 
             model_kwargs.update(run_model_config)
             m = SASI_Model(**model_kwargs)
