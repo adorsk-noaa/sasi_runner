@@ -105,17 +105,18 @@ class RunSasiTask(task_manager.Task):
                 taus[i] = getattr(parameters, "t_%s" % i)
                 omegas[i] = getattr(parameters, "w_%s" % i)
 
-            m = SASI_Model(
-                t0=parameters.time_start,
-                tf=parameters.time_end,
-                dt=parameters.time_step,
-                taus=taus,
-                omegas=omegas,
-                dao=dao,
-                logger=run_model_logger,
-                config=run_model_config,
-            )
-            m.run(commit_interval=run_model_config['commit_interval'])
+            model_kwargs = {
+                't0': parameters.time_start,
+                'tf': parameters.time_end,
+                'dt': parameters.time_step,
+                'taus': taus,
+                'omegas': omegas,
+                'dao': dao,
+                'logger': run_model_logger,
+            }
+            model_kwargs.update(run_model_config)
+            m = SASI_Model(**model_kwargs)
+            m.run(**run_model_config.get('run',{}))
         except Exception as e:
             self.logger.exception("Error running model: %s" % e)
             raise e

@@ -19,14 +19,15 @@ class RunSasiTaskTestCommon(object):
 
     def get_input_path(self):
         this_dir = os.path.dirname(os.path.abspath(__file__))
-        return "%s/../test_data/reduced_test_data" % this_dir
+        #return "%s/../test_data/reduced_test_data" % this_dir
+        return "%s/../test_data/new_test_data" % this_dir
 
     def get_config(self):
         return {
             'ingest': {
                 'sections': {
                     'gears': {
-                        'limit': 1,
+                        #'limit': 1,
                     },
                     'habitats': {
                         #'limit': 1000,
@@ -37,7 +38,7 @@ class RunSasiTaskTestCommon(object):
                 }
             },
             'run_model': {
-                'commit_interval': 1000,
+                'batch_size': 100,
             }
         }
 

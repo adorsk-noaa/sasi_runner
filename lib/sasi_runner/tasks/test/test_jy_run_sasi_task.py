@@ -36,18 +36,18 @@ class JyRunSasiTaskTestCase(unittest.TestCase, RunSasiTaskTestCommon):
             'ingest': {
                 'sections': {
                     'gears': {
-                        #'limit': 1,
+                        'limit': 1,
                     },
                     'habitats': {
-                        #'limit': 1,
+                        'limit': 1,
                     },
                     'grid': {
-                        #'limit': 1,
+                        'limit': 1,
                     }
                 }
             },
             'run_model': {
-                'commit_interval': 1000,
+                'batch_size': 100,
             }
         }
 
