@@ -31,12 +31,13 @@ class LoggerLogHandler(logging.Handler):
 class RunSasiTask(task_manager.Task):
 
     def __init__(self, input_path=None, output_file=None, config={}, 
-                 get_connection=None, **kwargs):
+                 get_connection=None, max_mem=1e9, **kwargs):
         super(RunSasiTask, self).__init__(**kwargs)
         self.logger.debug("RunSasiTask.__init__")
         if not kwargs.get('data', None):
             self.data = {}
         self.input_path = input_path
+        self.max_mem = max_mem
         self.config = config
 
         if not output_file:
@@ -97,23 +98,28 @@ class RunSasiTask(task_manager.Task):
             run_model_logger = self.get_logger_for_stage('run_model', base_msg)
             self.message_logger.info(base_msg)
             run_model_config = self.config.get('run_model', {})
-            parameters = dao.query('__ModelParameters').one()
+            parms = dao.query('__ModelParameters').one()
 
             taus = {}
             omegas = {}
             for i in range(0,4):
-                taus[i] = getattr(parameters, "t_%s" % i)
-                omegas[i] = getattr(parameters, "w_%s" % i)
+                taus[i] = getattr(parms, "t_%s" % i)
+                omegas[i] = getattr(parms, "w_%s" % i)
 
             model_kwargs = {
-                't0': parameters.time_start,
-                'tf': parameters.time_end,
-                'dt': parameters.time_step,
+                't0': parms.time_start,
+                'tf': parms.time_end,
+                'dt': parms.time_step,
                 'taus': taus,
                 'omegas': omegas,
                 'dao': dao,
                 'logger': run_model_logger,
             }
+
+            if 'batch_size' not in run_model_config:
+                model_kwargs['batch_size'] = self.get_batch_size(dao,
+                                                                 self.max_mem)
+
             model_kwargs.update(run_model_config)
             m = SASI_Model(**model_kwargs)
             m.run(**run_model_config.get('run',{}))
@@ -197,3 +203,33 @@ class RunSasiTask(task_manager.Task):
         logger.setLevel(self.message_logger.level)
         return logger
 
+    def get_batch_size(self, dao, max_memory=1e9):
+        """ Calculate approximate number of results per cell,
+        based on rough size of efforts + counts per cell.
+        We can use this to set a reasonable batch size,
+        based on the given max memory.
+        """
+        parms = dao.query('__ModelParameters').one()
+        counts = {}
+        counts['t'] = (parms.time_end - parms.time_start)/parms.time_step
+        data_categories = ['energy', 'substrate', 'feature', 'gear',
+                           'effort', 'cell']
+        for category in data_categories:
+            counts[category] = dao.query('__' + category.capitalize(), 
+                                         format_='query_obj').count()
+        # Approximate size of efforts per cell.
+        e_size = 1024
+        es_per_c = counts['effort']/counts['cell']
+        e_size_per_c = e_size * es_per_c
+
+        # approximate size of results per cell.
+        r_size = 1024
+        rs_per_c = 1
+        for category in ['t', 'energy', 'substrate', 'feature', 'gear']:
+            rs_per_c *= counts[category]
+        r_size_per_c = r_size * rs_per_c
+
+        total_size_per_c = e_size_per_c + r_size_per_c
+        batch_size = max(1, int(max_memory/total_size_per_c))
+        print "bs is: ", batch_size
+        return batch_size

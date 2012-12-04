@@ -37,9 +37,9 @@ class RunSasiTaskTestCommon(object):
                     }
                 }
             },
-            'run_model': {
-                'batch_size': 100,
-            }
+            #'run_model': {
+                #'batch_size': 100,
+            #}
         }
 
     def test_run_sasi_task(self):
@@ -48,6 +48,7 @@ class RunSasiTaskTestCommon(object):
             logger=self.logger,
             get_connection=self.get_connection,
             config=self.get_config(),
+            max_mem=10e9,
         )
         task.call()
 
