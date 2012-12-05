@@ -188,6 +188,17 @@ class RunSasiTask(task_manager.Task):
                 'num_items': items_q.count()
             }
 
+        # Special time data, to make time queries reasonable.
+        parms = dao.query('__ModelParameters').one()
+        class TimeObj(object):
+            def __init__(self, id):
+                self.id = id
+        data['time'] = {
+            'items': [TimeObj(t) for t in range(parms.time_start, 
+                                                parms.time_end + 1,
+                                                parms.time_step)]
+        }
+
         if output_format == 'georefine':
             packager = packagers.GeoRefinePackager(
                 data=data,

@@ -58,6 +58,13 @@ class GeoRefinePackager(object):
         # Define mappings, section by section.
         sections = [
             {
+                'id': 'time',
+                'data': self.data['time'],
+                'mappings': [
+                    'id',
+                ]
+            },
+            {
                 'id': 'cell',
                 'data': self.data['cell'],
                 'mappings': [

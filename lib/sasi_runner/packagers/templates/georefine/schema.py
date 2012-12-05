@@ -7,6 +7,13 @@ sources = {}
 ordered_sources = []
 metadata = MetaData()
 
+# Times go in their own table to speed up time queries.
+# Otherwise we have to scan all results to just get a list of times.
+sources['time'] = Table('time', metadata,
+        Column('id', Integer, primary_key=True),
+        )
+ordered_sources.append({'id': 'time', 'source': sources['time']})
+
 sources['cell'] = Table('cell', metadata,
         Column('id', Integer, primary_key=True),
         Column('z', Float),
