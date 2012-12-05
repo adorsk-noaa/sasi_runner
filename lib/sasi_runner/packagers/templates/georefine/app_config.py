@@ -2,26 +2,46 @@
 app_config = {}
 
 # Quantity fields are used in facets and charts.
-app_config['quantity_fields'] = {
-    'result_cell_area:sum': { 
-        'id': 'result_cell_area_sum',
-        'label': 'Cell Area',
-        'info': 'Cell Area Info', #@TODO
-        'value_type': 'numeric',
-        'inner_query': {
-            'SELECT': [{'ID': 'cell_area', 'EXPRESSION': '__result__cell__area'}],
-            'GROUP_BY': [
-                '__result__cell__id',
-                {'ID': 'cell_area'}
-            ],
-        },
-        'outer_query': {
-            'SELECT': [{'ID': 'sum_cell_area', 'EXPRESSION': 'func.sum(__inner__cell_area)'}],
-        },
-        'key_entity_expression': '__result__cell__area',
-        'format': '%.1h km<sup>2</sup>'
+app_config['quantity_fields'] = {}
+
+# Area field is special because it does not have a key expression.
+area_quantity_field = {
+    'id': 'cell_area_sum',
+    'label': 'Cell Area',
+    'info': 'Cell Area Info', #@TODO
+    'value_type': 'numeric',
+    'inner_query': {
+        'SELECT': [{'ID': 'cell_id', 'EXPRESSION': '__result__cell_id'}],
+        'GROUP_BY': [{'ID': 'cell_id'}],
     },
+    'outer_query': {
+        'SELECT': [{'ID': 'sum_cell_area', 'EXPRESSION': 'func.sum(__cell__area)'}],
+        'FROM': [
+            {
+                'SOURCE': 'cell',
+                'JOINS': [
+                    [
+                        'inner', 
+                        [
+                            {
+                                'TYPE': 'ENTITY', 
+                                'EXPRESSION': '__inner__cell_id'
+                            }, 
+                            '==', 
+                            {
+                                'TYPE': 'ENTITY', 
+                                'EXPRESSION':
+                                '__cell__id'
+                            }
+                        ],
+                    ],
+                ],
+            }
+        ]
+    },
+    'format': '%.1h m<sup>2</sup>'
 }
+app_config['quantity_fields']['cell_area:sum'] = area_quantity_field
 
 # Add SASI swept area fields to quantity fields.
 sasi_fields = [
@@ -32,25 +52,30 @@ sasi_fields = [
     ['znet', 'Cumulative Net Swept Area (Znet)'],
 ]
 
+sasi_quantity_fields = {}
 for f in sasi_fields:
     field_id = "result_%s_sum" % f[0]
-    app_config['quantity_fields'][field_id] = {
+    sasi_quantity_field = {
         'id': field_id,
         'label': f[1],
         'info': 'da info {{PROJECT_STATIC_DIR}}',
         'value_type': 'numeric',
         'inner_query': {
-            'GROUP_BY': [
-                {'ID': f[0], 'EXPRESSION': '__result__%s' % f[0]},
-                '__result__id'
+            'SELECT': [
+                {'ID': "%s_sum" % f[0], 'EXPRESSION': 'func.sum(__result__%s)' % f[0]},
             ],
         },
         'outer_query': {
-            'SELECT': [{'ID': "%s_sum" % f[0], 'EXPRESSION': "func.sum(__inner__%s)" % f[0]}],
+            'SELECT': [{'ID': "%s_sum" % f[0], 'EXPRESSION': "__inner__%s_sum" % f[0]}],
         },
         'key_entity_expression': '__result__%s' % f[0],
-        'format': '%.1h km<sup>2</sup>'
+        'format': '%.1h m<sup>2</sup>'
     }
+
+    # Save to overall quantity fields, 
+    # and sasi_quantity fields.
+    app_config['quantity_fields'][field_id] = sasi_quantity_field
+    sasi_quantity_fields[field_id] = sasi_quantity_field
 
 app_config['filter_groups'] = [
     {'id': 'scenario'},
@@ -67,16 +92,18 @@ app_config['facets'] = {
                 'label': 'Timestep',
                 'type': 'timeSlider',
                 'KEY': {
-                    'KEY_ENTITY': {'ID': 'result_t', 'EXPRESSION': '__result__t'},
-                    'LABEL_ENTITY': {'ID': 'result_t'},
+                    'QUERY': {
+                        'SELECT': [
+                            {'ID': 't', 'EXPRESSION': '__time__id'},
+                        ]
+                    },
+                    'KEY_ENTITY': {'ID': 't'}
                 },
                 'value_type': 'numeric',
                 'choices': [],
                 'primary_filter_groups': ['scenario'],
-                'filter_entity': {
-                    'TYPE': 'ENTITY', 
-                    'EXPRESSION': '__result__t'
-                },
+                'filter_entity': {'TYPE': 'ENTITY', 'ID': 't',
+                                  'EXPRESSION': '__result__t'},
                 'noClose': True
             },
         },
@@ -91,37 +118,85 @@ app_config['facets'] = {
                         ),
                 'type': 'list',
                 'KEY': {
-                    'KEY_ENTITY': {'ID': 'substrate_id', 'EXPRESSION':
-                                   '__result__substrate__id'},
-                    'LABEL_ENTITY': {'ID': 'substrate_name', 'EXPRESSION':
-                                     '__result__substrate__label'},
+                    'QUERY': {
+                        'SELECT': [
+                            {'ID': 'substrate_id', 'EXPRESSION': '__substrate__id'},
+                            {'ID': 'substrate_name', 'EXPRESSION': '__substrate__label'},
+                        ],
+                    },
+                    'KEY_ENTITY': {'ID': 'substrate_id'}, 
+                    'LABEL_ENTITY': {'ID': 'substrate_name'},
+                },
+                'inner_query': {
+                    'SELECT': [
+                        {'ID': 'substrate_id', 'EXPRESSION':
+                         '__result__substrate_id'},
+                    ],
+                    'GROUP_BY': [{'ID': 'substrate_id'}],
+                },
+                'outer_query': {
+                    'SELECT': [
+                        {'ID': 'substrate_name', 'EXPRESSION':
+                         '__substrate__label'},
+                        {'ID': 'substrate_id', 'EXPRESSION': '__substrate__id'}
+                    ],
+                    'FROM': [
+                        {
+                            'SOURCE': 'substrate',
+                            'JOINS': [
+                                [
+                                    'inner', 
+                                    [
+                                        {
+                                            'TYPE': 'ENTITY', 
+                                            'EXPRESSION': '__inner__substrate_id'
+                                        }, 
+                                        '==', 
+                                        {
+                                            'TYPE': 'ENTITY', 
+                                            'EXPRESSION':
+                                            '__substrate__id'
+                                        }
+                                    ],
+                                ],
+                            ],
+                        }
+                    ],
+                    'GROUP_BY': [
+                        {'ID': 'substrate_name'},
+                        {'ID': 'substrate_id'}
+                    ],
                 },
                 'primary_filter_groups': ['data'],
                 'base_filter_groups': ['scenario'],
-                'filter_entity': {
-                    'TYPE': 'ENTITY', 
-                    'EXPRESSION': '__result__substrate__id'
-                },
+                'filter_entity': {'TYPE': 'ENTITY', 'ID': 'substrate_id',
+                                  'EXPRESSION': '__result__substrate_id'},
             },
         },
     }
 }
 
-# Add quantity field facet definitions.
-for qfield in app_config['quantity_fields'].values():
+# Add sasi quantity field facet definitions.
+for qfield in sasi_quantity_fields.values():
+    key_entity_id = 'facet%s_key_' % qfield['id']
     app_config['facets']['definitions'][qfield['id']] = {
         'id': qfield['id'],
         'facetDef': {
             'label': qfield['label'],
             'info': qfield['info'],
             'type': 'numeric',
+            'inner_query': {
+                'SELECT': [
+                    {
+                        'ID': key_entity_id,
+                        'EXPRESSION': qfield['key_entity_expression'],
+                        'AS_HISTOGRAM': True,
+                        'ALL_VALUES': True,
+                    },
+                ]
+            },
             'KEY': {
-                'KEY_ENTITY': {
-                    'ID': 'facet%s_key_' % qfield['id'], 
-                    'EXPRESSION': qfield['key_entity_expression'],
-                    'AS_HISTOGRAM': True,
-                    'ALL_VALUES': True
-                },
+                'KEY_ENTITY': {'ID': key_entity_id}
             },
             'primary_filter_groups': ['data'],
             'base_filter_groups': ['scenario'],
@@ -155,8 +230,8 @@ app_config['charts'] = {
     ],
 }
 
-# Add quantity field histograms to category fields.
-for qfield in app_config['quantity_fields'].values():
+# Add sasi quantity field histograms to category fields.
+for qfield in sasi_quantity_fields.values():
     app_config['charts']['category_fields'].append({
         'id': qfield['id'],
         'label': qfield['label'],
@@ -229,6 +304,7 @@ for f in sasi_fields:
     }
     app_config['data_layers'].append(data_layer)
 
+"""
 app_config['maps'] = {
     "primary_filter_groups": ['data'],
     "base_filter_groups" : ['scenario'],
@@ -269,6 +345,7 @@ app_config['maps'] = {
     ],
     {% endfor %}
 }
+"""
 
 app_config['defaultInitialState'] = {
     'filterGroups': app_config['filter_groups'],
@@ -289,7 +366,7 @@ app_config['defaultInitialState'] = {
                 "type":"action",
                 "handler":"facets_facetsEditorSetQField",
                 "opts":{
-                    "id":"result_cell_area_sum"
+                    "id":"cell_area_sum"
                 }
             },
             # Timestep facet.
@@ -407,45 +484,45 @@ app_config['defaultInitialState'] = {
             },
 
             # Data Views.
-            {
-                "type":"actionQueue",
-                "async":True,
-                "actions":[
+            #{
+                #"type":"actionQueue",
+                #"async":True,
+                #"actions":[
 
-                    # Chart view.
-                    {
-                        "type":"actionQueue",
-                        "async":False,
-                        "actions":[
-                            {
-                                "type":"action",
-                                "handler":"dataViews_createFloatingDataView",
-                                "opts":{
-                                    "id":"initialChart",
-                                    "dataView":{
-                                        "type":"chart"
-                                    }
-                                }
-                            },
-                            {
-                                "type":"action",
-                                "handler":"dataViews_selectChartFields",
-                                "opts":{
-                                    "id":"initialChart",
-                                    "categoryField":{
-                                        "id":"substrates"
-                                    },
-                                    "quantityField":{
-                                        "id":"result_cell_area_sum"
-                                    }
-                                }
-                            }
-                        ]
-                    },
+                    ## Chart view.
+                    #{
+                        #"type":"actionQueue",
+                        #"async":False,
+                        #"actions":[
+                            #{
+                                #"type":"action",
+                                #"handler":"dataViews_createFloatingDataView",
+                                #"opts":{
+                                    #"id":"initialChart",
+                                    #"dataView":{
+                                        #"type":"chart"
+                                    #}
+                                #}
+                            #},
+                            #{
+                                #"type":"action",
+                                #"handler":"dataViews_selectChartFields",
+                                #"opts":{
+                                    #"id":"initialChart",
+                                    #"categoryField":{
+                                        #"id":"substrates"
+                                    #},
+                                    #"quantityField":{
+                                        #"id":"result_cell_area_sum"
+                                    #}
+                                #}
+                            #}
+                        #]
+                    #},
 
-                    # @TODO: Add Map view here.
-                ]
-            }
+                    ## @TODO: Add Map view here.
+                #]
+            #}
         ]
     }
 }
