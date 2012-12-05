@@ -1,4 +1,5 @@
-from sqlalchemy import Table, Column, ForeignKey, ForeignKeyConstraint, Integer, String, Float
+from sqlalchemy import (Table, Column, ForeignKey, ForeignKeyConstraint, 
+                        Integer, String, Float, Index)
 from sqlalchemy.orm import relationship, mapper
 from sqlalchemy import MetaData
 from geoalchemy import *
@@ -62,6 +63,10 @@ sources['result']= Table('result', metadata,
         Column('z', Float),
         Column('znet', Float),
         )
+# Create time/key indices. These are essential for filtering in a reasonable
+# amount of time.
+for col in ['energy_id', 'cell_id', 'gear_id', 'substrate_id', 'feature_id']:
+    Index('idx_t_%s' % col, sources['result'].c.t, sources['result'].c[col])
 ordered_sources.append({'id': 'result', 'source': sources['result']})
 
 # This dictionary contains the schema objects GeoRefine will use.
