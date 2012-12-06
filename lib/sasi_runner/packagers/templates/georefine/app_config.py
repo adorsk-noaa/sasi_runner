@@ -369,12 +369,12 @@ for f in sasi_fields:
 maps = {
     "primary_filter_groups": ['data'],
     "base_filter_groups" : ['scenario'],
-    #"max_extent" : {=map_parameters.max_extent=},
-    "max_extent": [-180,-90, 180, 90],
-    #"graticule_intervals": {=map_parameters.graticule_intervals=},
-    "graticule_intervals": [2],
-    #"resolutions": {=map_parameters.resolutions=},
-    "resolutions": [0.025, 0.0125, 0.00625, 0.003125, 0.0015625, 0.00078125],
+    "max_extent" : {=map_parameters.max_extent=},
+    #"max_extent": [-180,-90, 180, 90],
+    "graticule_intervals": {=map_parameters.graticule_intervals=},
+    #"graticule_intervals": [2],
+    "resolutions": {=map_parameters.resolutions=},
+    #"resolutions": [0.025, 0.0125, 0.00625, 0.003125, 0.0015625, 0.00078125],
     "default_layer_options" : {
         "transitionEffect": 'resize'
     },
@@ -384,30 +384,30 @@ maps = {
     },
 
     "data_layers": data_layers,
-    #{% for layer_category in ['base', 'overlay'] %}
-    #"{= layer_category =}_layers": [
-        #{% for layer in map_layers[layer_category] %}
-        #{
-            #{# direct attrs #}
-            #{% for attr, value in layer.attrs.items() %}
-            #'{= attr =}':{= value =},
-            #{% endfor %}
-            #{# wms parameters #}
-            #'params': {
-                #{% for attr, value in layer.wms_params.items() %}
-                #'{= attr =}':{= value =},
-                #{% endfor %}
-            #},
-            #{# options #}
-            #'options': {
-                #{% for attr, value in layer.options.items() %}
-                #'{= attr =}':{= value =},
-                #{% endfor %}
-            #},
-        #},
-        #{% endfor %}
-    #],
-    #{% endfor %}
+    {% for layer_category in ['base', 'overlay'] %}
+    "{= layer_category =}_layers": [
+        {% for layer in map_layers[layer_category] %}
+        {
+            {# direct attrs #}
+            {% for attr, value in layer.attrs.items() %}
+            '{= attr =}':{= value =},
+            {% endfor %}
+            {# wms parameters #}
+            'params': {
+                {% for attr, value in layer.wms_params.items() %}
+                '{= attr =}':{= value =},
+                {% endfor %}
+            },
+            {# options #}
+            'options': {
+                {% for attr, value in layer.options.items() %}
+                '{= attr =}':{= value =},
+                {% endfor %}
+            },
+        },
+        {% endfor %}
+    ],
+    {% endfor %}
 }
 app_config['maps'] = maps
 

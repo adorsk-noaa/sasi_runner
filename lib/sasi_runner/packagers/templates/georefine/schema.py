@@ -63,10 +63,11 @@ sources['result']= Table('result', metadata,
         Column('z', Float),
         Column('znet', Float),
         )
-# Create time/key indices. These are essential for filtering in a reasonable
+# Create time/field/cell indices. These are essential for filtering in a reasonable
 # amount of time.
 for col in ['energy_id', 'cell_id', 'gear_id', 'substrate_id', 'feature_id']:
-    Index('idx_t_%s' % col, sources['result'].c.t, sources['result'].c[col])
+    Index('idx_t_%s' % col, sources['result'].c.t, sources['result'].c[col],
+          sources['result'].c.cell_id)
 ordered_sources.append({'id': 'result', 'source': sources['result']})
 
 # This dictionary contains the schema objects GeoRefine will use.
