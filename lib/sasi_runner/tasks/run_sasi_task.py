@@ -177,10 +177,11 @@ class RunSasiTask(task_manager.Task):
 
         # Assemble data for packager.
         data = {}
-        data_categories = ['cell', 'energy', 'substrate', 'feature', 'gear',
-                           'result']
+        data_categories = ['cell', 'energy', 'substrate', 'feature_category', 
+                           'feature', 'gear', 'result']
         for category in data_categories:
-            items_q = dao.query('__' + category.capitalize(),
+            source_name = ''.join([s.capitalize() for s in category.split('_')])
+            items_q = dao.query('__' + source_name,
                                 format_='query_obj')
             batched_items = dao.orm_dao.get_batched_results(items_q, batch_size)
             data[category] = {

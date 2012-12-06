@@ -91,6 +91,7 @@ for f in sasi_fields:
 #
 category_fields = {}
 
+# Substrates category.
 category_fields['substrates'] = {
     'KEY': {
         'QUERY': {
@@ -140,6 +141,222 @@ category_fields['substrates'] = {
         'GROUP_BY': [
             {'ID': 'substrate_name'},
             {'ID': 'substrate_id'}
+        ],
+    },
+}
+
+# Gears category.
+category_fields['gears'] = {
+    'KEY': {
+        'QUERY': {
+            'SELECT': [
+                {'ID': 'gear_id', 'EXPRESSION': '__gear__id'},
+                {'ID': 'gear_name', 'EXPRESSION': '__gear__label'},
+            ],
+        },
+        'KEY_ENTITY': {'ID': 'gear_id'}, 
+        'LABEL_ENTITY': {'ID': 'gear_name'},
+    },
+    'inner_query': {
+        'SELECT': [
+            {'ID': 'gear_id', 'EXPRESSION':
+             '__result__gear_id'},
+        ],
+        'GROUP_BY': [{'ID': 'gear_id'}],
+    },
+    'outer_query': {
+        'SELECT': [
+            {'ID': 'gear_name', 'EXPRESSION':
+             '__gear__label'},
+            {'ID': 'gear_id', 'EXPRESSION': '__gear__id'}
+        ],
+        'FROM': [
+            {
+                'SOURCE': 'gear',
+                'JOINS': [
+                    [
+                        'inner', 
+                        [
+                            {
+                                'TYPE': 'ENTITY', 
+                                'EXPRESSION': '__inner__gear_id'
+                            }, 
+                            '==', 
+                            {
+                                'TYPE': 'ENTITY', 
+                                'EXPRESSION':
+                                '__gear__id'
+                            }
+                        ],
+                    ],
+                ],
+            }
+        ],
+        'GROUP_BY': [
+            {'ID': 'gear_name'},
+            {'ID': 'gear_id'}
+        ],
+    },
+}
+
+# Energies category.
+category_fields['energies'] = {
+    'KEY': {
+        'QUERY': {
+            'SELECT': [
+                {'ID': 'energy_id', 'EXPRESSION': '__energy__id'},
+                {'ID': 'energy_name', 'EXPRESSION': '__energy__label'},
+            ],
+        },
+        'KEY_ENTITY': {'ID': 'energy_id'}, 
+        'LABEL_ENTITY': {'ID': 'energy_name'},
+    },
+    'inner_query': {
+        'SELECT': [
+            {'ID': 'energy_id', 'EXPRESSION':
+             '__result__energy_id'},
+        ],
+        'GROUP_BY': [{'ID': 'energy_id'}],
+    },
+    'outer_query': {
+        'SELECT': [
+            {'ID': 'energy_name', 'EXPRESSION':
+             '__energy__label'},
+            {'ID': 'energy_id', 'EXPRESSION': '__energy__id'}
+        ],
+        'FROM': [
+            {
+                'SOURCE': 'energy',
+                'JOINS': [
+                    [
+                        'inner', 
+                        [
+                            {
+                                'TYPE': 'ENTITY', 
+                                'EXPRESSION': '__inner__energy_id'
+                            }, 
+                            '==', 
+                            {
+                                'TYPE': 'ENTITY', 
+                                'EXPRESSION':
+                                '__energy__id'
+                            }
+                        ],
+                    ],
+                ],
+            }
+        ],
+        'GROUP_BY': [
+            {'ID': 'energy_name'},
+            {'ID': 'energy_id'}
+        ],
+    },
+}
+
+# Features category
+category_fields['features'] = {
+    'KEY': {
+        'QUERY': {
+            'SELECT': [
+                {'ID': 'feature_id', 'EXPRESSION': '__feature__id'},
+                {'ID': 'feature_name', 'EXPRESSION': '__feature__label'},
+            ],
+        },
+        'KEY_ENTITY': {'ID': 'feature_id'}, 
+        'LABEL_ENTITY': {'ID': 'feature_name'},
+    },
+    'inner_query': {
+        'SELECT': [
+            {'ID': 'feature_id', 'EXPRESSION':
+             '__result__feature_id'},
+        ],
+        'GROUP_BY': [{'ID': 'feature_id'}],
+    },
+    'outer_query': {
+        'SELECT': [
+            {'ID': 'feature_name', 'EXPRESSION':
+             '__feature__label'},
+            {'ID': 'feature_id', 'EXPRESSION': '__feature__id'}
+        ],
+        'FROM': [
+            {
+                'SOURCE': 'feature',
+                'JOINS': [
+                    [
+                        'inner', 
+                        [
+                            {
+                                'TYPE': 'ENTITY', 
+                                'EXPRESSION': '__inner__feature_id'
+                            }, 
+                            '==', 
+                            {
+                                'TYPE': 'ENTITY', 
+                                'EXPRESSION':
+                                '__feature__id'
+                            }
+                        ],
+                    ],
+                ],
+            }
+        ],
+        'GROUP_BY': [
+            {'ID': 'feature_name'},
+            {'ID': 'feature_id'}
+        ],
+    },
+}
+
+# Feature Category category
+category_fields['feature_category'] = {
+    'KEY': {
+        'QUERY': {
+            'SELECT': [
+                {'ID': 'feature_category_id', 'EXPRESSION': '__feature_category__id'},
+                {'ID': 'feature_category_name', 'EXPRESSION': '__feature_category__label'},
+            ],
+        },
+        'KEY_ENTITY': {'ID': 'feature_category_id'}, 
+        'LABEL_ENTITY': {'ID': 'feature_category_name'},
+    },
+    'inner_query': {
+        'SELECT': [
+            {'ID': 'feature_category_id', 'EXPRESSION':
+             '__result__feature_category_id'},
+        ],
+        'GROUP_BY': [{'ID': 'feature_category_id'}],
+    },
+    'outer_query': {
+        'SELECT': [
+            {'ID': 'feature_category_name', 'EXPRESSION':
+             '__feature_category__label'},
+            {'ID': 'feature_category_id', 'EXPRESSION': '__feature_category__id'}
+        ],
+        'FROM': [
+            {
+                'SOURCE': 'feature_category',
+                'JOINS': [
+                    [
+                        'inner', 
+                        [
+                            {
+                                'TYPE': 'ENTITY', 
+                                'EXPRESSION': '__inner__feature_category_id'
+                            }, 
+                            '==', 
+                            {
+                                'TYPE': 'ENTITY', 
+                                'EXPRESSION':
+                                '__feature_category__id'
+                            }
+                        ],
+                    ],
+                ],
+            }
+        ],
+        'GROUP_BY': [
+            {'ID': 'feature_category_name'},
+            {'ID': 'feature_category_id'}
         ],
     },
 }
@@ -232,6 +449,86 @@ facets['definitions']['substrates'] =  {
 }
 facets['definitions']['substrates']['facetDef'].update(
     category_fields['substrates'])
+
+# Gears facet.
+facets['definitions']['gears'] =  {
+    'id': 'gears',
+    'facetDef': {
+        'label': 'Gears',
+        'info': ('<p>See this link:'
+                 ' <a href="'
+                 '{{PROJECT_STATIC_DIR}}/sasipedia#gears/index.html'
+                 '" target="_blank">Gears</a></p>'
+                ),
+        'type': 'list',
+        'primary_filter_groups': ['data'],
+        'base_filter_groups': ['scenario'],
+        'filter_entity': {'TYPE': 'ENTITY', 'ID': 'gear_id',
+                          'EXPRESSION': '__result__gear_id'},
+    },
+}
+facets['definitions']['gears']['facetDef'].update(
+    category_fields['gears'])
+
+# Energy facet.
+facets['definitions']['energies'] =  {
+    'id': 'energies',
+    'facetDef': {
+        'label': 'Energies',
+        'info': ('<p>See this link:'
+                 ' <a href="'
+                 '{{PROJECT_STATIC_DIR}}/sasipedia#energies/index.html'
+                 '" target="_blank">Energies</a></p>'
+                ),
+        'type': 'list',
+        'primary_filter_groups': ['data'],
+        'base_filter_groups': ['scenario'],
+        'filter_entity': {'TYPE': 'ENTITY', 'ID': 'energy_id',
+                          'EXPRESSION': '__result__energy_id'},
+    },
+}
+facets['definitions']['energies']['facetDef'].update(
+    category_fields['energies'])
+
+# Features facet.
+facets['definitions']['features'] =  {
+    'id': 'features',
+    'facetDef': {
+        'label': 'Features',
+        'info': ('<p>See this link:'
+                 ' <a href="'
+                 '{{PROJECT_STATIC_DIR}}/sasipedia#features/index.html'
+                 '" target="_blank">Features</a></p>'
+                ),
+        'type': 'list',
+        'primary_filter_groups': ['data'],
+        'base_filter_groups': ['scenario'],
+        'filter_entity': {'TYPE': 'ENTITY', 'ID': 'feature_id',
+                          'EXPRESSION': '__result__feature_id'},
+    },
+}
+facets['definitions']['features']['facetDef'].update(
+    category_fields['features'])
+
+# Feature Category facet.
+facets['definitions']['feature_category'] =  {
+    'id': 'feature_category',
+    'facetDef': {
+        'label': 'Feature Categories',
+        'info': ('<p>See this link:'
+                 ' <a href="'
+                 '{{PROJECT_STATIC_DIR}}/sasipedia#feature_categories/index.html'
+                 '" target="_blank">Feature Categories</a></p>'
+                ),
+        'type': 'list',
+        'primary_filter_groups': ['data'],
+        'base_filter_groups': ['scenario'],
+        'filter_entity': {'TYPE': 'ENTITY', 'ID': 'feature_category_id',
+                          'EXPRESSION': '__result__feature_category_id'},
+    },
+}
+facets['definitions']['feature_category']['facetDef'].update(
+    category_fields['feature_category'])
 
 # SASI quantity field facets.
 for qfield in sasi_quantity_fields.values():

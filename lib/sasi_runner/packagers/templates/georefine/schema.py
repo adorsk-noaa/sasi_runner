@@ -36,10 +36,17 @@ sources['substrate'] = Table('substrate', metadata,
         )
 ordered_sources.append({'id': 'substrate', 'source': sources['substrate']})
 
+sources['feature_category'] = Table('feature_category', metadata,
+        Column('id', String, primary_key=True),
+        Column('label', String),
+        )
+ordered_sources.append({'id': 'feature_category', 
+                        'source': sources['feature_category']})
+
 sources['feature'] = Table('feature', metadata,
         Column('id', String, primary_key=True),
         Column('label', String),
-        Column('category', String),
+        Column('feature_category_id', String, ForeignKey('feature_category.id')),
         )
 ordered_sources.append({'id': 'feature', 'source': sources['feature']})
 
@@ -57,6 +64,7 @@ sources['result']= Table('result', metadata,
         Column('gear_id', String, ForeignKey('gear.id')),
         Column('substrate_id', String, ForeignKey('substrate.id')),
         Column('feature_id', String, ForeignKey('feature.id')),
+        Column('feature_category_id', String, ForeignKey('feature_category.id')),
         Column('a', Float),
         Column('x', Float),
         Column('y', Float),
@@ -65,8 +73,9 @@ sources['result']= Table('result', metadata,
         )
 # Create time/field/cell indices. These are essential for filtering in a reasonable
 # amount of time.
-for col in ['energy_id', 'cell_id', 'gear_id', 'substrate_id', 'feature_id']:
-    Index('idx_t_%s' % col, sources['result'].c.t, sources['result'].c[col],
+for col in ['energy_id', 'cell_id', 'gear_id', 'substrate_id',
+            'feature_category_id', 'feature_id']:
+    Index('idx_t_%s_cell_id' % col, sources['result'].c.t, sources['result'].c[col],
           sources['result'].c.cell_id)
 ordered_sources.append({'id': 'result', 'source': sources['result']})
 

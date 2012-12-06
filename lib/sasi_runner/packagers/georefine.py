@@ -64,6 +64,7 @@ class GeoRefinePackager(object):
                     'id',
                 ]
             },
+
             {
                 'id': 'cell',
                 'data': self.data['cell'],
@@ -110,6 +111,16 @@ class GeoRefinePackager(object):
             },
 
             {
+                'id': 'feature_category',
+                'data': self.data['feature_category'],
+                'mappings': [
+                    'id',
+                    'label',
+                    'description',
+                ]
+            },
+
+            {
                 'id': 'gear',
                 'data': self.data['gear'],
                 'mappings': [
@@ -130,6 +141,7 @@ class GeoRefinePackager(object):
                     'substrate_id',
                     'energy_id',
                     'feature_id',
+                    'feature_category_id',
                     'a',
                     'x',
                     'y',
