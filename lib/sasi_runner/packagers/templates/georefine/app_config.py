@@ -1,88 +1,154 @@
 # This object will contain the app config.
 app_config = {}
 
-#
-# SASI swept area fields.
-#
-sasi_fields = [
-    ['a', 'Unmodified Swept Area (A)', 0],
-    ['y', 'Modified Swept Area (Y)'],
-    ['x', 'Recovered Swept Area (X)'],
-    ['z', 'Net Swept Area (Z)'],
-    ['znet', 'Cumulative Net Swept Area (Znet)'],
-]
+INFO_LINK_PREFIX = '{{PROJECT_STATIC_DIR}}/sasipedia'
 
-#
-# Quantity Fields.
-# Quantity fields are used in facets and charts.
-# They represent y-values in a chart, or a count in a facet.
-#
-quantity_fields = {}
-
-# Area field is special because it does not have a key expression.
-area_quantity_field = {
-    'id': 'cell_area_sum',
-    'label': 'Cell Area',
-    'info': 'Cell Area Info', #@TODO
-    'value_type': 'numeric',
-    'inner_query': {
-        'SELECT': [{'ID': 'cell_id', 'EXPRESSION': '__result__cell_id'}],
-        'GROUP_BY': [{'ID': 'cell_id'}],
+sasi_numeric_fields = {
+    'a': {
+        'label': 'Unmodified Swept Area (A)',
     },
-    'outer_query': {
-        'SELECT': [{'ID': 'sum_cell_area', 'EXPRESSION': 'func.sum(__cell__area)'}],
+    'y': {
+        'label': 'Modified Swept Area (Y)',
+    },
+    'x': {
+        'label': 'Recovered Swept Area (X)',
+    },
+    'z': {
+        'label': 'Net Swept Area (Z)',
+    },
+    'znet': {
+        'label':'Cumulative Net Swept Area (Znet)',
+    },
+}
+# Decorate numeric fields to set defaults.
+for field_id, field in sasi_numeric_fields.items():
+    field.setdefault('key_entity_expression',  '__result__%s' % field_id)
+    field.setdefault('format',  '%%.1h m<sup>2</sup>')
+
+
+sasi_categorical_fields = {
+    'substrate': {},
+    'gear': {},
+    'energy': {
+        'label': 'Energies', 
+        'info_link': INFO_LINK_PREFIX + '#energies/index.html' 
+    },
+    'feature': {},
+    'feature_category': {
+        'label': 'Feature Categories',
+        'info_link': INFO_LINK_PREFIX + '#feature_categories/index.html'
+    }
+}
+
+# Decorate categorical fields to set defaults.
+for field_id, field in sasi_categorical_fields.items():
+    field.setdefault('label', field_id.capitalize() + 's')
+    field.setdefault('info_link', 
+                     INFO_LINK_PREFIX + '#%ss/index.html' % field_id)
+
+    key = field.setdefault('KEY', {})
+    key.setdefault('QUERY', {
+        'SELECT': [
+            {
+                'ID': '%s_id' % field_id,
+                'EXPRESSION': '__%s__id' % field_id,
+            },
+            {
+                'ID': '%s_label' % field_id,
+                'EXPRESSION': '__%s__label' % field_id,
+            },
+        ]
+    })
+    key.setdefault('KEY_ENTITY', {
+        'ID': '%s_id' % field_id,
+        'EXPRESSION': '__result__%s_id' % field_id,
+    })
+    key.setdefault('LABEL_ENTITY',{
+        'ID': '%s_label' % field_id,
+    })
+
+    field.setdefault('inner_query', {
+        'SELECT': [key['KEY_ENTITY']],
+        'GROUP_BY': [key['KEY_ENTITY']],
+    })
+
+    field.setdefault('outer_query', {
+        'SELECT': key['QUERY']['SELECT'],
         'FROM': [
             {
-                'SOURCE': 'cell',
+                'SOURCE': '%s' % field_id,
                 'JOINS': [
                     [
                         'inner', 
                         [
                             {
                                 'TYPE': 'ENTITY', 
-                                'EXPRESSION': '__inner__cell_id'
+                                'EXPRESSION': '__inner__%s_id' % field_id,
                             }, 
                             '==', 
                             {
                                 'TYPE': 'ENTITY', 
                                 'EXPRESSION':
-                                '__cell__id'
+                                '__%s_id' % field_id,
                             }
                         ],
                     ],
                 ],
             }
-        ]
-    },
-    'format': '%.1h m<sup>2</sup>'
-}
-quantity_fields['cell_area_sum'] = area_quantity_field
+        ],
+        'GROUP_BY': [
+            {'ID': '%s_name' % field_id},
+            {'ID': '%s_id' % field_id},
+        ],
+    })
 
-# Generate quantity fields from sasi fields.
+    field.setdefault('filter_entity', {
+        'TYPE': 'ENTITY', 
+        'ID': field_id,
+        'EXPRESSION': '__result__%s' % field_id,
+    })
+
+#
+# Quantity Field Definitions.
+# Quantity fields are used in facets and charts.
+# They represent y-values in a chart, or a count in a facet.
+#
+quantity_fields = {}
+
+# Generate quantity fields from sasi numeric fields.
 sasi_quantity_fields = {}
-for f in sasi_fields:
-    field_id = "result_%s_sum" % f[0]
-    sasi_quantity_field = {
-        'id': field_id,
-        'label': f[1],
-        'info': 'da info {{PROJECT_STATIC_DIR}}',
+for field_id, field in sasi_numeric_fields.items():
+    # Sums.
+    qfield_id = "result_%s_sum" % field_id
+    qfield = {
+        'id': qfield_id,
+        'label': field['label'],
+        'info': field.get('info'),
         'value_type': 'numeric',
         'inner_query': {
             'SELECT': [
-                {'ID': "%s_sum" % f[0], 'EXPRESSION': 'func.sum(__result__%s)' % f[0]},
+                {
+                    'ID': "%s_sum" % field_id, 
+                    'EXPRESSION': 'func.sum(__result__%s)' % field_id,
+                },
             ],
         },
         'outer_query': {
-            'SELECT': [{'ID': "%s_sum" % f[0], 'EXPRESSION': "__inner__%s_sum" % f[0]}],
+            'SELECT': [
+                {
+                    'ID': "%s_sum" % field_id, 
+                    'EXPRESSION': "__inner__%s_sum" % field_id
+                }
+            ],
         },
-        'key_entity_expression': '__result__%s' % f[0],
-        'format': '%.1h m<sup>2</sup>'
+        'key_entity_expression': field['key_entity_expression'],
+        'format': field['format'],
     }
 
     # Save to overall quantity fields, 
     # and sasi_quantity fields.
-    quantity_fields[field_id] = sasi_quantity_field
-    sasi_quantity_fields[field_id] = sasi_quantity_field
+    quantity_fields[qfield_id] = qfield
+    sasi_quantity_fields[qfield_id] = qfield
 
 # 
 # Category Fields.
@@ -91,288 +157,25 @@ for f in sasi_fields:
 #
 category_fields = {}
 
-# Substrates category.
-category_fields['substrates'] = {
-    'KEY': {
-        'QUERY': {
-            'SELECT': [
-                {'ID': 'substrate_id', 'EXPRESSION': '__substrate__id'},
-                {'ID': 'substrate_name', 'EXPRESSION': '__substrate__label'},
-            ],
-        },
-        'KEY_ENTITY': {'ID': 'substrate_id'}, 
-        'LABEL_ENTITY': {'ID': 'substrate_name'},
-    },
-    'inner_query': {
-        'SELECT': [
-            {'ID': 'substrate_id', 'EXPRESSION':
-             '__result__substrate_id'},
-        ],
-        'GROUP_BY': [{'ID': 'substrate_id'}],
-    },
-    'outer_query': {
-        'SELECT': [
-            {'ID': 'substrate_name', 'EXPRESSION':
-             '__substrate__label'},
-            {'ID': 'substrate_id', 'EXPRESSION': '__substrate__id'}
-        ],
-        'FROM': [
-            {
-                'SOURCE': 'substrate',
-                'JOINS': [
-                    [
-                        'inner', 
-                        [
-                            {
-                                'TYPE': 'ENTITY', 
-                                'EXPRESSION': '__inner__substrate_id'
-                            }, 
-                            '==', 
-                            {
-                                'TYPE': 'ENTITY', 
-                                'EXPRESSION':
-                                '__substrate__id'
-                            }
-                        ],
-                    ],
-                ],
-            }
-        ],
-        'GROUP_BY': [
-            {'ID': 'substrate_name'},
-            {'ID': 'substrate_id'}
-        ],
-    },
-}
+# Define category fields for SASI categorical fields.
+for field_id, field in sasi_categorical_fields.items():
+    category_fields[field_id] = {
+        'KEY': field.get('KEY'),
+        'inner_query': field.get('inner_query'),
+        'outer_query': field.get('outer_query'),
+    }
 
-# Gears category.
-category_fields['gears'] = {
-    'KEY': {
-        'QUERY': {
-            'SELECT': [
-                {'ID': 'gear_id', 'EXPRESSION': '__gear__id'},
-                {'ID': 'gear_name', 'EXPRESSION': '__gear__label'},
-            ],
-        },
-        'KEY_ENTITY': {'ID': 'gear_id'}, 
-        'LABEL_ENTITY': {'ID': 'gear_name'},
-    },
-    'inner_query': {
-        'SELECT': [
-            {'ID': 'gear_id', 'EXPRESSION':
-             '__result__gear_id'},
-        ],
-        'GROUP_BY': [{'ID': 'gear_id'}],
-    },
-    'outer_query': {
-        'SELECT': [
-            {'ID': 'gear_name', 'EXPRESSION':
-             '__gear__label'},
-            {'ID': 'gear_id', 'EXPRESSION': '__gear__id'}
-        ],
-        'FROM': [
-            {
-                'SOURCE': 'gear',
-                'JOINS': [
-                    [
-                        'inner', 
-                        [
-                            {
-                                'TYPE': 'ENTITY', 
-                                'EXPRESSION': '__inner__gear_id'
-                            }, 
-                            '==', 
-                            {
-                                'TYPE': 'ENTITY', 
-                                'EXPRESSION':
-                                '__gear__id'
-                            }
-                        ],
-                    ],
-                ],
-            }
-        ],
-        'GROUP_BY': [
-            {'ID': 'gear_name'},
-            {'ID': 'gear_id'}
-        ],
-    },
-}
 
-# Energies category.
-category_fields['energies'] = {
-    'KEY': {
-        'QUERY': {
-            'SELECT': [
-                {'ID': 'energy_id', 'EXPRESSION': '__energy__id'},
-                {'ID': 'energy_name', 'EXPRESSION': '__energy__label'},
-            ],
-        },
-        'KEY_ENTITY': {'ID': 'energy_id'}, 
-        'LABEL_ENTITY': {'ID': 'energy_name'},
-    },
-    'inner_query': {
-        'SELECT': [
-            {'ID': 'energy_id', 'EXPRESSION':
-             '__result__energy_id'},
-        ],
-        'GROUP_BY': [{'ID': 'energy_id'}],
-    },
-    'outer_query': {
-        'SELECT': [
-            {'ID': 'energy_name', 'EXPRESSION':
-             '__energy__label'},
-            {'ID': 'energy_id', 'EXPRESSION': '__energy__id'}
-        ],
-        'FROM': [
-            {
-                'SOURCE': 'energy',
-                'JOINS': [
-                    [
-                        'inner', 
-                        [
-                            {
-                                'TYPE': 'ENTITY', 
-                                'EXPRESSION': '__inner__energy_id'
-                            }, 
-                            '==', 
-                            {
-                                'TYPE': 'ENTITY', 
-                                'EXPRESSION':
-                                '__energy__id'
-                            }
-                        ],
-                    ],
-                ],
-            }
-        ],
-        'GROUP_BY': [
-            {'ID': 'energy_name'},
-            {'ID': 'energy_id'}
-        ],
-    },
-}
-
-# Features category
-category_fields['features'] = {
-    'KEY': {
-        'QUERY': {
-            'SELECT': [
-                {'ID': 'feature_id', 'EXPRESSION': '__feature__id'},
-                {'ID': 'feature_name', 'EXPRESSION': '__feature__label'},
-            ],
-        },
-        'KEY_ENTITY': {'ID': 'feature_id'}, 
-        'LABEL_ENTITY': {'ID': 'feature_name'},
-    },
-    'inner_query': {
-        'SELECT': [
-            {'ID': 'feature_id', 'EXPRESSION':
-             '__result__feature_id'},
-        ],
-        'GROUP_BY': [{'ID': 'feature_id'}],
-    },
-    'outer_query': {
-        'SELECT': [
-            {'ID': 'feature_name', 'EXPRESSION':
-             '__feature__label'},
-            {'ID': 'feature_id', 'EXPRESSION': '__feature__id'}
-        ],
-        'FROM': [
-            {
-                'SOURCE': 'feature',
-                'JOINS': [
-                    [
-                        'inner', 
-                        [
-                            {
-                                'TYPE': 'ENTITY', 
-                                'EXPRESSION': '__inner__feature_id'
-                            }, 
-                            '==', 
-                            {
-                                'TYPE': 'ENTITY', 
-                                'EXPRESSION':
-                                '__feature__id'
-                            }
-                        ],
-                    ],
-                ],
-            }
-        ],
-        'GROUP_BY': [
-            {'ID': 'feature_name'},
-            {'ID': 'feature_id'}
-        ],
-    },
-}
-
-# Feature Category category
-category_fields['feature_category'] = {
-    'KEY': {
-        'QUERY': {
-            'SELECT': [
-                {'ID': 'feature_category_id', 'EXPRESSION': '__feature_category__id'},
-                {'ID': 'feature_category_name', 'EXPRESSION': '__feature_category__label'},
-            ],
-        },
-        'KEY_ENTITY': {'ID': 'feature_category_id'}, 
-        'LABEL_ENTITY': {'ID': 'feature_category_name'},
-    },
-    'inner_query': {
-        'SELECT': [
-            {'ID': 'feature_category_id', 'EXPRESSION':
-             '__result__feature_category_id'},
-        ],
-        'GROUP_BY': [{'ID': 'feature_category_id'}],
-    },
-    'outer_query': {
-        'SELECT': [
-            {'ID': 'feature_category_name', 'EXPRESSION':
-             '__feature_category__label'},
-            {'ID': 'feature_category_id', 'EXPRESSION': '__feature_category__id'}
-        ],
-        'FROM': [
-            {
-                'SOURCE': 'feature_category',
-                'JOINS': [
-                    [
-                        'inner', 
-                        [
-                            {
-                                'TYPE': 'ENTITY', 
-                                'EXPRESSION': '__inner__feature_category_id'
-                            }, 
-                            '==', 
-                            {
-                                'TYPE': 'ENTITY', 
-                                'EXPRESSION':
-                                '__feature_category__id'
-                            }
-                        ],
-                    ],
-                ],
-            }
-        ],
-        'GROUP_BY': [
-            {'ID': 'feature_category_name'},
-            {'ID': 'feature_category_id'}
-        ],
-    },
-}
-
-# SASI histgram category fields.
-# These fields are histograms of 
-# SASI quantity fields.
-for qfield in sasi_quantity_fields.values():
-    key_entity_id = 'facet%s_key_' % qfield['id']
+# Define category fields for SASI numerical fields.
+for field_id, field in sasi_quantity_fields.items():
+    key_entity_id = 'facet%s_key_' % field_id,
     key_entity = {
         'ID': key_entity_id,
-        'EXPRESSION': qfield['key_entity_expression'],
+        'EXPRESSION': field['key_entity_expression'],
         'AS_HISTOGRAM': True,
         'ALL_VALUES': True,
     }
-    category_fields[qfield['id']] = {
+    category_fields[field_id] = {
         'KEY': {
             'KEY_ENTITY': key_entity
         },
@@ -388,7 +191,6 @@ for qfield in sasi_quantity_fields.values():
             'GROUP_BY': [{'ID': key_entity['ID']}],
         },
     }
-        
 
 # 
 # Filter Groups.
@@ -430,113 +232,31 @@ facets['definitions']['timestep'] = {
     },
 }
 
-# Substrates facet.
-facets['definitions']['substrates'] =  {
-    'id': 'substrates',
-    'facetDef': {
+# Facets for categorical category fields.
+for field_id, field in sasi_categorical_fields.items():
+    facet_def = {
         'label': 'Substrates',
-        'info': ('<p>See this link:'
-                 ' <a href="'
-                 '{{PROJECT_STATIC_DIR}}/sasipedia#substrates/index.html'
-                 '" target="_blank">Substrates</a></p>'
-                ),
+        'info': field.get('info'),
+        'info_link': field.get('info_link'),
         'type': 'list',
         'primary_filter_groups': ['data'],
         'base_filter_groups': ['scenario'],
-        'filter_entity': {'TYPE': 'ENTITY', 'ID': 'substrate_id',
-                          'EXPRESSION': '__result__substrate_id'},
-    },
-}
-facets['definitions']['substrates']['facetDef'].update(
-    category_fields['substrates'])
+        'filter_entity': field.get('filter_entity')
+    }
+    facet_def.update(category_fields[field_id])
+    facets['definitions'][field_id] = {
+        'id': field_id,
+        'facetDef': facet_def,
+    }
 
-# Gears facet.
-facets['definitions']['gears'] =  {
-    'id': 'gears',
-    'facetDef': {
-        'label': 'Gears',
-        'info': ('<p>See this link:'
-                 ' <a href="'
-                 '{{PROJECT_STATIC_DIR}}/sasipedia#gears/index.html'
-                 '" target="_blank">Gears</a></p>'
-                ),
-        'type': 'list',
-        'primary_filter_groups': ['data'],
-        'base_filter_groups': ['scenario'],
-        'filter_entity': {'TYPE': 'ENTITY', 'ID': 'gear_id',
-                          'EXPRESSION': '__result__gear_id'},
-    },
-}
-facets['definitions']['gears']['facetDef'].update(
-    category_fields['gears'])
-
-# Energy facet.
-facets['definitions']['energies'] =  {
-    'id': 'energies',
-    'facetDef': {
-        'label': 'Energies',
-        'info': ('<p>See this link:'
-                 ' <a href="'
-                 '{{PROJECT_STATIC_DIR}}/sasipedia#energies/index.html'
-                 '" target="_blank">Energies</a></p>'
-                ),
-        'type': 'list',
-        'primary_filter_groups': ['data'],
-        'base_filter_groups': ['scenario'],
-        'filter_entity': {'TYPE': 'ENTITY', 'ID': 'energy_id',
-                          'EXPRESSION': '__result__energy_id'},
-    },
-}
-facets['definitions']['energies']['facetDef'].update(
-    category_fields['energies'])
-
-# Features facet.
-facets['definitions']['features'] =  {
-    'id': 'features',
-    'facetDef': {
-        'label': 'Features',
-        'info': ('<p>See this link:'
-                 ' <a href="'
-                 '{{PROJECT_STATIC_DIR}}/sasipedia#features/index.html'
-                 '" target="_blank">Features</a></p>'
-                ),
-        'type': 'list',
-        'primary_filter_groups': ['data'],
-        'base_filter_groups': ['scenario'],
-        'filter_entity': {'TYPE': 'ENTITY', 'ID': 'feature_id',
-                          'EXPRESSION': '__result__feature_id'},
-    },
-}
-facets['definitions']['features']['facetDef'].update(
-    category_fields['features'])
-
-# Feature Category facet.
-facets['definitions']['feature_category'] =  {
-    'id': 'feature_category',
-    'facetDef': {
-        'label': 'Feature Categories',
-        'info': ('<p>See this link:'
-                 ' <a href="'
-                 '{{PROJECT_STATIC_DIR}}/sasipedia#feature_categories/index.html'
-                 '" target="_blank">Feature Categories</a></p>'
-                ),
-        'type': 'list',
-        'primary_filter_groups': ['data'],
-        'base_filter_groups': ['scenario'],
-        'filter_entity': {'TYPE': 'ENTITY', 'ID': 'feature_category_id',
-                          'EXPRESSION': '__result__feature_category_id'},
-    },
-}
-facets['definitions']['feature_category']['facetDef'].update(
-    category_fields['feature_category'])
-
-# SASI quantity field facets.
+# Facets for SASI quantity fields
 for qfield in sasi_quantity_fields.values():
-    facets['definitions'][qfield['id']] = {
+    facet_def = {
         'id': qfield['id'],
         'facetDef': {
             'label': qfield['label'],
-            'info': qfield['info'],
+            'info': qfield.get('info'),
+            'info_link': qfield.get('info_link'),
             'type': 'numeric',
             'primary_filter_groups': ['data'],
             'base_filter_groups': ['scenario'],
@@ -544,12 +264,16 @@ for qfield in sasi_quantity_fields.values():
                 'TYPE': 'ENTITY', 
                 'EXPRESSION': qfield['key_entity_expression'],
             },
+            # TODO: set this for ranges.
             'range_auto': True
         },
     }
-    facets['definitions'][qfield['id']]['facetDef'].update(
-        category_fields[qfield['id']]
-    )
+    facet_def.update(category_fields[qfield['id']])
+    facets['definitions'][field_id] = {
+        'id': field_id,
+        'facetDef': facet_def,
+    }
+
 app_config['facets'] = facets
 
 
@@ -563,24 +287,27 @@ charts = {
     'category_fields': []
 }
 
-# Substrates category.
-charts['category_fields'].append(
-    dict({
-        'id': 'substrates',
-        'label': 'Substrates',
+# SASI categorical fields category fields.
+for field_id, field in sasi_categorical_fields.items():
+    chart_category_field =  {
+        'id': field_id,
+        'label': field['label'],
         'value_type': 'categorical',
-    }.items() + category_fields['substrates'].items())
-)
+    }
+    chart_category_field.update(category_fields[field_id])
+    charts['category_fields'].append(chart_category_field)
 
-# SASI field categories.
-for qfield in sasi_quantity_fields.values():
-    charts['category_fields'].append(
-        dict({
-            'id': qfield['id'],
-            'label': qfield['label'],
-            'value_type': 'numeric',
-        }.items() + category_fields[qfield['id']].items())
-    )
+
+# SASI quantity field category fields.
+for field_id, field in sasi_quantity_fields.items():
+    chart_category_field =  {
+        'id': field_id,
+        'label': field['label'],
+        'value_type': 'numeric',
+    }
+    chart_category_field.update(category_fields[field_id])
+    charts['category_fields'].append(chart_category_field)
+
 app_config['charts'] = charts
 
 
@@ -589,10 +316,10 @@ app_config['charts'] = charts
 #
 
 data_layers = []
-for f in sasi_fields:
+for field_id, field in sasi_numeric_fields.items():
     data_layer = {
-        "id": f[0],
-        "label": "%s (density)" % f[1],
+        "id": field_id,
+        "label": "%s (density)" % field['label'],
         "info": "info test",
         "source": "georefine_data_layer",
         "layer_type": 'WMS',
@@ -604,8 +331,8 @@ for f in sasi_fields:
         "inner_query": {
             'SELECT': [
                 {
-                    'ID': "%s_data" % f[0], 
-                    'EXPRESSION': "func.sum(__result__%s)" % f[0]
+                    'ID': "%s_data" % field_id, 
+                    'EXPRESSION': "func.sum(__result__%s)" % field_id,
                 },
             ],
             'GROUP_BY': [
@@ -618,16 +345,16 @@ for f in sasi_fields:
         "outer_query": {
             'SELECT': [
                 {
-                    'ID': "%s_geom_id" % f[0], 
+                    'ID': "%s_geom_id" % field_id, 
                     'EXPRESSION': "__cell__id",
                 },
                 {
-                    'ID': "%s_geom" % f[0], 
+                    'ID': "%s_geom" % field_id, 
                     'EXPRESSION': "__cell__geom",
                 },
                 {
-                    'ID': "%s_data" % f[0], 
-                    'EXPRESSION': "__inner__%s_data / __cell__area" % f[0]
+                    'ID': "%s_data" % field_id, 
+                    'EXPRESSION': "__inner__%s_data / __cell__area" % field_id
                 },
             ],
             'FROM': [
@@ -652,12 +379,12 @@ for f in sasi_fields:
                 }
             ]
         },
-        "geom_id_entity": {'ID': "%s_geom_id" % f[0]},
-        "geom_entity": {'ID': "%s_geom" % f[0]},
+        "geom_id_entity": {'ID': "%s_geom_id" % field_id},
+        "geom_entity": {'ID': "%s_geom" % field_id},
         "data_entity": {
-            'ID': "%s_data" % f[0],
-            'min': 0, # @TODO: SET SMART DEFAULTS BASED ON DATA.
-            'max': 1, # @TODO: SET SMART DEFAULTS BASED ON DATA.
+            'ID': "%s_data" % field_id,
+            'min': 0,
+            'max': 1,
         },
     "disabled": True 
     }
