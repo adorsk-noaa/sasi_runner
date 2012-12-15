@@ -23,8 +23,7 @@ sasi_numeric_fields = {
 # Decorate numeric fields to set defaults.
 for field_id, field in sasi_numeric_fields.items():
     field.setdefault('key_entity_expression',  '__result__%s' % field_id)
-    field.setdefault('format',  '%%.1h m<sup>2</sup>')
-
+    field.setdefault('format',  '%.1h m<sup>2</sup>')
 
 sasi_categorical_fields = {
     'substrate': {},
@@ -89,7 +88,7 @@ for field_id, field in sasi_categorical_fields.items():
                             {
                                 'TYPE': 'ENTITY', 
                                 'EXPRESSION':
-                                '__%s_id' % field_id,
+                                '__%s__id' % field_id,
                             }
                         ],
                     ],
@@ -97,7 +96,7 @@ for field_id, field in sasi_categorical_fields.items():
             }
         ],
         'GROUP_BY': [
-            {'ID': '%s_name' % field_id},
+            {'ID': '%s_label' % field_id},
             {'ID': '%s_id' % field_id},
         ],
     })
@@ -105,7 +104,7 @@ for field_id, field in sasi_categorical_fields.items():
     field.setdefault('filter_entity', {
         'TYPE': 'ENTITY', 
         'ID': field_id,
-        'EXPRESSION': '__result__%s' % field_id,
+        'EXPRESSION': '__result__%s_id' % field_id,
     })
 
 #
@@ -221,7 +220,7 @@ facets['definitions']['timestep'] = {
                     {'ID': 't', 'EXPRESSION': '__time__id'},
                 ]
             },
-            'KEY_ENTITY': {'ID': 't'}
+            'KEY_ENTITY': {'ID': 't', 'EXPRESSION': '__result__t'}
         },
         'value_type': 'numeric',
         'choices': [],
@@ -252,21 +251,18 @@ for field_id, field in sasi_categorical_fields.items():
 # Facets for SASI quantity fields
 for qfield in sasi_quantity_fields.values():
     facet_def = {
-        'id': qfield['id'],
-        'facetDef': {
-            'label': qfield['label'],
-            'info': qfield.get('info'),
-            'info_link': qfield.get('info_link'),
-            'type': 'numeric',
-            'primary_filter_groups': ['data'],
-            'base_filter_groups': ['scenario'],
-            'filter_entity': {
-                'TYPE': 'ENTITY', 
-                'EXPRESSION': qfield['key_entity_expression'],
-            },
-            # TODO: set this for ranges.
-            'range_auto': True
+        'label': qfield['label'],
+        'info': qfield.get('info'),
+        'info_link': qfield.get('info_link'),
+        'type': 'numeric',
+        'primary_filter_groups': ['data'],
+        'base_filter_groups': ['scenario'],
+        'filter_entity': {
+            'TYPE': 'ENTITY', 
+            'EXPRESSION': qfield['key_entity_expression'],
         },
+        # TODO: set this for ranges.
+        'range_auto': True
     }
     facet_def.update(category_fields[qfield['id']])
     facets['definitions'][field_id] = {
@@ -454,7 +450,7 @@ app_config['defaultInitialState'] = {
                 "type":"action",
                 "handler":"facets_facetsEditorSetQField",
                 "opts":{
-                    "id":"cell_area_sum"
+                    "id":"result_znet_sum"
                 }
             },
             # Timestep facet.
@@ -540,7 +536,7 @@ app_config['defaultInitialState'] = {
                         "opts":{
                             "fromDefinition":True,
                             "category":"primary",
-                            "defId":"substrates",
+                            "defId":"substrate",
                             "facetId":"initSubstrates"
                         }
                     },
@@ -598,10 +594,10 @@ app_config['defaultInitialState'] = {
                                 "opts":{
                                     "id":"initialChart",
                                     "categoryField":{
-                                        "id":"substrates"
+                                        "id":"substrate"
                                     },
                                     "quantityField":{
-                                        "id":"cell_area_sum"
+                                        "id":"result_znet_sum"
                                     }
                                 }
                             }
