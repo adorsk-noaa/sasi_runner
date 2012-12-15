@@ -179,15 +179,15 @@ for field_id, field in sasi_quantity_fields.items():
             'KEY_ENTITY': key_entity
         },
         'inner_query': {
-            'SELECT': [key_entity],
-            'GROUP_BY': [key_entity],
+            'SELECT': [{'ID': key_entity_id, 'EXPRESSION': '___TOKENS__KEY'}],
+            'GROUP_BY': [{'ID': key_entity_id}],
         },
         'outer_query': {
             'SELECT': [{
-                'ID': key_entity['ID'], 
-                'EXPRESSION': "__inner__%s" % key_entity['ID']
+                'ID': key_entity_id,
+                'EXPRESSION': "__inner__%s" % key_entity_id,
             }],
-            'GROUP_BY': [{'ID': key_entity['ID']}],
+            'GROUP_BY': [{'ID': key_entity_id}],
         },
     }
 
