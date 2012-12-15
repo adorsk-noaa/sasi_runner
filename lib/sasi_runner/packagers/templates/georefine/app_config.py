@@ -167,7 +167,7 @@ for field_id, field in sasi_categorical_fields.items():
 
 # Define category fields for SASI numerical fields.
 for field_id, field in sasi_quantity_fields.items():
-    key_entity_id = 'facet%s_key_' % field_id,
+    key_entity_id = 'facet%s_key_' % field_id
     key_entity = {
         'ID': key_entity_id,
         'EXPRESSION': field['key_entity_expression'],
@@ -234,7 +234,7 @@ facets['definitions']['timestep'] = {
 # Facets for categorical category fields.
 for field_id, field in sasi_categorical_fields.items():
     facet_def = {
-        'label': 'Substrates',
+        'label': field.get('label'),
         'info': field.get('info'),
         'info_link': field.get('info_link'),
         'type': 'list',
@@ -249,7 +249,7 @@ for field_id, field in sasi_categorical_fields.items():
     }
 
 # Facets for SASI quantity fields
-for qfield in sasi_quantity_fields.values():
+for qfield_id, qfield in sasi_quantity_fields.items():
     facet_def = {
         'label': qfield['label'],
         'info': qfield.get('info'),
@@ -264,9 +264,9 @@ for qfield in sasi_quantity_fields.values():
         # TODO: set this for ranges.
         'range_auto': True
     }
-    facet_def.update(category_fields[qfield['id']])
-    facets['definitions'][field_id] = {
-        'id': field_id,
+    facet_def.update(category_fields[qfield_id])
+    facets['definitions'][qfield_id] = {
+        'id': qfield_id,
         'facetDef': facet_def,
     }
 
