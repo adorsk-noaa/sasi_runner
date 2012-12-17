@@ -23,8 +23,7 @@ sasi_numeric_fields = {
 # Decorate numeric fields to set defaults.
 for field_id, field in sasi_numeric_fields.items():
     field.setdefault('key_entity_expression',  '__result__%s' % field_id)
-    field.setdefault('format',  '%%.1h m<sup>2</sup>')
-
+    field.setdefault('format',  '%.1h m<sup>2</sup>')
 
 sasi_categorical_fields = {
     'substrate': {},
@@ -89,7 +88,7 @@ for field_id, field in sasi_categorical_fields.items():
                             {
                                 'TYPE': 'ENTITY', 
                                 'EXPRESSION':
-                                '__%s_id' % field_id,
+                                '__%s__id' % field_id,
                             }
                         ],
                     ],
@@ -97,7 +96,7 @@ for field_id, field in sasi_categorical_fields.items():
             }
         ],
         'GROUP_BY': [
-            {'ID': '%s_name' % field_id},
+            {'ID': '%s_label' % field_id},
             {'ID': '%s_id' % field_id},
         ],
     })
@@ -105,7 +104,7 @@ for field_id, field in sasi_categorical_fields.items():
     field.setdefault('filter_entity', {
         'TYPE': 'ENTITY', 
         'ID': field_id,
-        'EXPRESSION': '__result__%s' % field_id,
+        'EXPRESSION': '__result__%s_id' % field_id,
     })
 
 #
@@ -168,7 +167,7 @@ for field_id, field in sasi_categorical_fields.items():
 
 # Define category fields for SASI numerical fields.
 for field_id, field in sasi_quantity_fields.items():
-    key_entity_id = 'facet%s_key_' % field_id,
+    key_entity_id = 'facet%s_key_' % field_id
     key_entity = {
         'ID': key_entity_id,
         'EXPRESSION': field['key_entity_expression'],
@@ -180,15 +179,15 @@ for field_id, field in sasi_quantity_fields.items():
             'KEY_ENTITY': key_entity
         },
         'inner_query': {
-            'SELECT': [key_entity],
-            'GROUP_BY': [key_entity],
+            'SELECT': [{'ID': key_entity_id, 'EXPRESSION': '___TOKENS__KEY'}],
+            'GROUP_BY': [{'ID': key_entity_id}],
         },
         'outer_query': {
             'SELECT': [{
-                'ID': key_entity['ID'], 
-                'EXPRESSION': "__inner__%s" % key_entity['ID']
+                'ID': key_entity_id,
+                'EXPRESSION': "__inner__%s" % key_entity_id,
             }],
-            'GROUP_BY': [{'ID': key_entity['ID']}],
+            'GROUP_BY': [{'ID': key_entity_id}],
         },
     }
 
@@ -221,7 +220,7 @@ facets['definitions']['timestep'] = {
                     {'ID': 't', 'EXPRESSION': '__time__id'},
                 ]
             },
-            'KEY_ENTITY': {'ID': 't'}
+            'KEY_ENTITY': {'ID': 't', 'EXPRESSION': '__result__t'}
         },
         'value_type': 'numeric',
         'choices': [],
@@ -235,7 +234,7 @@ facets['definitions']['timestep'] = {
 # Facets for categorical category fields.
 for field_id, field in sasi_categorical_fields.items():
     facet_def = {
-        'label': 'Substrates',
+        'label': field.get('label'),
         'info': field.get('info'),
         'info_link': field.get('info_link'),
         'type': 'list',
@@ -250,27 +249,24 @@ for field_id, field in sasi_categorical_fields.items():
     }
 
 # Facets for SASI quantity fields
-for qfield in sasi_quantity_fields.values():
+for qfield_id, qfield in sasi_quantity_fields.items():
     facet_def = {
-        'id': qfield['id'],
-        'facetDef': {
-            'label': qfield['label'],
-            'info': qfield.get('info'),
-            'info_link': qfield.get('info_link'),
-            'type': 'numeric',
-            'primary_filter_groups': ['data'],
-            'base_filter_groups': ['scenario'],
-            'filter_entity': {
-                'TYPE': 'ENTITY', 
-                'EXPRESSION': qfield['key_entity_expression'],
-            },
-            # TODO: set this for ranges.
-            'range_auto': True
+        'label': qfield['label'],
+        'info': qfield.get('info'),
+        'info_link': qfield.get('info_link'),
+        'type': 'numeric',
+        'primary_filter_groups': ['data'],
+        'base_filter_groups': ['scenario'],
+        'filter_entity': {
+            'TYPE': 'ENTITY', 
+            'EXPRESSION': qfield['key_entity_expression'],
         },
+        # TODO: set this for ranges.
+        'range_auto': True
     }
-    facet_def.update(category_fields[qfield['id']])
-    facets['definitions'][field_id] = {
-        'id': field_id,
+    facet_def.update(category_fields[qfield_id])
+    facets['definitions'][qfield_id] = {
+        'id': qfield_id,
         'facetDef': facet_def,
     }
 
@@ -454,7 +450,7 @@ app_config['defaultInitialState'] = {
                 "type":"action",
                 "handler":"facets_facetsEditorSetQField",
                 "opts":{
-                    "id":"cell_area_sum"
+                    "id":"result_znet_sum"
                 }
             },
             # Timestep facet.
@@ -540,7 +536,7 @@ app_config['defaultInitialState'] = {
                         "opts":{
                             "fromDefinition":True,
                             "category":"primary",
-                            "defId":"substrates",
+                            "defId":"substrate",
                             "facetId":"initSubstrates"
                         }
                     },
@@ -598,10 +594,10 @@ app_config['defaultInitialState'] = {
                                 "opts":{
                                     "id":"initialChart",
                                     "categoryField":{
-                                        "id":"substrates"
+                                        "id":"substrate"
                                     },
                                     "quantityField":{
-                                        "id":"cell_area_sum"
+                                        "id":"result_znet_sum"
                                     }
                                 }
                             }
