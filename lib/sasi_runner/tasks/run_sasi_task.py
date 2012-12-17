@@ -183,7 +183,7 @@ class RunSasiTask(task_manager.Task):
             source_name = ''.join([s.capitalize() for s in category.split('_')])
             items_q = dao.query('__' + source_name,
                                 format_='query_obj')
-            batched_items = dao.orm_dao.get_batched_results(items_q, batch_size)
+            batched_items = dao.get_batched_results(items_q, batch_size)
             data[category] = {
                 'items': batched_items,
                 'num_items': items_q.count()
