@@ -71,6 +71,12 @@ class SASI_Model(object):
         for f in self.dao.query('__Feature'):
             self.features_lu[f.id] = f
 
+        # Create gears lookup.
+        self.logger.info("Creating gears lookup...")
+        self.gears_lu = {}
+        for g in self.dao.query('__Gear'):
+            self.gears_lu[g.id] = g
+
         # Group features by category and habitat types.
         self.logger.info("Grouping features by categories and habitats...")
         self.f_by_ht_fc = {}
@@ -124,7 +130,8 @@ class SASI_Model(object):
             effort_cache = self.get_effort_cache(cell_ids)
             result_cache = self.get_result_cache(cell_ids)
 
-            for c in cell_ids:
+            for cell in cell_batch:
+                c = cell.id
 
                 cell_counter += 1
                 if (cell_counter % log_interval) == 0: 
@@ -133,6 +140,18 @@ class SASI_Model(object):
 
                 for t in range(self.t0, self.tf + 1, self.dt):
                     for effort in effort_cache.get(c, {}).get(t, []):
+
+                        # If effort gear has depth limits, skip if cell depth is not
+                        # w/in the limits.
+                        gear = self.gears_lu.get(effort.gear_id)
+                        if not gear:
+                            continue
+                        if gear.min_depth is not None \
+                           and cell.z < gear.min_depth:
+                            continue
+                        if gear.max_depth is not None \
+                           and cell.z > gear.max_depth:
+                            continue
 
                         # Get relevant habitat types for the effort.
                         relevant_habitat_types = []

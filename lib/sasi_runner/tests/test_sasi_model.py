@@ -47,6 +47,14 @@ class SASIModelTest(unittest.TestCase):
         ]
         dao.save_all(features)
 
+        Gear = dao.schema['sources']['Gear']
+        gears = [
+            Gear(id='G1', min_depth=0, max_depth=1000),
+            Gear(id='GTooDeep', min_depth=5000),
+            Gear(id='GTooShallow', max_depth=0),
+        ]
+        dao.save_all(gears)
+
         Cell = dao.schema['sources']['Cell']
         cells = [
             Cell(
@@ -56,6 +64,7 @@ class SASIModelTest(unittest.TestCase):
                     ('S1', 'Low'): .5,
                     ('S1', 'High'): .5,
                 },
+                z=500,
             ),
         ]
         dao.save_all(cells)
@@ -107,11 +116,29 @@ class SASIModelTest(unittest.TestCase):
                 hours_fished=100.0,
                 value=100.0
             ),
-            # Irrelevant effort.
+            # Invalid gear: should be skipped.
             Effort(
                 time=0,
                 cell_id=0,
                 gear_id='G99',
+                a=100.0,
+                hours_fished=100.0,
+                value=100.0
+            ),
+            # Out of depth limits, should be skipped.
+            Effort(
+                time=0,
+                cell_id=0,
+                gear_id='GTooDeep',
+                a=100.0,
+                hours_fished=100.0,
+                value=100.0
+            ),
+            # Out of depth limits, should be skipped.
+            Effort(
+                time=0,
+                cell_id=0,
+                gear_id='GTooShallow',
                 a=100.0,
                 hours_fished=100.0,
                 value=100.0
