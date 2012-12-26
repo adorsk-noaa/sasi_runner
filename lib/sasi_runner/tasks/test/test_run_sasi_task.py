@@ -5,6 +5,8 @@ import os
 import logging
 from sqlalchemy import create_engine
 import argparse
+from sasi_data.util.data_generators import generate_data_dir
+import shutil
 
 
 class RunSasiTaskTestCommon(object):
@@ -44,7 +46,7 @@ class RunSasiTaskTestCommon(object):
 
     def test_run_sasi_task(self):
         task = RunSasiTask(
-            input_path=self.get_input_path(),
+            input_path=self.data_dir,
             logger=self.logger,
             get_connection=self.get_connection,
             config=self.get_config(),
@@ -56,6 +58,12 @@ class PyRunSasiTaskTestCase(unittest.TestCase, RunSasiTaskTestCommon):
     def __init__(self, *args, **kwargs):
         RunSasiTaskTestCommon.__init__(self, *args, **kwargs)
         unittest.TestCase.__init__(self, *args, **kwargs)
+
+    def setUp(self):
+        self.data_dir = generate_data_dir(effort_model='nominal')
+    def tearDown(self):
+        if hasattr(self, 'data_dir') and self.data_dir.startswith('/tmp'):
+            shutil.rmtree(self.data_dir)
 
     @staticmethod
     def get_connection():
