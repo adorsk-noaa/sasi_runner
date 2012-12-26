@@ -35,13 +35,15 @@ class SASIModelTest(unittest.TestCase):
 
         FeatureCategory = dao.schema['sources']['FeatureCategory']
         feature_categories = [
-            FeatureCategory(id='FC1')
+            FeatureCategory(id='FC1'),
+            FeatureCategory(id='FC2')
         ]
         dao.save_all(feature_categories)
 
         Feature = dao.schema['sources']['Feature']
         features = [
             Feature(id='F1', category='FC1'),
+            Feature(id='F2', category='FC2'),
         ]
         dao.save_all(features)
 
@@ -76,6 +78,22 @@ class SASIModelTest(unittest.TestCase):
                 s=2,
                 r=2,
             ),
+            VA(
+                substrate_id='S1',
+                energy_id='High',
+                gear_id='G1',
+                feature_id='F2',
+                s=1,
+                r=1,
+            ),
+            VA(
+                substrate_id='S1',
+                energy_id='Low',
+                gear_id='G1',
+                feature_id='F2',
+                s=2,
+                r=2,
+            ),
         ]
         dao.save_all(vas)
 
@@ -85,25 +103,34 @@ class SASIModelTest(unittest.TestCase):
                 time=0,
                 cell_id=0,
                 gear_id='G1',
-                a=1.0,
-                hours_fished=1.0,
-                value=1.0
+                a=100.0,
+                hours_fished=100.0,
+                value=100.0
+            ),
+            # Irrelevant effort.
+            Effort(
+                time=0,
+                cell_id=0,
+                gear_id='G99',
+                a=100.0,
+                hours_fished=100.0,
+                value=100.0
             ),
             Effort(
                 time=1,
                 cell_id=0,
                 gear_id='G1',
-                a=1.0,
-                hours_fished=1.0,
-                value=1.0
+                a=100.0,
+                hours_fished=100.0,
+                value=100.0
             ),
             Effort(
                 time=2,
                 cell_id=0,
                 gear_id='G1',
-                a=1.0,
-                hours_fished=1.0,
-                value=1.0
+                a=100.0,
+                hours_fished=100.0,
+                value=100.0
             ),
         ]
         dao.save_all(efforts)
@@ -131,7 +158,11 @@ class SASIModelTest(unittest.TestCase):
         m.run(batch_size=100)
 
         expected_result_dicts = [
+            #
             # t=0
+            #
+
+            # s=1, r=1
             {
                 't': 0, 
                 'cell_id': 0, 
@@ -139,26 +170,61 @@ class SASIModelTest(unittest.TestCase):
                 'substrate_id': 'S1', 
                 'feature_id': 'F1', 
                 'gear_id': 'G1', 
-                'a': 0.5,
-                'x': 0.0, 
-                'y': .125, 
-                'z': -.125, 
-                'znet': -.125,
-            },
-            {
-                't': 0, 
-                'cell_id': 0, 
-                'energy_id': 'Low', 
-                'substrate_id': 'S1', 
-                'feature_id': 'F1', 
-                'gear_id': 'G1', 
-                'a': 0.5,
+                'a': 25.0,
                 'x': 0.0,
-                'y': .25,
-                'z': -.25,
-                'znet': -.25
+                'y': 6.25,
+                'z': -6.25,
+                'znet': -6.25,
             },
+
+            # s=1, r=1
+            {
+                't': 0, 
+                'cell_id': 0, 
+                'energy_id': 'High', 
+                'substrate_id': 'S1', 
+                'feature_id': 'F2', 
+                'gear_id': 'G1', 
+                'a': 25.0,
+                'x': 0.0, 
+                'y': 6.25,
+                'z': -6.25,
+                'znet': -6.25,
+            },
+
+            # s=2, r=2
+            {
+                't': 0, 
+                'cell_id': 0, 
+                'energy_id': 'Low', 
+                'substrate_id': 'S1', 
+                'feature_id': 'F1', 
+                'gear_id': 'G1', 
+                'a': 25.0,
+                'x': 0.0,
+                'y': 12.5,
+                'z': -12.5,
+                'znet': -12.5
+            },
+            # s=2, r=2
+            {
+                't': 0, 
+                'cell_id': 0, 
+                'energy_id': 'Low', 
+                'substrate_id': 'S1', 
+                'feature_id': 'F2', 
+                'gear_id': 'G1', 
+                'a': 25.0,
+                'x': 0.0,
+                'y': 12.5,
+                'z': -12.5,
+                'znet': -12.5
+            },
+            #
             # t=1
+            #
+
+            # s=1, r=1
             {
                 't': 1, 
                 'cell_id': 0, 
@@ -166,51 +232,113 @@ class SASIModelTest(unittest.TestCase):
                 'substrate_id': 'S1', 
                 'feature_id': 'F1', 
                 'gear_id': 'G1', 
-                'a': 0.5,
-                'x': .125, 
-                'y': .125, 
-                'z': 0.0, 
-                'znet': -.125,
-            },
-            {
-                't': 1, 
-                'cell_id': 0, 
-                'energy_id': 'Low', 
-                'substrate_id': 'S1', 
-                'feature_id': 'F1', 
-                'gear_id': 'G1', 
-                'a': 0.5,
-                'x': .125,
-                'y': .25,
-                'z': -.125,
-                'znet': -.375,
-            },
-            # t=2
-            {
-                't': 2, 
-                'cell_id': 0, 
-                'energy_id': 'High', 
-                'substrate_id': 'S1', 
-                'feature_id': 'F1', 
-                'gear_id': 'G1', 
-                'a': 0.5,
-                'x': .125, 
-                'y': .125, 
-                'z': 0.0, 
-                'znet': -.125,
-            },
-            {
-                't': 2, 
-                'cell_id': 0, 
-                'energy_id': 'Low', 
-                'substrate_id': 'S1', 
-                'feature_id': 'F1', 
-                'gear_id': 'G1', 
-                'a': 0.5,
-                'x': .25,
-                'y': .25,
+                'a': 25.0,
+                'x': 6.25,
+                'y': 6.25,
                 'z': 0.0,
-                'znet': -.375,
+                'znet': -6.25,
+            },
+            # s=1, r=1
+            {
+                't': 1, 
+                'cell_id': 0, 
+                'energy_id': 'High', 
+                'substrate_id': 'S1', 
+                'feature_id': 'F2', 
+                'gear_id': 'G1', 
+                'a': 25.0,
+                'x': 6.25,
+                'y': 6.25,
+                'z': 0.0,
+                'znet': -6.25,
+            },
+            # s=2, r=2
+            {
+                't': 1, 
+                'cell_id': 0, 
+                'energy_id': 'Low', 
+                'substrate_id': 'S1', 
+                'feature_id': 'F1', 
+                'gear_id': 'G1', 
+                'a': 25.0,
+                'x': 6.25,
+                'y': 12.5,
+                'z': -6.25,
+                'znet': -18.75
+            },
+            # s=2, r=2
+            {
+                't': 1, 
+                'cell_id': 0, 
+                'energy_id': 'Low', 
+                'substrate_id': 'S1', 
+                'feature_id': 'F2', 
+                'gear_id': 'G1', 
+                'a': 25.0,
+                'x': 6.25,
+                'y': 12.5,
+                'z': -6.25,
+                'znet': -18.75
+            },
+            #
+            # t=2
+            #
+
+            # s=1, r=1
+            {
+                't': 2, 
+                'cell_id': 0, 
+                'energy_id': 'High', 
+                'substrate_id': 'S1', 
+                'feature_id': 'F1', 
+                'gear_id': 'G1', 
+                'a': 25.0,
+                'x': 6.25,
+                'y': 6.25,
+                'z': 0.0,
+                'znet': -6.25,
+            },
+            # s=1, r=1
+            {
+                't': 2, 
+                'cell_id': 0, 
+                'energy_id': 'High', 
+                'substrate_id': 'S1', 
+                'feature_id': 'F2', 
+                'gear_id': 'G1', 
+                'a': 25.0,
+                'x': 6.25,
+                'y': 6.25,
+                'z': 0.0,
+                'znet': -6.25,
+            },
+            # s=2, r=2
+            {
+                't': 2, 
+                'cell_id': 0, 
+                'energy_id': 'Low', 
+                'substrate_id': 'S1', 
+                'feature_id': 'F1', 
+                'gear_id': 'G1', 
+                'a': 25.0,
+                'x': 12.5,
+                'y': 12.5,
+                'z': 0.0,
+                'znet': -18.75
+            },
+            # s=2, r=2
+            {
+                't': 2, 
+                'cell_id': 0, 
+                'energy_id': 'Low', 
+                'substrate_id': 'S1', 
+                'feature_id': 'F2', 
+                'gear_id': 'G1', 
+                'a': 25.0,
+                'x': 12.5,
+                'y': 12.5,
+                'z': 0.0,
+                'znet': -18.75
             }
         ]
 

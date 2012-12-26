@@ -137,7 +137,7 @@ class SASI_Model(object):
                         # Get relevant habitat types for the effort.
                         relevant_habitat_types = []
                         for ht in self.c_ht_fc_f[c]['ht'].keys():
-                            if ht in self.ht_by_g[effort.gear_id]: 
+                            if ht in self.ht_by_g.get(effort.gear_id, {}): 
                                 relevant_habitat_types.append(ht)
 
                         if relevant_habitat_types:
