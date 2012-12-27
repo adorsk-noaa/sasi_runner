@@ -95,7 +95,7 @@ class RunSasiTask(task_manager.Task):
 
         # Run the model.
         try:
-            base_msg = "Starting model run..."
+            base_msg = "Running SASI model ..."
             run_model_logger = self.get_logger_for_stage('run_model', base_msg)
             self.message_logger.info(base_msg)
             run_model_config = self.config.get('run_model', {})

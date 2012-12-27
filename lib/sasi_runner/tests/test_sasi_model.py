@@ -151,13 +151,14 @@ class SASIModelTest(unittest.TestCase):
                 hours_fished=100.0,
                 value=100.0
             ),
+            # Test empty hours fished, value
             Effort(
                 time=2,
                 cell_id=0,
                 gear_id='G1',
                 a=100.0,
-                hours_fished=100.0,
-                value=100.0
+                hours_fished=None,
+                value=None,
             ),
         ]
         dao.save_all(efforts)
@@ -180,6 +181,7 @@ class SASIModelTest(unittest.TestCase):
             dt=1,
             taus=taus,
             omegas=omegas,
+            effort_model='realized',
             dao=dao,
         )
         m.run(batch_size=100)
@@ -202,6 +204,8 @@ class SASIModelTest(unittest.TestCase):
                 'y': 6.25,
                 'z': -6.25,
                 'znet': -6.25,
+                'hours_fished': 25.0,
+                'value': 25.0,
             },
 
             # s=1, r=1
@@ -217,6 +221,8 @@ class SASIModelTest(unittest.TestCase):
                 'y': 6.25,
                 'z': -6.25,
                 'znet': -6.25,
+                'hours_fished': 25.0,
+                'value': 25.0,
             },
 
             # s=2, r=2
@@ -231,7 +237,9 @@ class SASIModelTest(unittest.TestCase):
                 'x': 0.0,
                 'y': 12.5,
                 'z': -12.5,
-                'znet': -12.5
+                'znet': -12.5,
+                'hours_fished': 25.0,
+                'value': 25.0,
             },
             # s=2, r=2
             {
@@ -245,7 +253,9 @@ class SASIModelTest(unittest.TestCase):
                 'x': 0.0,
                 'y': 12.5,
                 'z': -12.5,
-                'znet': -12.5
+                'znet': -12.5,
+                'hours_fished': 25.0,
+                'value': 25.0,
             },
             #
             # t=1
@@ -264,6 +274,8 @@ class SASIModelTest(unittest.TestCase):
                 'y': 6.25,
                 'z': 0.0,
                 'znet': -6.25,
+                'hours_fished': 25.0,
+                'value': 25.0,
             },
             # s=1, r=1
             {
@@ -278,6 +290,8 @@ class SASIModelTest(unittest.TestCase):
                 'y': 6.25,
                 'z': 0.0,
                 'znet': -6.25,
+                'hours_fished': 25.0,
+                'value': 25.0,
             },
             # s=2, r=2
             {
@@ -291,7 +305,9 @@ class SASIModelTest(unittest.TestCase):
                 'x': 6.25,
                 'y': 12.5,
                 'z': -6.25,
-                'znet': -18.75
+                'znet': -18.75,
+                'hours_fished': 25.0,
+                'value': 25.0,
             },
             # s=2, r=2
             {
@@ -305,7 +321,9 @@ class SASIModelTest(unittest.TestCase):
                 'x': 6.25,
                 'y': 12.5,
                 'z': -6.25,
-                'znet': -18.75
+                'znet': -18.75,
+                'hours_fished': 25.0,
+                'value': 25.0,
             },
             #
             # t=2
@@ -324,6 +342,8 @@ class SASIModelTest(unittest.TestCase):
                 'y': 6.25,
                 'z': 0.0,
                 'znet': -6.25,
+                'hours_fished': 0.0,
+                'value': 0.0,
             },
             # s=1, r=1
             {
@@ -338,6 +358,8 @@ class SASIModelTest(unittest.TestCase):
                 'y': 6.25,
                 'z': 0.0,
                 'znet': -6.25,
+                'hours_fished': 0.0,
+                'value': 0.0,
             },
             # s=2, r=2
             {
@@ -351,7 +373,9 @@ class SASIModelTest(unittest.TestCase):
                 'x': 12.5,
                 'y': 12.5,
                 'z': 0.0,
-                'znet': -18.75
+                'znet': -18.75,
+                'hours_fished': 0.0,
+                'value': 0.0,
             },
             # s=2, r=2
             {
@@ -365,7 +389,9 @@ class SASIModelTest(unittest.TestCase):
                 'x': 12.5,
                 'y': 12.5,
                 'z': 0.0,
-                'znet': -18.75
+                'znet': -18.75,
+                'hours_fished': 0.0,
+                'value': 0.0,
             }
         ]
 
@@ -386,7 +412,7 @@ class SASIModelTest(unittest.TestCase):
         dicts = []
         fields = [
             't', 'cell_id', 'energy_id', 'substrate_id', 'feature_id',
-            'gear_id', 'a', 'x', 'y', 'z', 'znet'
+            'gear_id', 'a', 'x', 'y', 'z', 'znet', 'hours_fished', 'value',
         ]
         for r in results:
             rd = {}

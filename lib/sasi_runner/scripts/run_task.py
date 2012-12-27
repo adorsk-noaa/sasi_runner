@@ -51,10 +51,10 @@ task = RunSasiTask(
         'ingest': {
             'sections': {
                 'grid': {
-                    'limit': 1e3
+                    'limit': 1e2
                 },
                 'habitats': {
-                    'limit': None
+                    'limit': 1e2
                 },
             }
         }
