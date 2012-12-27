@@ -2,7 +2,7 @@ from sasi_runner.tasks.run_sasi_task import RunSasiTask
 from javax.swing import (JPanel, JScrollPane, JTextArea, JFrame, JFileChooser,
                          JButton, WindowConstants, JLabel, BoxLayout)
 from javax.swing.filechooser import FileNameExtensionFilter
-from java.awt import Component
+from java.awt import (Component, BorderLayout)
 import os
 import tempfile
 import logging
@@ -34,7 +34,7 @@ class JythonGui(object):
             "SASI Runner",
             defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE,
         )
-        self.frame.size = (800, 800,)
+        self.frame.size = (650, 400,)
 
         self.main_panel = JPanel()
         self.main_panel.layout = BoxLayout(self.main_panel, BoxLayout.Y_AXIS)
@@ -70,10 +70,13 @@ class JythonGui(object):
         self.log_panel = JPanel()
         self.log_panel.alignmentX = Component.CENTER_ALIGNMENT
         self.main_panel.add(self.log_panel)
-        self.log = JTextArea(5,20)
+        self.log_panel.setLayout(BorderLayout())
+        self.log = JTextArea()
         self.log.editable = False
         self.logScrollPane = JScrollPane(self.log)
-        self.log_panel.add(self.logScrollPane)
+        self.logScrollPane.setVerticalScrollBarPolicy(
+            JScrollPane.VERTICAL_SCROLLBAR_ALWAYS)
+        self.log_panel.add(self.logScrollPane, BorderLayout.CENTER)
 
         # File selectors
         self.inputChooser = JFileChooser()
@@ -81,8 +84,8 @@ class JythonGui(object):
         self.outputChooser = JFileChooser()
         self.outputChooser.fileSelectionMode = JFileChooser.FILES_ONLY
 
-        self.frame.pack()
         self.frame.visible = True
+        self.frame.setLocationRelativeTo(None)
 
     def log_msg(self, msg):
         self.log.append(msg + "\n")
@@ -117,9 +120,6 @@ class JythonGui(object):
         def get_connection():
             engine = create_engine('h2+zxjdbc:////%s' % self.db_file)
             con = engine.connect()
-            javaCon = con.connection.__connection__
-            from geodb.GeoDB import InitGeoDB
-            InitGeoDB(javaCon)
             return con
 
         task = RunSasiTask(
