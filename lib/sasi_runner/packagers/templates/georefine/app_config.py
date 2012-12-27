@@ -19,6 +19,12 @@ sasi_numeric_fields = {
     'znet': {
         'label':'Cumulative Net Swept Area (Znet)',
     },
+    'hours_fished': {
+        'label':'Hours Fished',
+    },
+    'value': {
+        'label':'Estimated Economic Value',
+    },
 }
 # Decorate numeric fields to set defaults.
 for field_id, field in sasi_numeric_fields.items():

@@ -70,6 +70,8 @@ sources['result']= Table('result', metadata,
         Column('y', Float),
         Column('z', Float),
         Column('znet', Float),
+        Column('hours_fished', Float),
+        Column('value', Float),
         )
 # Create time/field/cell indices. These are essential for filtering in a reasonable
 # amount of time.
