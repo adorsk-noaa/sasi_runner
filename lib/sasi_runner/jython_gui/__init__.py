@@ -1,8 +1,11 @@
 from sasi_runner.tasks.run_sasi_task import RunSasiTask
-from javax.swing import (JPanel, JScrollPane, JTextArea, JFrame, JFileChooser,
-                         JButton, WindowConstants, JLabel, BoxLayout)
+from javax.swing import (
+    JPanel, JScrollPane, JTextArea, JFrame, JFileChooser, JButton, 
+    WindowConstants, JLabel, BoxLayout, JTextField, SpringLayout
+)
 from javax.swing.filechooser import FileNameExtensionFilter
 from java.awt import (Component, BorderLayout)
+import layout.SpringUtilities as SpringUtilities
 import os
 import tempfile
 import logging
@@ -40,31 +43,28 @@ class JythonGui(object):
         self.main_panel.layout = BoxLayout(self.main_panel, BoxLayout.Y_AXIS)
         self.frame.add(self.main_panel)
 
-        # Select input panel.
-        self.input_panel = JPanel()
-        self.input_panel.alignmentX = Component.CENTER_ALIGNMENT
-        self.main_panel.add(self.input_panel)
-        self.input_panel.add(
+        self.top_panel = JPanel(SpringLayout())
+        self.top_panel.alignmentX = Component.CENTER_ALIGNMENT
+        self.main_panel.add(self.top_panel)
+
+        # Select input elements.
+        self.top_panel.add(
             JLabel("1. Select a SASI .zip file or data folder:"))
-        self.input_panel.add(
+        self.top_panel.add(
             JButton("Select input...", actionPerformed=self.openInputChooser))
 
-        # Select output panel.
-        self.output_panel = JPanel()
-        self.output_panel.alignmentX = Component.CENTER_ALIGNMENT
-        self.main_panel.add(self.output_panel)
-        self.output_panel.add(JLabel("2. Specify an output file."))
-        self.output_panel.add(
+        # Select output elements.
+        self.top_panel.add(JLabel("2. Specify an output file."))
+        self.top_panel.add(
             JButton("Specify output...", actionPerformed=self.openOutputChooser))
 
-        # Run panel.
-        self.run_panel = JPanel()
-        self.run_panel.alignmentX = Component.CENTER_ALIGNMENT
-        self.main_panel.add(self.run_panel)
+        # Run elements.
         self.run_message = JLabel("3. Run SASI:")
-        self.run_panel.add(self.run_message)
+        self.top_panel.add(self.run_message)
         self.run_button = JButton("Run...", actionPerformed=self.runSASI)
-        self.run_panel.add(self.run_button)
+        self.top_panel.add(self.run_button)
+
+        SpringUtilities.makeCompactGrid(self.top_panel, 3, 2, 6, 6, 6, 6)
 
         # Log panel.
         self.log_panel = JPanel()
