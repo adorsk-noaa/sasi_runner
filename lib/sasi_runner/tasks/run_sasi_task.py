@@ -5,7 +5,7 @@ Task for running SASI.
 from sasi_data.dao.sasi_sa_dao import SASI_SqlAlchemyDAO
 from sasi_data.ingestors.sasi_ingestor import SASI_Ingestor
 from sasi_runner import packagers as packagers
-from sasi_model.sasi_model import SASI_Model
+from sasi_runner.sasi_model import SASI_Model
 import sasipedia
 import task_manager
 from sqlalchemy import create_engine
@@ -85,9 +85,11 @@ class RunSasiTask(task_manager.Task):
             ingest_logger = self.get_logger_for_stage('ingest', base_msg)
             self.message_logger.info(base_msg)
             dao = SASI_SqlAlchemyDAO(session=session)
-            sasi_ingestor = SASI_Ingestor(dao=dao, logger=ingest_logger,
-                                          config=self.config.get('ingest', {}))
-            sasi_ingestor.ingest(data_dir=data_dir)
+            sasi_ingestor = SASI_Ingestor(
+                data_dir=data_dir, dao=dao, logger=ingest_logger,
+                config=self.config.get('ingest', {})
+            )
+            sasi_ingestor.ingest()
         except Exception as e:
             self.logger.exception("Error ingesting")
             raise e

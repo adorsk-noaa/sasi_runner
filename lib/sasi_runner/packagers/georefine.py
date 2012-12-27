@@ -1,5 +1,4 @@
 import sasi_data.exporters as exporters
-import sasi_data.processors as processors
 from jinja2 import Environment, PackageLoader
 import os
 import csv
@@ -73,9 +72,7 @@ class GeoRefinePackager(object):
                     'type',
                     'type_id',
                     'area',
-                    {'source': 'geom', 'target': 'geom_wkt', 
-                     'processor': processors.sa_wkb_to_wkt
-                    }
+                    'geom_wkt'
                 ]
             },
 
