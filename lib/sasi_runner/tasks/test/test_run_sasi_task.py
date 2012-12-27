@@ -11,34 +11,13 @@ import platform
 
 
 class RunSasiTaskTestCase(unittest.TestCase):
-    def setUp(self):
-        self.data_dir = generate_data_dir(effort_model='nominal')
 
     def tearDown(self):
         if hasattr(self, 'data_dir') and self.data_dir.startswith('/tmp'):
             shutil.rmtree(self.data_dir)
 
-    def get_config(self):
-        return {
-            'ingest': {
-                'sections': {
-                    'gears': {
-                        #'limit': 1,
-                    },
-                    'habitats': {
-                        #'limit': 1000,
-                    },
-                    'grid': {
-                        #'limit': 100,
-                    }
-                }
-            },
-            #'run_model': {
-                #'batch_size': 100,
-            #}
-        }
-
     def test_run_sasi_task(self):
+        self.data_dir = generate_data_dir(effort_model='nominal')
 
         def get_connection():
             if platform.system() == 'Java':

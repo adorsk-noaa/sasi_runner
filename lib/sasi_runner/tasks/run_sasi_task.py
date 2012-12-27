@@ -250,5 +250,4 @@ class RunSasiTask(task_manager.Task):
 
         total_size_per_c = e_size_per_c + r_size_per_c
         batch_size = max(1, int(max_memory/total_size_per_c))
-        print "bs is: ", batch_size
         return batch_size

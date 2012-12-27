@@ -130,7 +130,7 @@ class SASI_Model(object):
 
             # Fill up a batch before procesing.
             if (batch_counter % batch_size) == 0:
-                self.run_batch(cell_batch, num_cells)
+                self.run_batch(cell_batch, log_interval=log_interval)
                 batch_counter = 0
                 cell_batch = []
 

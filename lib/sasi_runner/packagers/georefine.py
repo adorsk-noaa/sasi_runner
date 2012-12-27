@@ -172,11 +172,10 @@ class GeoRefinePackager(object):
 
     def create_schema_files(self):
         schema_file = os.path.join(self.target_dir, "schema.py")
-        schema_fh = open(schema_file, "w")
-        schema_template = self.template_env.get_template(
-            os.path.join('georefine', 'schema.py'))
-        schema_fh.write(schema_template.render())
-        schema_fh.close()
+        with open(schema_file, "w") as f:
+            schema_template = self.template_env.get_template(
+                os.path.join('georefine', 'schema.py'))
+            f.write(schema_template.render())
 
     def create_app_config_files(self):
         map_parameters = self.get_map_parameters()
@@ -185,16 +184,15 @@ class GeoRefinePackager(object):
         formatted_map_layers = self.format_layers_for_app_config(map_layers)
 
         app_config_file = os.path.join(self.target_dir, "app_config.py")
-        app_config_fh = open(app_config_file, "w")
-        app_config_template = self.template_env.get_template(
-            os.path.join('georefine', 'app_config.py'))
-        app_config_fh.write(
-            app_config_template.render(
-                map_parameters=map_parameters,
-                map_layers=formatted_map_layers
+        with open(app_config_file, "w") as f:
+            app_config_template = self.template_env.get_template(
+                os.path.join('georefine', 'app_config.py'))
+            f.write(
+                app_config_template.render(
+                    map_parameters=map_parameters,
+                    map_layers=formatted_map_layers
+                )
             )
-        )
-        app_config_fh.close()
 
     def create_static_files(self):
         # Create dir.
@@ -216,16 +214,18 @@ class GeoRefinePackager(object):
         map_parameters_file = os.path.join(
             self.data_dir, "map_parameters", "data", "map_parameters.csv"
         )
-        reader = csv.DictReader(open(map_parameters_file, "rb"))
-        return reader.next()
+        with open(map_parameters_file, "rb") as f:
+            reader = csv.DictReader(f)
+            return reader.next()
 
     def get_map_layers(self):
         map_layers = {'base': [], 'overlay': []}
         map_layers_file = os.path.join(
             self.data_dir, "map_layers", "data", "map_layers.csv"
         )
-        reader = csv.DictReader(open(map_layers_file, "rb"))
-        return [row for row in reader]
+        with open(map_layers_file, "rb") as f:
+            reader = csv.DictReader(f)
+            return [row for row in reader]
 
     def format_layers_for_app_config(self, layers):
         formatted_layers = {}
