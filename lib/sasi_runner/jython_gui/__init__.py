@@ -96,8 +96,8 @@ class JythonGui(object):
         self.outputChooser = JFileChooser()
         self.outputChooser.fileSelectionMode = JFileChooser.FILES_ONLY
 
-        self.frame.visible = True
         self.frame.setLocationRelativeTo(None)
+        self.frame.visible = True
 
     def log_msg(self, msg):
         self.log.append(msg + "\n")
@@ -129,14 +129,16 @@ class JythonGui(object):
         logger.addHandler(FnLogHandler(log_fn))
         logger.setLevel(logging.DEBUG)
 
-        def get_connection():
-            engine = create_engine('h2+zxjdbc:////%s' % self.db_file)
-            con = engine.connect()
-            return con
 
         # Run task in a separate thread, so that log
         # messages will be shown as task progresses.
         def run_task():
+
+            def get_connection():
+                engine = create_engine('h2+zxjdbc:////%s' % self.db_file)
+                con = engine.connect()
+                return con
+
             try:
                 task = RunSasiTask(
                     #input_path=self.selected_input_file.path,
@@ -147,7 +149,7 @@ class JythonGui(object):
                     get_connection=get_connection,
                     config={
                         'run_model': {
-                            'commit_interval': 1000,
+                            'batch_size': 10,
                         }
                     }
                 )
