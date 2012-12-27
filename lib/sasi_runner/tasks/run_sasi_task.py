@@ -112,6 +112,7 @@ class RunSasiTask(task_manager.Task):
                 't0': parms.time_start,
                 'tf': parms.time_end,
                 'dt': parms.time_step,
+                'effort_model': parms.effort_model,
                 'taus': taus,
                 'omegas': omegas,
                 'dao': dao,

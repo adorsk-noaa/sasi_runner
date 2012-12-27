@@ -149,7 +149,7 @@ class JythonGui(object):
                     get_connection=get_connection,
                     config={
                         'run_model': {
-                            'batch_size': 10,
+                            'batch_size': 1,
                         }
                     }
                 )
