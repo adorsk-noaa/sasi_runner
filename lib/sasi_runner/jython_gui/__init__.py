@@ -4,13 +4,16 @@ from javax.swing import (
     WindowConstants, JLabel, BoxLayout, JTextField, SpringLayout
 )
 from javax.swing.filechooser import FileNameExtensionFilter
+from javax.swing.border import EmptyBorder
 from java.awt import (Component, BorderLayout)
+from java.awt.event import AdjustmentListener
 import layout.SpringUtilities as SpringUtilities
 import os
 import tempfile
 import logging
 from sqlalchemy import create_engine
 import shutil
+from threading import Thread
 
 
 class FnLogHandler(logging.Handler):
@@ -69,6 +72,7 @@ class JythonGui(object):
         # Log panel.
         self.log_panel = JPanel()
         self.log_panel.alignmentX = Component.CENTER_ALIGNMENT
+        self.log_panel.setBorder(EmptyBorder(10,10,10,10))
         self.main_panel.add(self.log_panel)
         self.log_panel.setLayout(BorderLayout())
         self.log = JTextArea()
@@ -76,6 +80,14 @@ class JythonGui(object):
         self.logScrollPane = JScrollPane(self.log)
         self.logScrollPane.setVerticalScrollBarPolicy(
             JScrollPane.VERTICAL_SCROLLBAR_ALWAYS)
+        # Add listener to do auto scrolling..
+        class LogScrollListener(AdjustmentListener):
+            def adjustmentValueChanged(self, e):
+                adjustable = e.getAdjustable()
+                adjustable.setValue(adjustable.getMaximum())
+        self.logScrollPane.getVerticalScrollBar().addAdjustmentListener(
+            LogScrollListener())
+        
         self.log_panel.add(self.logScrollPane, BorderLayout.CENTER)
 
         # File selectors
@@ -122,21 +134,29 @@ class JythonGui(object):
             con = engine.connect()
             return con
 
-        task = RunSasiTask(
-            #input_path=self.selected_input_file.path,
-            #output_file=self.selected_output_file.path,
-            input_path="/home/adorsk/projects/sasi_runner/lib/sasi_runner/tasks/test_data/reduced_test_data",
-            output_file="/home/adorsk/Desktop/foo.tar.gz",
-            logger=logger,
-            get_connection=get_connection,
-            config={
-                'run_model': {
-                    'commit_interval': 1000,
-                }
-            }
-        )
-        task.call()
-        shutil.rmtree(self.tmp_dir)
+        # Run task in a separate thread, so that log
+        # messages will be shown as task progresses.
+        def run_task():
+            try:
+                task = RunSasiTask(
+                    #input_path=self.selected_input_file.path,
+                    #output_file=self.selected_output_file.path,
+                    input_path='/home/adorsk/projects/noaa/cache/sasi_runner/lib/sasi_runner/tasks/test_data/new_test_data',
+                    output_path='/tmp/foo.tar.gz',
+                    logger=logger,
+                    get_connection=get_connection,
+                    config={
+                        'run_model': {
+                            'commit_interval': 1000,
+                        }
+                    }
+                )
+                task.call()
+            except Exception as e:
+                logger.exception("Could not complete task")
+            shutil.rmtree(self.tmp_dir)
+
+        Thread(target=run_task).start()
 
     def validateParameters(self):
         return True
