@@ -38,6 +38,8 @@ class SASI_Model(object):
 
         self.effort_model = effort_model
 
+        self.result_counter = 0
+
         self.setup()
 
     def setup(self):
@@ -47,7 +49,7 @@ class SASI_Model(object):
 
         # Create va lookup.
         self.vas = {}
-        for va in self.dao.query('__VA'):
+        for va in self.dao.query('__VA').all():
             key = (va.gear_id, va.substrate_id, va.energy_id, va.feature_id)
             self.vas[key] = va
 
@@ -69,13 +71,13 @@ class SASI_Model(object):
         # Create feature lookup.
         self.logger.info("Creating features lookup...")
         self.features = {}
-        for f in self.dao.query('__Feature'):
+        for f in self.dao.query('__Feature').all():
             self.features[f.id] = f
 
         # Create gears lookup.
         self.logger.info("Creating gears lookup...")
         self.gears = {}
-        for g in self.dao.query('__Gear'):
+        for g in self.dao.query('__Gear').all():
             self.gears[g.id] = g
 
         # Group features by category and habitat types.
@@ -99,7 +101,7 @@ class SASI_Model(object):
         self.logger.info(("Creating cells-habitat_type-feature_category-"
                           "feature lookup..."))
         c_ht_fc_f = {}
-        for c in self.dao.query('__Cell'):
+        for c in self.dao.query('__Cell').all():
             c_ht_fc_f[c.id] = { 'ht': {} }
             for ht, pct_area in c.habitat_composition.items():
                 c_ht_fc_f[c.id]['ht'][ht] = {
@@ -260,12 +262,22 @@ class SASI_Model(object):
             # End of cell block
 
         # Save results.
-        for cell_results in result_cache.values():
-            for time_results in cell_results.values():
-                for result in time_results.values():
-                    self.dao.save(result, commit=False)
-        if commit:
-            self.dao.commit()
+        self.save_result_cache(result_cache, commit=commit)
+
+    def save_result_cache(self, result_cache, commit=True):
+        prev_num_saved = self.result_counter
+
+        def results_iter():
+            for cell_results in result_cache.values():
+                for time_results in cell_results.values():
+                    for result in time_results.values():
+                        self.result_counter += 1
+                        yield result
+
+        self.logger.info("Saving partial results...")
+        self.dao.bulk_insert_results(results_iter(), commit=commit)
+        self.logger.info("%.3e results saved. (%.3e overall)" % (
+            self.result_counter - prev_num_saved, self.result_counter))
 
     def get_effort_cache(self, cells):
         """ Get efforts cache, grouped by cell and time. """

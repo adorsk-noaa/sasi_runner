@@ -66,7 +66,6 @@ class RunSasiTask(task_manager.Task):
         build_dir = tempfile.mkdtemp(prefix="rsBuild.")
 
         con = self.get_connection()
-        trans = con.begin()
         session = sessionmaker()(bind=con)
 
         # If input_path is a file, assemble data dir.
@@ -173,7 +172,7 @@ class RunSasiTask(task_manager.Task):
 
     def get_output_package(self, data_dir=None, metadata_dir=None, dao=None,
                            output_format=None, logger=logging.getLogger(),
-                           batch_size=1e5,output_file=None):
+                           batch_size=1e4,output_file=None):
 
         #self.engine_logger.setLevel(logging.INFO)
 
