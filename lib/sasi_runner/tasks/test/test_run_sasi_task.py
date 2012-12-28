@@ -50,6 +50,11 @@ class RunSasiTaskTestCase(unittest.TestCase):
                         }
                     }
                 },
+                'run_model': {
+                    'run': {
+                        'batch_size': 'auto',
+                    }
+                },
             }
         )
         task.call()

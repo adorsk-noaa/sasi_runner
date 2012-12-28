@@ -12,7 +12,8 @@ import os
 argparser = argparse.ArgumentParser()
 argparser.add_argument('input')
 argparser.add_argument('--db-uri')
-argparser.add_argument('--batch-size', '-b', type=int, default=100)
+argparser.add_argument('--run-batch-size', '-rbs', default='auto')
+argparser.add_argument('--write-batch-size', '-wbs', default='auto')
 
 args = argparser.parse_args()
 
@@ -40,14 +41,23 @@ def get_connection():
     con = engine.connect()
     return con
 
+# Run batch size.
+try:
+    run_batch_size = float(args.run_batch_size)
+except:
+    run_batch_size = args.run_batch_size
+
+# Write batch size.
+try:
+    write_batch_size = float(args.write_batch_size)
+except:
+    write_batch_size = args.write_batch_size
+
 task = RunSasiTask(
     input_path=args.input,
     logger=logger,
     get_connection=get_connection,
     config={
-        'run_model': {
-            'batch_size': args.batch_size
-        },
         'ingest': {
             'sections': {
                 'grid': {
@@ -57,7 +67,15 @@ task = RunSasiTask(
                     'limit': 1e2
                 },
             }
-        }
+        },
+        'run_model': {
+            'run': {
+                'batch_size': run_batch_size,
+            },
+        },
+        'output': {
+            'batch_size': write_batch_size,
+        },
     }
 )
 task.call()

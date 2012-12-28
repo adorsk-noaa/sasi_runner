@@ -16,6 +16,7 @@ import os
 import shutil
 import zipfile
 import logging
+import platform
 
 
 class LoggerLogHandler(logging.Handler):
@@ -118,17 +119,15 @@ class RunSasiTask(task_manager.Task):
                 'logger': run_model_logger,
             }
 
-            # Just use a default batch size, rather than one calculated on
-            # memory. After a certain size, limiting factor becomes write
-            # speed, which doesn't vary much once batches are past a certain
-            # size. In addition, smaller, regular batch sizes can make the
-            # logging output easier for users to understand.
-            #model_kwargs['batch_size'] = self.get_batch_size(dao, self.max_mem)
-            model_kwargs['batch_size'] = run_model_config.get('batch_size', 10)
+            run_kwargs = {}
+            run_kwargs.update(run_model_config.get('run', {}))
+            batch_size = run_kwargs.setdefault('batch_size', 20)
+            if batch_size == 'auto':
+                run_kwargs['batch_size'] = self.get_run_batch_size(dao)
 
             model_kwargs.update(run_model_config)
             m = SASI_Model(**model_kwargs)
-            m.run(**run_model_config.get('run',{}))
+            m.run(**run_kwargs)
         except Exception as e:
             self.logger.exception("Error running model: %s" % e)
             raise e
@@ -145,18 +144,21 @@ class RunSasiTask(task_manager.Task):
             self.logger.exception("Error generating metadata.")
             raise e
 
-        # Create georefine package.
+        # Generate ouput package.
         try:
-            base_msg = "Generating GeoRefine package..."
-            georefine_package_logger = self.get_logger_for_stage(
-                'georefine_package', base_msg)
+            output_config = self.config.get('output', {})
+            base_msg = "Generating output package..."
+            output_package_logger = self.get_logger_for_stage(
+                'output_package', base_msg)
             self.message_logger.info(base_msg)
-            georefine_package_file = self.get_output_package(
+
+            self.create_output_package(
                 data_dir=data_dir, 
                 metadata_dir=metadata_dir,
                 dao=dao, 
                 output_format='georefine',
-                logger=georefine_package_logger,
+                logger=output_package_logger,
+                batch_size=output_config.get('batch_size', 'auto'),
                 output_file=self.output_file,
             )
         except Exception as e:
@@ -170,11 +172,16 @@ class RunSasiTask(task_manager.Task):
             self.output_file))
         self.status = 'resolved'
 
-    def get_output_package(self, data_dir=None, metadata_dir=None, dao=None,
+    def create_output_package(self, data_dir=None, metadata_dir=None, dao=None,
                            output_format=None, logger=logging.getLogger(),
-                           batch_size=1e4,output_file=None):
+                           batch_size='auto',output_file=None):
 
-        #self.engine_logger.setLevel(logging.INFO)
+        # Calculate batch size if set to 'auto'.
+        if batch_size == 'auto':
+            approx_obj_size = self.get_approx_sasi_obj_size()
+            mem = self.get_free_mem()
+            # Calculate rough batch size w/ some fudge.
+            batch_size = max(1e3, int(.75 * mem/approx_obj_size))
 
         # Assemble data for packager.
         data = {}
@@ -221,32 +228,92 @@ class RunSasiTask(task_manager.Task):
         logger.setLevel(self.message_logger.level)
         return logger
 
-    def get_batch_size(self, dao, max_memory=1e9):
-        """ Calculate approximate number of results per cell,
-        based on rough size of efforts + counts per cell.
-        We can use this to set a reasonable batch size,
-        based on the given max memory.
+    def get_run_batch_size(self, dao, max_memory=1e9):
+        """ Calculate approximate number of cells to include
+        in model batch runs.
         """
+
+        approx_obj_size = self.get_approx_sasi_obj_size()
+        mem = self.get_free_mem()
+
+        # Get counts of SASI objects.
         parms = dao.query('__ModelParameters').one()
         counts = {}
         counts['t'] = (parms.time_end - parms.time_start)/parms.time_step
-        data_categories = ['energy', 'substrate', 'feature', 'gear',
-                           'effort', 'cell']
+        data_categories = ['energy', 'substrate', 'feature', 'gear', 'cell']
         for category in data_categories:
             counts[category] = dao.query('__' + category.capitalize(), 
                                          format_='query_obj').count()
-        # Approximate size of efforts per cell.
-        e_size = 1024
-        es_per_c = counts['effort']/counts['cell']
-        e_size_per_c = e_size * es_per_c
 
-        # approximate size of results per cell.
-        r_size = 1024
-        rs_per_c = 1
-        for category in ['t', 'energy', 'substrate', 'feature', 'gear']:
-            rs_per_c *= counts[category]
-        r_size_per_c = r_size * rs_per_c
+        # Estimate max number of results per cell.
+        results_per_c = 1
+        for data_cat in ['t', 'energy', 'substrate', 'feature', 'gear']:
+            results_per_c *= counts[data_cat]
 
-        total_size_per_c = e_size_per_c + r_size_per_c
-        batch_size = max(1, int(max_memory/total_size_per_c))
+        # Estimate max number of efforts per cell.
+        efforts_per_c = 1
+        for data_cat in ['t', 'gear']:
+            efforts_per_c *= counts[data_cat]
+
+        # Estimate memory use per cell.
+        total_size_per_c = (results_per_c + efforts_per_c) * approx_obj_size
+
+        # Calculate batch size, w/ some fudging.
+        batch_size = max(1, int(.75 * mem/total_size_per_c))
         return batch_size
+
+    def get_approx_sasi_obj_size(self):
+        """ Rough approximations of SASI object sizes
+        in bytes. """
+        if platform.system() == 'Java':
+            return 2048.0
+        else:
+            return 1024.0
+
+    def get_free_mem(self):
+        """ Get available memory."""
+        if platform.system() == 'Java':
+            return self.get_jython_free_mem()
+        else:
+            return self.get_cython_free_mem()
+
+    def get_jython_free_mem(self):
+        # Force garbage collection first.
+        from java.lang import Runtime
+        from java.lang.ref import WeakReference
+        from java.lang import Object
+        from java.lang import System
+        obj = Object()
+        ref = WeakReference(obj)
+        obj = None
+        while ref.get() is not None:
+            System.gc()
+
+        # Calculate approx. available memory.
+        return Runtime.getRuntime().freeMemory()
+
+    def get_cython_free_mem(self):
+        import ctypes
+        if os.name == "posix":
+            mbs = int(os.popen("free -m").readlines()[1].split()[3])
+            return (1024**2) * mbs
+        elif os.name == "nt":
+            kernel32 = ctypes.windll.kernel32
+            c_ulong = ctypes.c_ulong
+            class MEMORYSTATUS(ctypes.Structure):
+                _fields_ = [
+                    ("dwLength", c_ulong),
+                    ("dwMemoryLoad", c_ulong),
+                    ("dwTotalPhys", c_ulong),
+                    ("dwAvailPhys", c_ulong),
+                    ("dwTotalPageFile", c_ulong),
+                    ("dwAvailPageFile", c_ulong),
+                    ("dwTotalVirtual", c_ulong),
+                    ("dwAvailVirtual", c_ulong)
+                ]
+            memoryStatus = MEMORYSTATUS()
+            memoryStatus.dwLength = ctypes.sizeof(MEMORYSTATUS)
+            kernel32.GlobalMemoryStatus(ctypes.byref(memoryStatus))
+            return int(memoryStatus.dwAvailPhys)
+        else:
+            raise Exception("Cannot detect memory for os '%s'" % os.name)

@@ -149,8 +149,13 @@ class JythonGui(object):
                     get_connection=get_connection,
                     config={
                         'run_model': {
-                            'batch_size': 1,
-                        }
+                            'run': {
+                                'batch_size': 'auto',
+                            }
+                        },
+                        'output': {
+                            'batch_size': 'auto',
+                        },
                     }
                 )
                 task.call()

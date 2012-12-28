@@ -4,8 +4,7 @@ import logging
 class SASI_Model(object):
 
     def __init__(self, t0=0, tf=10, dt=1, taus=None, omegas=None, dao=None, 
-                 logger=logging.getLogger(), batch_size=100,
-                 effort_model='nominal', **kwargs):
+                 logger=logging.getLogger(), effort_model='nominal', **kwargs):
 
         self.logger = logger
 
@@ -33,8 +32,6 @@ class SASI_Model(object):
         self.omegas = omegas
 
         self.dao = dao
-
-        self.batch_size = batch_size
 
         self.effort_model = effort_model
 
@@ -114,9 +111,10 @@ class SASI_Model(object):
 
     def run(self, log_interval=1, commit=True, **kwargs):
         self.run_counter = 0
-        batch_size = kwargs.get('batch_size', getattr(self, 'batch_size', 100))
+        batch_size = kwargs.get('batch_size', 20)
 
         self.logger.info("Iterating through cells...")
+        self.logger.info("Saving results every %s cells" % batch_size)
         Cell = self.dao.schema['sources']['Cell']
         cell_q = self.dao.session.query(Cell).order_by(Cell.id)
         batched_cell_q = self.dao.get_batched_results(cell_q, 1e2)
