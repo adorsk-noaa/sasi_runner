@@ -9,12 +9,16 @@ assets = {
         'source': 'http://pypi.python.org/packages/2.7/s/setuptools/setuptools-0.6c11-py2.7.egg'
     },
     'jinja2' : {
-        'type': 'rsync',
-        'source': '/home/adorsk/projects/sasi_runner/jy2.7/Lib/site-packages/jinja2',
+        'type': 'url',
+        'source': 'http://pypi.python.org/packages/source/J/Jinja/Jinja-1.2.tar.gz',
+        'untar': True,
+        'path': 'Jinja-1.2/jinja',
     },
     'blinker' : {
-        'type': 'rsync',
-        'source': '/home/adorsk/projects/sasi_runner/jy2.7/Lib/site-packages/blinker',
+        'type': 'url',
+        'source': 'http://pypi.python.org/packages/source/b/blinker/blinker-1.2.tar.gz',
+        'untar': True,
+        'path': 'blinker-1.2/blinker',
     },
     'sa_dao' : {
         'type': 'git',
@@ -26,27 +30,16 @@ assets = {
         'source': 'https://github.com/adorsk-noaa/sasi_data',
         'path': 'lib/sasi_data',
     },
-    'sasi_model' : {
-        'type': 'git',
-        'source': 'https://github.com/adorsk-noaa/sasi_model',
-        'path': 'lib/sasi_model',
-    },
     'sasipedia' : {
         'type': 'git',
         'source': 'https://github.com/adorsk-noaa/sasipedia.git',
         'path': 'lib/sasipedia',
     },
     'sqlalchemy' : {
-        'type': 'hg',
-        'source': 'https://adorsk@bitbucket.org/adorsk/sqlalchemy',
-        #@TODO: implement refspec for h2+zxjdbc branch.
-        'path': 'lib/sqlalchemy',
-    },
-    'geoalchemy': {
-        'type': 'git',
-        'source': 'https://github.com/adorsk/geoalchemy.git',
-        'path': 'geoalchemy',
-        'refspec': 'geodb'
+        'type': 'url',
+        'unzip': True,
+        'path': 'sqlalchemy-rel_0_8/lib/sqlalchemy',
+        'source': 'http://hg.sqlalchemy.org/sqlalchemy/archive/rel_0_8.zip' ,
     },
     'sasi_runner' : {
         'type': 'git',
@@ -58,6 +51,11 @@ assets = {
         'source': 'https://github.com/adorsk/TaskManager.git',
         'path': 'lib/task_manager',
     },
+    'sqlalchemy_h2' : {
+        'type': 'git',
+        'source': 'https://github.com/adorsk/sqlalchemy_h2.git',
+        'path': 'sqlalchemy_h2',
+    },
     'jython-full.jar' : {
         'type': 'rsync',
         'source': '/home/adorsk/tools/jython/jython-dev/dist/jython-standalone.jar'
@@ -65,5 +63,9 @@ assets = {
     'java-lib' : {
         'type': 'rsync',
         'source': '/home/adorsk/tools/jython/jython-dev/dist/javalib'
+    },
+    'jenv-java-lib' : {
+        'type': 'rsync',
+        'source': '/home/adorsk/projects/noaa/jenv/javalib'
     },
 }

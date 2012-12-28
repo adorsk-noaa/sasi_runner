@@ -37,8 +37,8 @@ def main():
     )
 
     # Pylibs.
-    for py_asset in ['sa_dao', 'sasi_data', 'sasi_model', 'sasipedia',
-                     'sqlalchemy', 'geoalchemy', 'sasi_runner', 'jinja2',
+    for py_asset in ['sa_dao', 'sasi_data', 'sasipedia',
+                     'sqlalchemy', 'sqlalchemy_h2', 'sasi_runner', 'jinja2',
                      'blinker', 'task_manager']:
         shutil.copytree(
             os.path.join(assets_dir, py_asset),
@@ -58,6 +58,11 @@ def main():
         os.path.join(assets_dir, 'java-lib'),
         os.path.join(build_dir, 'java-lib')
     )
+    subprocess.call(
+        "cp -r %s/* %s" % (
+            os.path.join(assets_dir, 'jenv-java-lib'),
+            os.path.join(build_dir, 'java-lib'),
+        ), shell=True)
 
     # Copy java src.
     shutil.copytree(
