@@ -56,20 +56,17 @@ assets = {
         'source': 'https://github.com/adorsk/sqlalchemy_h2.git',
         'path': 'sqlalchemy_h2',
     },
-    'jython-full.jar' : {
+    'jython.jar' : {
         'type': 'rsync',
-        'source': '/home/adorsk/tools/jython/jython-dev/dist/jython-standalone.jar'
+        'source': '/home/adorsk/tools/jython/full_build/work/dist/jython-standalone.jar'
     },
-    'java-lib' : {
-        'type': 'rsync',
-        'source': '/home/adorsk/tools/jython/jython-dev/dist/javalib'
-    },
-    'jenv-java-lib' : {
-        'type': 'rsync',
-        'source': '/home/adorsk/projects/noaa/jenv/javalib'
-    },
-    'spring_utilities' : {
+    'spring_utilities.py' : {
         'type': 'url',
         'source': 'https://gist.github.com/raw/4524185/gistfile1.txt'
-    }
+    },
+    'jython_runner' : {
+        'type': 'git',
+        'source': 'https://github.com/adorsk/jython_runner.git'
+    },
+
 }

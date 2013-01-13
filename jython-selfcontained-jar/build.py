@@ -9,6 +9,8 @@ assets_dir = os.path.join(this_dir, 'assets')
 cache_dir = os.path.join(this_dir, 'cache')
 build_dir = os.path.join(this_dir, "build")
 dist_dir = os.path.join(this_dir, "dist")
+maven_cache_dir = os.path.join(this_dir, 'mvn_cache')
+pom_file = os.path.join(this_dir, "pom.xml")
 
 
 def main():
@@ -25,75 +27,60 @@ def main():
 
     os.makedirs(build_dir)
 
-    for dir_ in ['etc', 'python-src', 'python-lib']:
-        os.makedirs(os.path.join(build_dir, dir_))
-
     # Move assets into dirs.
+
+    # Main dir, from jython_runner template
+    base_dir = os.path.join(build_dir, 'sasi_runner')
+    shutil.copytree(
+        os.path.join(assets_dir, 'jython_runner'),
+        base_dir,
+    )
 
     # jython.jar
     shutil.copyfile(
-        os.path.join(assets_dir, 'jython-full.jar'),
-        os.path.join(build_dir, 'jython-full.jar')
+        os.path.join(assets_dir, 'jython.jar'),
+        os.path.join(base_dir, '.jython', 'jython.jar')
     )
 
     # Pylibs.
+    pylib_dir = os.path.join(base_dir, '.lib', 'python')
     for py_asset in ['sa_dao', 'sasi_data', 'sasipedia',
                      'sqlalchemy', 'sqlalchemy_h2', 'sasi_runner', 'jinja2',
-                     'blinker', 'task_manager', 'spring_utilities']:
-        shutil.copytree(
-            os.path.join(assets_dir, py_asset),
-            os.path.join(build_dir, 'python-lib', py_asset)
-        )
+                     'blinker', 'task_manager', 'spring_utilities.py']:
+        asset_path = os.path.join(assets_dir, py_asset)
+        target_path = os.path.join(pylib_dir, py_asset)
+        if os.path.isdir(asset_path):
+            shutil.copytree( asset_path, target_path)
+        else:
+            shutil.copy(asset_path, target_path)
+
     shutil.copy(
         os.path.join(assets_dir, 'setuptools.egg'),
-        os.path.join(build_dir, 'python-lib', 'setuptools.egg')
+        os.path.join(pylib_dir, 'setuptools.egg')
     )
     shutil.copy(
         os.path.join(templates_dir, 'setuptools.pth'),
-        os.path.join(build_dir, 'python-lib', 'setuptools.pth')
+        os.path.join(pylib_dir, 'setuptools.pth')
+    )
+
+    entrypoint_target = os.path.join(pylib_dir, 'entrypoint.py')
+    if os.path.exists(entrypoint_target):
+        os.remove(entrypoint_target)
+    shutil.copy(
+        os.path.join(templates_dir, 'entrypoint.py'),
+        entrypoint_target,
     )
 
     # Jars.
-    shutil.copytree(
-        os.path.join(assets_dir, 'java-lib'),
-        os.path.join(build_dir, 'java-lib')
-    )
+    javalib_dir = os.path.join(base_dir, '.lib', 'java')
+    if not os.path.exists(maven_cache_dir):
+        os.makedirs(maven_cache_dir)
     subprocess.call(
-        "cp -r %s/* %s" % (
-            os.path.join(assets_dir, 'jenv-java-lib'),
-            os.path.join(build_dir, 'java-lib'),
-        ), shell=True)
-
-    # Copy java src.
-    shutil.copytree(
-        os.path.join(templates_dir, 'java-src'),
-        os.path.join(build_dir, 'java-src')
-    )
-
-    # Copy entry point.
-    shutil.copyfile(
-        os.path.join(templates_dir, 'entrypoint.py'),
-        os.path.join(build_dir, 'python-src', 'entrypoint.py')
-    )
-
-    # Copy build script.
-    shutil.copyfile(
-        os.path.join(templates_dir, 'build.xml'),
-        os.path.join(build_dir, 'build.xml')
-    )
-
-    # Run ant build.
-    subprocess.call(
-        "cd %s; ant" % build_dir,
-        shell=True
-    )
-
-    # Move dist dir to this directory.
-    shutil.move(
-        os.path.join(build_dir, "dist"),
-        dist_dir
-    )
-
+        'mvn -f %s -DoutputDirectory="%s" dependency:copy-dependencies' % (
+            pom_file, maven_cache_dir), 
+        shell=True)
+    subprocess.call('cp -r "%s"/*  %s' % (maven_cache_dir, javalib_dir),
+                    shell=True)
 
 if __name__ == '__main__':
     main()

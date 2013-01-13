@@ -7,10 +7,11 @@ from javax.swing.filechooser import FileNameExtensionFilter
 from javax.swing.border import EmptyBorder
 from java.awt import (Component, BorderLayout)
 from java.awt.event import AdjustmentListener
-import spring_utilities SpringUtilities
+import spring_utilities as SpringUtilities
 import os
 import tempfile
 import logging
+import sqlalchemy_h2
 from sqlalchemy import create_engine
 import shutil
 from threading import Thread
