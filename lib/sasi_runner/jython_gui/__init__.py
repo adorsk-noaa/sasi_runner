@@ -81,14 +81,7 @@ class JythonGui(object):
         self.logScrollPane = JScrollPane(self.log)
         self.logScrollPane.setVerticalScrollBarPolicy(
             JScrollPane.VERTICAL_SCROLLBAR_ALWAYS)
-        # Add listener to do auto scrolling..
-        class LogScrollListener(AdjustmentListener):
-            def adjustmentValueChanged(self, e):
-                adjustable = e.getAdjustable()
-                adjustable.setValue(adjustable.getMaximum())
-        self.logScrollPane.getVerticalScrollBar().addAdjustmentListener(
-            LogScrollListener())
-        
+        self.logScrollBar = self.logScrollPane.getVerticalScrollBar()
         self.log_panel.add(self.logScrollPane, BorderLayout.CENTER)
 
         # File selectors
@@ -101,7 +94,9 @@ class JythonGui(object):
         self.frame.visible = True
 
     def log_msg(self, msg):
+        """ Print message to log and scroll to bottom. """
         self.log.append(msg + "\n")
+        self.log.setCaretPosition(self.log.getDocument().getLength())
 
     def openInputChooser(self, event):
         ret = self.inputChooser.showOpenDialog(self.frame)
@@ -142,10 +137,10 @@ class JythonGui(object):
 
             try:
                 task = RunSasiTask(
-                    #input_path=self.selected_input_file.path,
-                    #output_file=self.selected_output_file.path,
-                    input_path='/home/adorsk/projects/noaa/cache/sasi_runner/lib/sasi_runner/tasks/test_data/new_test_data',
-                    output_path='/tmp/foo.tar.gz',
+                    input_path=self.selected_input_file.path,
+                    output_file=self.selected_output_file.path,
+                    #input_path='/home/adorsk/projects/noaa/cache/sasi_runner/lib/sasi_runner/tasks/test_data/new_test_data',
+                    #output_path='/tmp/foo.tar.gz',
                     logger=logger,
                     get_connection=get_connection,
                     config={
