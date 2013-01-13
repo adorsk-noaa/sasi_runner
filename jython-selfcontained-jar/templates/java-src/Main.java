@@ -61,8 +61,6 @@ public class Main {
     String py_code = "try:\n" + 
       " import site\n" +
       " site.addsitedir('" + pythonLibPath + "')\n" +
-      " import sys\n" +
-      " print 'sp is: ', sys.path\n" +
       " import entrypoint\n" +
       " entrypoint.main()\n" +
       "except SystemExit: pass";

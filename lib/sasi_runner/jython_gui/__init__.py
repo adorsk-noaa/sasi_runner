@@ -7,7 +7,7 @@ from javax.swing.filechooser import FileNameExtensionFilter
 from javax.swing.border import EmptyBorder
 from java.awt import (Component, BorderLayout)
 from java.awt.event import AdjustmentListener
-import layout.SpringUtilities as SpringUtilities
+import spring_utilities SpringUtilities
 import os
 import tempfile
 import logging

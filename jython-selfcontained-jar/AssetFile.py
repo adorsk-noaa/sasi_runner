@@ -10,9 +10,9 @@ assets = {
     },
     'jinja2' : {
         'type': 'url',
-        'source': 'http://pypi.python.org/packages/source/J/Jinja/Jinja-1.2.tar.gz',
+        'source': 'http://pypi.python.org/packages/source/J/Jinja2/Jinja2-2.6.tar.gz',
         'untar': True,
-        'path': 'Jinja-1.2/jinja',
+        'path': 'Jinja2-2.6/jinja2',
     },
     'blinker' : {
         'type': 'url',
@@ -68,4 +68,8 @@ assets = {
         'type': 'rsync',
         'source': '/home/adorsk/projects/noaa/jenv/javalib'
     },
+    'spring_utilities' : {
+        'type': 'url',
+        'source': 'https://gist.github.com/raw/4524185/gistfile1.txt'
+    }
 }

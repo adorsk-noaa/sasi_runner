@@ -39,7 +39,7 @@ def main():
     # Pylibs.
     for py_asset in ['sa_dao', 'sasi_data', 'sasipedia',
                      'sqlalchemy', 'sqlalchemy_h2', 'sasi_runner', 'jinja2',
-                     'blinker', 'task_manager']:
+                     'blinker', 'task_manager', 'spring_utilities']:
         shutil.copytree(
             os.path.join(assets_dir, py_asset),
             os.path.join(build_dir, 'python-lib', py_asset)
