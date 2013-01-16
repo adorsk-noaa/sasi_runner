@@ -32,13 +32,12 @@ class LoggerLogHandler(logging.Handler):
 class RunSasiTask(task_manager.Task):
 
     def __init__(self, input_path=None, output_file=None, config={}, 
-                 get_connection=None, max_mem=1e9, **kwargs):
+                 get_connection=None, **kwargs):
         super(RunSasiTask, self).__init__(**kwargs)
         self.logger.debug("RunSasiTask.__init__")
         if not kwargs.get('data', None):
             self.data = {}
         self.input_path = input_path
-        self.max_mem = max_mem
         self.config = config
 
         if not output_file:
@@ -117,6 +116,7 @@ class RunSasiTask(task_manager.Task):
                 'omegas': omegas,
                 'dao': dao,
                 'logger': run_model_logger,
+                'result_key_fields': run_model_config.get('result_key_fields'),
             }
 
             run_kwargs = {}

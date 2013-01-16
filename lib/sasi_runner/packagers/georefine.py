@@ -144,8 +144,6 @@ class GeoRefinePackager(object):
                     'y',
                     'z',
                     'znet',
-                    'hours_fished',
-                    'value',
                 ]
             }
         ]

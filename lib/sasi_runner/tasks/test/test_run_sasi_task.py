@@ -51,6 +51,7 @@ class RunSasiTaskTestCase(unittest.TestCase):
                     }
                 },
                 'run_model': {
+                    'result_key_fields': ['gear_id', 'substrate_id'],
                     'run': {
                         'batch_size': 'auto',
                     }
