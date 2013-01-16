@@ -5,7 +5,7 @@ class SASI_Model(object):
 
     def __init__(self, t0=0, tf=10, dt=1, taus=None, omegas=None, dao=None, 
                  logger=logging.getLogger(), effort_model='nominal', 
-                 result_key_fields=None, **kwargs):
+                 result_fields=None, **kwargs):
 
         self.logger = logger
 
@@ -36,10 +36,10 @@ class SASI_Model(object):
         # More fields improve the resolution of SASI results,
         # e.g. you can filter by both gear and substrate
         # but can greatly increase the number of results.
-        if not result_key_fields:
-            result_key_fields = ['gear_id', 'substrate_id', 'energy_id',
+        if not result_fields:
+            result_fields = ['gear_id', 'substrate_id', 'energy_id',
                                  'feature_id', 'feature_category_id']
-        self.result_key_fields = result_key_fields
+        self.result_fields = result_fields
 
         self.dao = dao
 
@@ -151,7 +151,7 @@ class SASI_Model(object):
 
     def run_batch(self, cell_batch, commit=True, log_interval=1):
         # Set of current fields for result keys.
-        key_fields = {}
+        result_fields = {}
 
         # Get a local cache of results and efforts for the current batch.
         result_cache = self.get_result_cache(cell_batch)
@@ -181,7 +181,7 @@ class SASI_Model(object):
                     if gear.max_depth is not None \
                        and cell.z > gear.max_depth:
                         continue
-                    key_fields['gear_id'] = gear.id
+                    result_fields['gear_id'] = gear.id
 
                     # Get relevant habitat types for the effort.
                     relevant_habitat_types = []
@@ -200,7 +200,7 @@ class SASI_Model(object):
 
                     # For each relevant habitat...
                     for ht in relevant_habitat_types:
-                        key_fields.update({
+                        result_fields.update({
                             'substrate_id': ht[0],
                             'energy_id': ht[1],
                         })
@@ -223,7 +223,7 @@ class SASI_Model(object):
                         fc_pct = ht_pct/len(fcs)
 
                         for fc in fcs:
-                            key_fields['feature_category_id'] = fc
+                            result_fields['feature_category_id'] = fc
                             relevant_features = []
                             for f in self.c_ht_fc_f[c]['ht'][ht]['fc'][fc]:
                                 if f in self.f_by_g[effort.gear_id]: 
@@ -238,7 +238,7 @@ class SASI_Model(object):
                             pct_f = fc_pct/len(relevant_features)
 
                             for f in relevant_features:
-                                key_fields['feature_id'] = f
+                                result_fields['feature_id'] = f
 
                                 # Get vulnerability assessment for the effort.
                                 va = self.vas[(effort.gear_id, ht[0], ht[1], f)]
@@ -247,7 +247,7 @@ class SASI_Model(object):
                                 tau = self.taus[va.r]
 
                                 result = self.get_or_create_result(
-                                    result_cache, t, c, key_fields)
+                                    result_cache, t, c, result_fields)
 
                                 # Calculate swept area for the feature.
                                 f_swept_area = pct_f * getattr(effort, 'a', 0.0)
@@ -271,7 +271,7 @@ class SASI_Model(object):
                                     if future_t <= self.tf:
                                         future_result = self.get_or_create_result(
                                             result_cache, future_t, c,
-                                            key_fields)
+                                            result_fields)
                                         future_result.x += recovery_per_dt
 
                                 # Calculate Z.
@@ -287,7 +287,7 @@ class SASI_Model(object):
                         cur_r.znet = cur_r.z
                     else:
                         prev_r = self.get_or_create_result(
-                            result_cache, t - self.dt, c, key_fields)
+                            result_cache, t - self.dt, c, result_fields)
                         cur_r.znet = prev_r.znet + cur_r.z
                 # End of timestep block
             # End of cell block
@@ -355,9 +355,10 @@ class SASI_Model(object):
         return result_cache
 
     def get_or_create_result(self, result_cache, t, cell_id, fields):
-        result_key = self.get_result_key(t, cell_id, fields)
+        result_key = tuple(
+            [t, cell_id] + [fields[f] for f in self.result_fields])
         relevant_fields = dict([(k,v) for k,v in fields.items() if k in
-                                self.result_key_fields])
+                                self.result_fields])
         if not result_cache[cell_id][t].has_key(result_key):
             new_result = self.dao.schema['sources']['Result'](
                 t=t,
@@ -370,6 +371,3 @@ class SASI_Model(object):
             )
             result_cache[cell_id][t][result_key] = new_result
         return result_cache[cell_id][t][result_key]
-
-    def get_result_key(self, t, cell_id, fields):
-        return tuple([t, cell_id] + [fields[f] for f in self.result_key_fields])

@@ -40,6 +40,12 @@ class RunSasiTask(task_manager.Task):
         self.input_path = input_path
         self.config = config
 
+        # Set default result key fields.
+        # Can include any members of:
+        # 'gear_id', 'substrate_id', 'energy_id', 'feature_id',
+        # 'feature_category_id'
+        self.config.setdefault('result_fields', ['gear_id'])
+
         if not output_file:
             os_hndl, output_file = tempfile.mkstemp(suffix=".georefine.tar.gz")
         self.output_file = output_file
@@ -116,7 +122,7 @@ class RunSasiTask(task_manager.Task):
                 'omegas': omegas,
                 'dao': dao,
                 'logger': run_model_logger,
-                'result_key_fields': run_model_config.get('result_key_fields'),
+                'result_fields': self.config.get('result_fields'),
             }
 
             run_kwargs = {}
@@ -245,9 +251,16 @@ class RunSasiTask(task_manager.Task):
             counts[category] = dao.query('__' + category.capitalize(), 
                                          format_='query_obj').count()
 
-        # Estimate max number of results per cell.
-        results_per_c = 1
-        for data_cat in ['t', 'energy', 'substrate', 'feature', 'gear']:
+        # Estimate max number of results per cell, based on result key fields.
+        result_fields_to_data_cats = {
+            'energy_id': 'energy',
+            'substrate_id': 'substrate',
+            'feature_id': 'feature',
+            'gear_id': 'gear'
+        }
+        results_per_c = counts['t']
+        for field in self.config['result_fields']:
+            data_cat = result_fields_to_data_cats[field]
             results_per_c *= counts[data_cat]
 
         # Estimate max number of efforts per cell.

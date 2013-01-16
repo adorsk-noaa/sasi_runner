@@ -14,15 +14,15 @@ argparser.add_argument('input')
 argparser.add_argument('--db-uri')
 argparser.add_argument('--run-batch-size', '-rbs', default='auto')
 argparser.add_argument('--write-batch-size', '-wbs', default='auto')
+argparser.add_argument('--result-fields', '-rf', nargs='*')
+argparser.add_argument('--grid-limit', '-gl', type=int)
+argparser.add_argument('--habitats-limit', '-hl', type=int)
 
 args = argparser.parse_args()
 
 logger = logging.getLogger('run_task')
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
-
-#logging.getLogger('sqlalchemy.engine').addHandler(logging.StreamHandler())
-#logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 db_dir = None
 
@@ -58,13 +58,14 @@ task = RunSasiTask(
     logger=logger,
     get_connection=get_connection,
     config={
+        'result_fields': args.result_fields,
         'ingest': {
             'sections': {
                 'grid': {
-                    'limit': 1e2
+                    'limit': args.grid_limit,
                 },
                 'habitats': {
-                    'limit': 1e2
+                    'limit': args.habitats_limit
                 },
             }
         },
