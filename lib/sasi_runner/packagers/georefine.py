@@ -288,7 +288,6 @@ class GeoRefinePackager(object):
                     if basename:
                         zf_path_parts.insert(0, basename)
                     zfn = os.path.join(*zf_path_parts)
-                    print "fn: ", fn, "absfn: ", absfn, "zfn: ", zfn
                     z.write(absfn, zfn)
             z.close()
         zipdir(self.target_dir, output_file)
