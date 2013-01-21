@@ -172,7 +172,7 @@ class GeoRefinePackager(object):
 
     def create_schema_files(self):
         schema_file = os.path.join(self.target_dir, "schema.py")
-        with open(schema_file, "w") as f:
+        with open(schema_file, "wb") as f:
             schema_template = self.template_env.get_template(
                 'georefine/schema.py')
             f.write(schema_template.render())
@@ -184,7 +184,7 @@ class GeoRefinePackager(object):
         formatted_map_layers = self.format_layers_for_app_config(map_layers)
 
         app_config_file = os.path.join(self.target_dir, "app_config.py")
-        with open(app_config_file, "w") as f:
+        with open(app_config_file, "wb") as f:
             app_config_template = self.template_env.get_template(
                 'georefine/app_config.py')
             f.write(
