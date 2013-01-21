@@ -163,7 +163,7 @@ class JythonGui(ItemListener):
         self.inputChooser.fileSelectionMode = JFileChooser.FILES_AND_DIRECTORIES
         self.outputChooser = JFileChooser()
         defaultOutputFile = os.path.join(System.getProperty("user.home"),
-                                         "sasi_project.tgz")
+                                         "sasi_project.zip")
 
         self.outputChooser.setSelectedFile(File(defaultOutputFile));
         self.outputChooser.fileSelectionMode = JFileChooser.FILES_ONLY
@@ -200,9 +200,9 @@ class JythonGui(ItemListener):
         ret = self.outputChooser.showSaveDialog(self.frame)
         if ret == JFileChooser.APPROVE_OPTION:
             selectedPath = self.outputChooser.selectedFile.path
-            if not selectedPath.endswith('.tgz'):
-                tgzPath = selectedPath + '.tgz'
-                self.outputChooser.setSelectedFile(File(tgzPath))
+            if not selectedPath.endswith('.zip'):
+                zipPath = selectedPath + '.zip'
+                self.outputChooser.setSelectedFile(File(zipPath))
             self.selected_output_file = self.outputChooser.selectedFile
             self.log_msg(
                 "Selected '%s' as output." % self.selected_output_file.path)

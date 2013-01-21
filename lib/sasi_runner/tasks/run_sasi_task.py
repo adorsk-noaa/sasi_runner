@@ -47,7 +47,7 @@ class RunSasiTask(task_manager.Task):
         self.config.setdefault('result_fields', ['gear_id'])
 
         if not output_file:
-            os_hndl, output_file = tempfile.mkstemp(suffix=".georefine.tar.gz")
+            os_hndl, output_file = tempfile.mkstemp(suffix=".georefine.zip")
         self.output_file = output_file
 
         # Assign get_session function.

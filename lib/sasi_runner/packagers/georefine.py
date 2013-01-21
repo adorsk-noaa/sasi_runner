@@ -1,9 +1,9 @@
 import sasi_data.exporters as exporters
 from jinja2 import Environment, PackageLoader
 import os
+import zipfile
 import csv
 import shutil
-import tarfile
 import tempfile
 import logging
 
@@ -29,7 +29,7 @@ class GeoRefinePackager(object):
         self.target_dir = tempfile.mkdtemp(prefix="grp.")
         
         if not output_file:
-            os_hndl, output_file = tempfile.mkstemp(suffix=".georefine.tar.gz")
+            os_hndl, output_file = tempfile.mkstemp(suffix=".georefine.zip")
         self.output_file = output_file
 
         self.template_env = Environment(
@@ -276,16 +276,22 @@ class GeoRefinePackager(object):
 
         formatted_layer['wms_params'] = wms_params
 
-
-
         return formatted_layer
 
     def create_archive(self, output_file):
-        tar = tarfile.open(output_file, "w:gz")
-        for item in os.listdir(self.target_dir):
-            path = os.path.join(self.target_dir, item)
-            tar.add(path, arcname=item)
-        tar.close()
+        def zipdir(basedir, archivename, basename=None):
+            z = zipfile.ZipFile(archivename, "w", zipfile.ZIP_DEFLATED)
+            for root, dirs, files in os.walk(basedir):
+                for fn in files:
+                    absfn = os.path.join(root, fn)
+                    zf_path_parts = [absfn[len(basedir)+len(os.sep):]]
+                    if basename:
+                        zf_path_parts.insert(0, basename)
+                    zfn = os.path.join(*zf_path_parts)
+                    print "fn: ", fn, "absfn: ", absfn, "zfn: ", zfn
+                    z.write(absfn, zfn)
+            z.close()
+        zipdir(self.target_dir, output_file)
         return output_file
 
     def get_logger_for_section(self, section_id=None, base_msg=None):
