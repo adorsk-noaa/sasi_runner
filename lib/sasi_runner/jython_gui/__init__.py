@@ -1,12 +1,15 @@
 from sasi_runner.tasks.run_sasi_task import RunSasiTask
 from javax.swing import (
     JPanel, JScrollPane, JTextArea, JFrame, JFileChooser, JButton, 
-    WindowConstants, JLabel, BoxLayout, JTextField, SpringLayout, JCheckBox
+    WindowConstants, JLabel, BoxLayout, JTextField, SpringLayout, JCheckBox,
+    JProgressBar
 )
 from javax.swing.filechooser import FileNameExtensionFilter
 from javax.swing.border import EmptyBorder
 from java.awt import (Component, BorderLayout, GridLayout)
-from java.awt.event import (AdjustmentListener, ItemEvent)
+from java.awt.event import (AdjustmentListener, ItemListener, ItemEvent)
+from java.lang import System
+from java.io import File
 import spring_utilities as SpringUtilities
 import os
 import tempfile
@@ -29,10 +32,17 @@ class FnLogHandler(logging.Handler):
         except:
             self.handleError(record)
 
-class JythonGui(object):
+class JythonGui(ItemListener):
     def __init__(self):
         self.tmp_dir = tempfile.mkdtemp(prefix="sasi_runner.")
         self.db_file = os.path.join(self.tmp_dir, "sasi_runner.db")
+
+        self.logger = logging.getLogger('sasi_runner_gui')
+        self.logger.addHandler(logging.StreamHandler())
+        def log_fn(msg):
+            self.log_msg(msg)
+        self.logger.addHandler(FnLogHandler(log_fn))
+        self.logger.setLevel(logging.DEBUG)
 
         self.selected_input_file = None
         self.selected_output_file = None
@@ -73,11 +83,11 @@ class JythonGui(object):
         ]
         self.selected_result_fields = {}
         self.top_panel.add(JLabel("3. Set result resolution."))
-        checkPanel = JPanel(GridLayout(1, 0))
+        checkPanel = JPanel(GridLayout(0, 1))
         self.top_panel.add(checkPanel) 
         self.resultFieldCheckBoxes = {}
         for result_field in result_fields:
-            self.selected_result_fields.set(
+            self.selected_result_fields.setdefault(
                 result_field['id'], result_field['selected'])
             checkBox = JCheckBox(
                 result_field['label'], result_field['selected'])
@@ -91,7 +101,11 @@ class JythonGui(object):
         self.run_button = JButton("Run...", actionPerformed=self.runSASI)
         self.top_panel.add(self.run_button)
 
-        SpringUtilities.makeCompactGrid(self.top_panel, 3, 2, 6, 6, 6, 6)
+        SpringUtilities.makeCompactGrid(self.top_panel, 4, 2, 6, 6, 6, 6)
+
+        # Progress bar.
+        self.progressBar = JProgressBar(0, 100)
+        self.main_panel.add(self.progressBar)
 
         # Log panel.
         self.log_panel = JPanel()
@@ -111,6 +125,10 @@ class JythonGui(object):
         self.inputChooser = JFileChooser()
         self.inputChooser.fileSelectionMode = JFileChooser.FILES_AND_DIRECTORIES
         self.outputChooser = JFileChooser()
+        defaultOutputFile = os.path.join(System.getProperty("user.home"),
+                                         "sasi_project.tgz")
+
+        self.outputChooser.setSelectedFile(File(defaultOutputFile));
         self.outputChooser.fileSelectionMode = JFileChooser.FILES_ONLY
 
         self.frame.setLocationRelativeTo(None)
@@ -119,7 +137,7 @@ class JythonGui(object):
     def itemStateChanged(self, event):
         """ Listen for checkbox changes. """
         checkBox = event.getItemSelectable()
-        is_selected = (event.getStateChange == ItemEvent.SELECTED)
+        is_selected = (event.getStateChange() == ItemEvent.SELECTED)
         result_field = self.resultFieldCheckBoxes[checkBox]
         self.selected_result_fields[result_field['id']] = is_selected
         self.log_msg("srf: %s" % self.selected_result_fields)
@@ -138,6 +156,10 @@ class JythonGui(object):
     def openOutputChooser(self, event):
         ret = self.outputChooser.showSaveDialog(self.frame)
         if ret == JFileChooser.APPROVE_OPTION:
+            selectedPath = self.outputChooser.selectedFile.path
+            if not selectedPath.endswith('.tgz'):
+                tgzPath = selectedPath + '.tgz'
+                self.outputChooser.setSelectedFile(File(tgzPath))
             self.selected_output_file = self.outputChooser.selectedFile
             self.log_msg(
                 "Selected '%s' as output." % self.selected_output_file.path)
@@ -148,18 +170,11 @@ class JythonGui(object):
         except Exception as e:
             self.log_msg("ERROR: '%s'" % e)
 
-
-        logger = logging.getLogger('sasi_runner_gui')
-        logger.addHandler(logging.StreamHandler())
-        def log_fn(msg):
-            self.log_msg(msg)
-        logger.addHandler(FnLogHandler(log_fn))
-        logger.setLevel(logging.DEBUG)
-
-
         # Run task in a separate thread, so that log
         # messages will be shown as task progresses.
         def run_task():
+            self.progressBar.setValue(0)
+            self.progressBar.setIndeterminate(True)
 
             def get_connection():
                 engine = create_engine('h2+zxjdbc:////%s' % self.db_file)
@@ -167,7 +182,6 @@ class JythonGui(object):
                 return con
 
             try:
-
                 # Set result fields.
                 result_fields = []
                 for field_id, is_selected in self.selected_result_fields.items():
@@ -176,9 +190,7 @@ class JythonGui(object):
                 task = RunSasiTask(
                     input_path=self.selected_input_file.path,
                     output_file=self.selected_output_file.path,
-                    #input_path='/home/adorsk/projects/noaa/cache/sasi_runner/lib/sasi_runner/tasks/test_data/new_test_data',
-                    #output_path='/tmp/foo.tar.gz',
-                    logger=logger,
+                    logger=self.logger,
                     get_connection=get_connection,
                     config={
                         'result_fields': result_fields,
@@ -194,7 +206,11 @@ class JythonGui(object):
                 )
                 task.call()
             except Exception as e:
-                logger.exception("Could not complete task")
+                self.logger.exception("Could not complete task")
+
+            self.progressBar.setIndeterminate(False)
+            self.progressBar.setValue(100)
+
             shutil.rmtree(self.tmp_dir)
 
         Thread(target=run_task).start()

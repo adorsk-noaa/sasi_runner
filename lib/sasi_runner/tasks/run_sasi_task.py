@@ -182,12 +182,14 @@ class RunSasiTask(task_manager.Task):
                            output_format=None, logger=logging.getLogger(),
                            batch_size='auto',output_file=None):
 
-        # Calculate batch size if set to 'auto'.
+        # Calculate approximate batch size if set to 'auto'.
         if batch_size == 'auto':
             approx_obj_size = self.get_approx_sasi_obj_size()
             mem = self.get_free_mem()
             # Calculate rough batch size w/ some fudge.
-            batch_size = max(1e3, int(.75 * mem/approx_obj_size))
+            calculated_batch_size = max(1e3, int(.5 * mem/(2 * approx_obj_size)))
+            # Doesn't make much difference after 1e5.
+            batch_size = min(1e5, calculated_batch_size)
 
         # Assemble data for packager.
         data = {}
@@ -260,8 +262,9 @@ class RunSasiTask(task_manager.Task):
         }
         results_per_c = counts['t']
         for field in self.config['result_fields']:
-            data_cat = result_fields_to_data_cats[field]
-            results_per_c *= counts[data_cat]
+            data_cat = result_fields_to_data_cats.get(field)
+            if data_cat:
+                results_per_c *= counts[data_cat]
 
         # Estimate max number of efforts per cell.
         efforts_per_c = 1
@@ -279,7 +282,7 @@ class RunSasiTask(task_manager.Task):
         """ Rough approximations of SASI object sizes
         in bytes. """
         if platform.system() == 'Java':
-            return 2048.0
+            return 4096.0
         else:
             return 1024.0
 
