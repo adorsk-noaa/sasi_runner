@@ -174,7 +174,7 @@ class GeoRefinePackager(object):
         schema_file = os.path.join(self.target_dir, "schema.py")
         with open(schema_file, "w") as f:
             schema_template = self.template_env.get_template(
-                os.path.join('georefine', 'schema.py'))
+                'georefine/schema.py')
             f.write(schema_template.render())
 
     def create_app_config_files(self):
@@ -186,7 +186,7 @@ class GeoRefinePackager(object):
         app_config_file = os.path.join(self.target_dir, "app_config.py")
         with open(app_config_file, "w") as f:
             app_config_template = self.template_env.get_template(
-                os.path.join('georefine', 'app_config.py'))
+                'georefine/app_config.py')
             f.write(
                 app_config_template.render(
                     map_parameters=map_parameters,

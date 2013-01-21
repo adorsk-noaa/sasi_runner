@@ -2,14 +2,15 @@ from sasi_runner.tasks.run_sasi_task import RunSasiTask
 from javax.swing import (
     JPanel, JScrollPane, JTextArea, JFrame, JFileChooser, JButton, 
     WindowConstants, JLabel, BoxLayout, JTextField, SpringLayout, JCheckBox,
-    JProgressBar
+    JProgressBar, SwingConstants
 )
 from javax.swing.filechooser import FileNameExtensionFilter
 from javax.swing.border import EmptyBorder
-from java.awt import (Component, BorderLayout, GridLayout)
+from java.awt import (Component, BorderLayout, GridLayout, Desktop, Color)
 from java.awt.event import (AdjustmentListener, ItemListener, ItemEvent)
-from java.lang import System
+from java.lang import (System, Runtime, Class)
 from java.io import File
+from java.net import URI
 import spring_utilities as SpringUtilities
 import os
 import tempfile
@@ -32,10 +33,26 @@ class FnLogHandler(logging.Handler):
         except:
             self.handleError(record)
 
+def browseURI(uri):
+    osName = System.getProperty("os.name")
+    rt = Runtime.getRuntime()
+    if osName.startswith("Mac OS"):
+        rt.exec('open "%s"' % uri)
+    else:
+        if osName.startswith("Windows"):
+            rt.exec('rundll32 url.dll,FileProtocolHandler "%s"' % uri)
+        else:
+            browsers = ["google-chrome", "firefox", "opera", "konqueror", 
+                        "epiphany", "mozilla", "netscape" ]
+            for b in browsers:
+                exists = rt.exec("which %s" % b).getInputStream().read()
+                if exists != -1:
+                    Runtime.getRuntime().exec('%s "%s"' % (b, uri))
+                    return
+
 class JythonGui(ItemListener):
-    def __init__(self):
-        self.tmp_dir = tempfile.mkdtemp(prefix="sasi_runner.")
-        self.db_file = os.path.join(self.tmp_dir, "sasi_runner.db")
+    def __init__(self, instructionsURI=''):
+        self.instructionsURI = instructionsURI
 
         self.logger = logging.getLogger('sasi_runner_gui')
         self.logger.addHandler(logging.StreamHandler())
@@ -61,18 +78,38 @@ class JythonGui(ItemListener):
         self.top_panel.alignmentX = Component.CENTER_ALIGNMENT
         self.main_panel.add(self.top_panel)
 
-        # Select input elements.
-        self.top_panel.add(
-            JLabel("1. Select a SASI .zip file or data folder:"))
+        self.stageCounter = 0
+        def getStageLabel(txt):
+            label = JLabel("%s. %s" % (self.stageCounter, txt))
+            self.stageCounter += 1
+            return label
+
+        # Instructions link.
+        self.top_panel.add(getStageLabel("Read the instructions:"))
+        self.stageCounter += 1
+        instructionsButton = JButton(
+            ('<HTML><FONT color="#000099">'
+             '<U>open instructions</U></FONT><HTML>'),
+            actionPerformed=self.browseInstructions)
+        instructionsButton.setHorizontalAlignment(SwingConstants.LEFT);
+        instructionsButton.setBorderPainted(False);
+        instructionsButton.setOpaque(False);
+        instructionsButton.setBackground(Color.WHITE);
+        instructionsButton.setToolTipText(self.instructionsURI);
+        self.top_panel.add(instructionsButton)
+
+        # 'Select input' elements.
+        self.top_panel.add(getStageLabel(
+            "Select a SASI .zip file or data folder:"))
         self.top_panel.add(
             JButton("Select input...", actionPerformed=self.openInputChooser))
 
-        # Select output elements.
-        self.top_panel.add(JLabel("2. Specify an output file."))
+        # 'Select output' elements.
+        self.top_panel.add(getStageLabel("Specify an output file:"))
         self.top_panel.add(
             JButton("Specify output...", actionPerformed=self.openOutputChooser))
 
-        # Set result fields.
+        # 'Set result fields' elements.
         result_fields = [
             {'id': 'gear_id', 'label': 'Gear', 'selected': True}, 
             {'id': 'substrate_id', 'label': 'Substrate', 'selected': False}, 
@@ -82,7 +119,7 @@ class JythonGui(ItemListener):
              'selected': False}
         ]
         self.selected_result_fields = {}
-        self.top_panel.add(JLabel("3. Set result resolution."))
+        self.top_panel.add(getStageLabel("Set result resolution:"))
         checkPanel = JPanel(GridLayout(0, 1))
         self.top_panel.add(checkPanel) 
         self.resultFieldCheckBoxes = {}
@@ -95,13 +132,13 @@ class JythonGui(ItemListener):
             checkPanel.add(checkBox)
             self.resultFieldCheckBoxes[checkBox] = result_field
 
-        # Run elements.
-        self.run_message = JLabel("4. Run SASI:")
-        self.top_panel.add(self.run_message)
+        # 'Run' elements.
+        self.top_panel.add(getStageLabel("Run SASI: "))
         self.run_button = JButton("Run...", actionPerformed=self.runSASI)
         self.top_panel.add(self.run_button)
 
-        SpringUtilities.makeCompactGrid(self.top_panel, 4, 2, 6, 6, 6, 6)
+        SpringUtilities.makeCompactGrid(
+            self.top_panel, self.stageCounter - 1, 2, 6, 6, 6, 6)
 
         # Progress bar.
         self.progressBar = JProgressBar(0, 100)
@@ -134,13 +171,19 @@ class JythonGui(ItemListener):
         self.frame.setLocationRelativeTo(None)
         self.frame.visible = True
 
+    def browseInstructions(self, event):
+        """ Open a browser to the instructions page. """
+        browseURI(self.instructionsURI)
+        return
+        if (Desktop.isDesktopSupported()):
+            Desktop.getDesktop().browse(URI(self.instructionsURI))
+
     def itemStateChanged(self, event):
         """ Listen for checkbox changes. """
         checkBox = event.getItemSelectable()
         is_selected = (event.getStateChange() == ItemEvent.SELECTED)
         result_field = self.resultFieldCheckBoxes[checkBox]
         self.selected_result_fields[result_field['id']] = is_selected
-        self.log_msg("srf: %s" % self.selected_result_fields)
 
     def log_msg(self, msg):
         """ Print message to log and scroll to bottom. """
@@ -173,6 +216,9 @@ class JythonGui(ItemListener):
         # Run task in a separate thread, so that log
         # messages will be shown as task progresses.
         def run_task():
+            self.tmp_dir = tempfile.mkdtemp(prefix="sasi_runner.")
+            self.db_file = os.path.join(self.tmp_dir, "sasi_runner.db")
+
             self.progressBar.setValue(0)
             self.progressBar.setIndeterminate(True)
 
@@ -218,8 +264,8 @@ class JythonGui(ItemListener):
     def validateParameters(self):
         return True
 
-def main():
-    JythonGui()
+def main(*args, **kwargs):
+    JythonGui(*args, **kwargs)
 
 if __name__ == '__main__':
     main()
