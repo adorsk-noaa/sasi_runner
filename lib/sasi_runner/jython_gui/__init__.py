@@ -1,12 +1,12 @@
 from sasi_runner.tasks.run_sasi_task import RunSasiTask
 from javax.swing import (
     JPanel, JScrollPane, JTextArea, JFrame, JFileChooser, JButton, 
-    WindowConstants, JLabel, BoxLayout, JTextField, SpringLayout
+    WindowConstants, JLabel, BoxLayout, JTextField, SpringLayout, JCheckBox
 )
 from javax.swing.filechooser import FileNameExtensionFilter
 from javax.swing.border import EmptyBorder
-from java.awt import (Component, BorderLayout)
-from java.awt.event import AdjustmentListener
+from java.awt import (Component, BorderLayout, GridLayout)
+from java.awt.event import (AdjustmentListener, ItemEvent)
 import spring_utilities as SpringUtilities
 import os
 import tempfile
@@ -62,8 +62,31 @@ class JythonGui(object):
         self.top_panel.add(
             JButton("Specify output...", actionPerformed=self.openOutputChooser))
 
+        # Set result fields.
+        result_fields = [
+            {'id': 'gear_id', 'label': 'Gear', 'selected': True}, 
+            {'id': 'substrate_id', 'label': 'Substrate', 'selected': False}, 
+            {'id': 'energy_id', 'label': 'Energy', 'selected': False},
+            {'id': 'feature_id', 'label': 'Feature', 'selected': False}, 
+            {'id': 'feature_category_id', 'label': 'Feature Category', 
+             'selected': False}
+        ]
+        self.selected_result_fields = {}
+        self.top_panel.add(JLabel("3. Set result resolution."))
+        checkPanel = JPanel(GridLayout(1, 0))
+        self.top_panel.add(checkPanel) 
+        self.resultFieldCheckBoxes = {}
+        for result_field in result_fields:
+            self.selected_result_fields.set(
+                result_field['id'], result_field['selected'])
+            checkBox = JCheckBox(
+                result_field['label'], result_field['selected'])
+            checkBox.addItemListener(self)
+            checkPanel.add(checkBox)
+            self.resultFieldCheckBoxes[checkBox] = result_field
+
         # Run elements.
-        self.run_message = JLabel("3. Run SASI:")
+        self.run_message = JLabel("4. Run SASI:")
         self.top_panel.add(self.run_message)
         self.run_button = JButton("Run...", actionPerformed=self.runSASI)
         self.top_panel.add(self.run_button)
@@ -92,6 +115,14 @@ class JythonGui(object):
 
         self.frame.setLocationRelativeTo(None)
         self.frame.visible = True
+
+    def itemStateChanged(self, event):
+        """ Listen for checkbox changes. """
+        checkBox = event.getItemSelectable()
+        is_selected = (event.getStateChange == ItemEvent.SELECTED)
+        result_field = self.resultFieldCheckBoxes[checkBox]
+        self.selected_result_fields[result_field['id']] = is_selected
+        self.log_msg("srf: %s" % self.selected_result_fields)
 
     def log_msg(self, msg):
         """ Print message to log and scroll to bottom. """
@@ -136,6 +167,12 @@ class JythonGui(object):
                 return con
 
             try:
+
+                # Set result fields.
+                result_fields = []
+                for field_id, is_selected in self.selected_result_fields.items():
+                    if is_selected: result_fields.append(field_id)
+
                 task = RunSasiTask(
                     input_path=self.selected_input_file.path,
                     output_file=self.selected_output_file.path,
@@ -144,6 +181,7 @@ class JythonGui(object):
                     logger=logger,
                     get_connection=get_connection,
                     config={
+                        'result_fields': result_fields,
                         'run_model': {
                             'run': {
                                 'batch_size': 'auto',
