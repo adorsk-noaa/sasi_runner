@@ -112,7 +112,7 @@ class JythonGui(ItemListener):
         # 'Set result fields' elements.
         result_fields = [
             {'id': 'gear_id', 'label': 'Gear', 'selected': True}, 
-            {'id': 'substrate_id', 'label': 'Substrate', 'selected': False}, 
+            {'id': 'substrate_id', 'label': 'Substrate', 'selected': True}, 
             {'id': 'energy_id', 'label': 'Energy', 'selected': False},
             {'id': 'feature_id', 'label': 'Feature', 'selected': False}, 
             {'id': 'feature_category_id', 'label': 'Feature Category', 
@@ -161,6 +161,7 @@ class JythonGui(ItemListener):
         # File selectors
         self.inputChooser = JFileChooser()
         self.inputChooser.fileSelectionMode = JFileChooser.FILES_AND_DIRECTORIES
+
         self.outputChooser = JFileChooser()
         defaultOutputFile = os.path.join(System.getProperty("user.home"),
                                          "sasi_project.zip")
