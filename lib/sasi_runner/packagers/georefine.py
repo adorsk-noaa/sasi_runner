@@ -196,7 +196,7 @@ class GeoRefinePackager(object):
 
     def create_static_files(self):
         # Create dir.
-        static_files_dir = os.path.join(self.target_dir, 'public_html')
+        static_files_dir = os.path.join(self.target_dir, 'static')
 
         # Copy metadata into dir.
         if os.path.isdir(self.metadata_dir):

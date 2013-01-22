@@ -1,7 +1,7 @@
 # This object will contain the app config.
 app_config = {}
 
-INFO_LINK_PREFIX = '{{PROJECT_STATIC_DIR}}/sasipedia'
+INFO_LINK_PREFIX = '{{PROJECT_STATIC_DIR}}/static/sasipedia/index.html'
 
 sasi_numeric_fields = {
     'a': {
@@ -50,6 +50,8 @@ for field_id, field in sasi_categorical_fields.items():
     field.setdefault('label', field_id.capitalize() + 's')
     field.setdefault('info_link', 
                      INFO_LINK_PREFIX + '#%ss/index.html' % field_id)
+    field.setdefault(
+        'info', 'see this link: <a href="%s">info</a>' % field['info_link'])
 
     key = field.setdefault('KEY', {})
     key.setdefault('QUERY', {
