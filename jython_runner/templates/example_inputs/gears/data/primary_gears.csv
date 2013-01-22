@@ -1,0 +1,17 @@
+id,label,category
+GC1,Generic Trawl,Trawl
+GC10,Otter Trawl,Trawl
+GC11,Shrimp,Trawl
+GC12,Squid,Trawl
+GC13,Raised,Trawl
+GC2,Generic Scallop,Scallop
+GC20,"Scallop Dredge, Limited Access",Scallop
+GC21,"Scallop Dredge, General",Scallop
+GC3,Generic Dredge,Dredge
+GC30,Hydraulic Dredge,Dredge
+GC4,Generic Longline,Longline
+GC40,Longline,Longline
+GC5,Generic Gillnet,Gillnet
+GC50,Gillnet,Gillnet
+GC6,Generic Trap,Trap
+GC60,Trap,Trap

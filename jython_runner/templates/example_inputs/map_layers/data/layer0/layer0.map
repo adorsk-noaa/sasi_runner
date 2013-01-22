@@ -1,0 +1,28 @@
+
+MAP
+  EXTENT -180 -90 180 90
+  IMAGETYPE "image/gif"
+  NAME "layer0"
+  SIZE 640 640
+  STATUS ON
+  UNITS DD
+  PROJECTION
+    "init=epsg:4326"
+  END
+  WEB
+    METADATA
+      "ows_enable_request"	"*"
+    END
+  END
+  LAYER
+    STATUS ON
+    NAME "layer0"
+    DATA "layer0"
+    TYPE POLYGON
+    CLASS
+      STYLE
+        COLOR 0 0 0
+      END # STYLE
+    END # CLASS
+  END # LAYER
+END # MAP

@@ -1,0 +1,7 @@
+id,label,category,description
+GC1,Generic Trawl,Trawl
+GC2,Generic Scallop,Scallop
+GC3,Generic Dredge,Dredge
+GC4,Generic Longline,Longline
+GC5,Generic Gillnet,Gillnet
+GC6,Generic Trap,Trap
