@@ -34,6 +34,7 @@ def get_connection():
         db_dir = tempfile.mkdtemp(prefix="rst.db.")
         db_file = os.path.join(db_dir, "db")
         if platform.system() == 'Java':
+            import sqlalchemy_h2
             cache_size = 64 * 1024
             pragmas = 'LOG=0;CACHE_SIZE=%s;LOCK_MODE=0;UNDO_LOG=0' % cache_size
             db_uri = 'h2+zxjdbc:///%s;%s' % (db_file, pragmas)
