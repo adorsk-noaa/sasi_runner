@@ -14,7 +14,9 @@ argparser.add_argument('input')
 argparser.add_argument('--db-uri')
 argparser.add_argument('--run-batch-size', '-rbs', default='auto')
 argparser.add_argument('--write-batch-size', '-wbs', default='auto')
-argparser.add_argument('--result-fields', '-rf', nargs='*', default=['gear_id'])
+argparser.add_argument('--result-fields', '-rf', nargs='*', 
+                       default=['gear_id', 'substrate_id', 'energy_id',
+                                'feature_id', 'feature_category_id'])
 argparser.add_argument('--grid-limit', '-gl', type=int)
 argparser.add_argument('--habitats-limit', '-hl', type=int)
 
