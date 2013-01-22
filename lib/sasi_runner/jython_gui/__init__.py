@@ -78,7 +78,7 @@ class JythonGui(ItemListener):
         self.top_panel.alignmentX = Component.CENTER_ALIGNMENT
         self.main_panel.add(self.top_panel)
 
-        self.stageCounter = 0
+        self.stageCounter = 1
         def getStageLabel(txt):
             label = JLabel("%s. %s" % (self.stageCounter, txt))
             self.stageCounter += 1
@@ -86,7 +86,6 @@ class JythonGui(ItemListener):
 
         # Instructions link.
         self.top_panel.add(getStageLabel("Read the instructions:"))
-        self.stageCounter += 1
         instructionsButton = JButton(
             ('<HTML><FONT color="#000099">'
              '<U>open instructions</U></FONT><HTML>'),
