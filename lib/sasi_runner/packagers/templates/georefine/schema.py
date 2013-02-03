@@ -83,6 +83,7 @@ ordered_sources.append({'id': 'result', 'source': sources['result']})
 sources['econ']= Table('econ', metadata,
         Column('id', Integer, primary_key=True),
         Column('t', Integer),
+        Column('cell_id', Integer, ForeignKey('cell.id')),
         Column('gear_id', String, ForeignKey('gear.id')),
         Column('a', Float),
         Column('hours_fished', Float),
