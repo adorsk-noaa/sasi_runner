@@ -194,7 +194,7 @@ class RunSasiTask(task_manager.Task):
         # Assemble data for packager.
         data = {}
         data_categories = ['cell', 'energy', 'substrate', 'feature_category', 
-                           'feature', 'gear', 'result']
+                           'feature', 'gear', 'result', 'econ_result']
         for category in data_categories:
             source_name = ''.join([s.capitalize() for s in category.split('_')])
             items_q = dao.query('__' + source_name,

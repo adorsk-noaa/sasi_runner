@@ -45,7 +45,10 @@ class SASI_Model(object):
 
         self.effort_model = effort_model
 
-        self.result_counter = 0
+        self.table_counters = {
+            'Result': 0,
+            'EconResult': 0,
+        }
 
         self.setup()
 
@@ -119,10 +122,8 @@ class SASI_Model(object):
                     c_ht_fc_f[c.id]['ht'][ht]['fc'][fc] = fs
         return c_ht_fc_f
 
-    def run(self, log_interval=1, commit=True, **kwargs):
+    def run(self, log_interval=1, commit=True, batch_size=20, **kwargs):
         self.run_counter = 0
-
-        batch_size = kwargs.get('batch_size', 20)
 
         self.logger.info("Iterating through cells...")
         self.logger.info("Saving results every %s cells" % batch_size)
@@ -147,6 +148,7 @@ class SASI_Model(object):
 
         # Process remaining cells.
         self.run_batch(cell_batch, log_interval=log_interval)
+
         self.logger.info('Run completed.')
 
     def run_batch(self, cell_batch, commit=True, log_interval=1):
@@ -155,8 +157,8 @@ class SASI_Model(object):
 
         # Get a local cache of results and efforts for the current batch.
         result_cache = self.get_result_cache(cell_batch)
+        econ_result_cache = self.get_result_cache(cell_batch)
         effort_cache = self.get_effort_cache(cell_batch)
-
 
         for cell in cell_batch:
             self.run_counter += 1
@@ -170,6 +172,18 @@ class SASI_Model(object):
 
             for t in range(self.t0, self.tf + 1, self.dt):
                 for effort in effort_cache.get(c, {}).get(t, []):
+                    # Add raw effort fields to econ results.
+                    econ_result = self.get_or_create_econ_result(
+                        econ_result_cache, t, c, effort.gear_id)
+                    for field in ['value', 'hours_fished', 'a']:
+                        old_val = getattr(econ_result, field, None)
+                        if old_val is None:
+                            old_val = 0.0
+                        effort_val = getattr(effort, field, None) 
+                        if effort_val is None:
+                            effort_val = 0.0
+                        setattr(econ_result, field, old_val + effort_val)
+
                     # If effort gear has depth limits, skip if cell depth is not
                     # w/in the limits.
                     gear = self.gears.get(effort.gear_id)
@@ -289,26 +303,44 @@ class SASI_Model(object):
                         prev_r = self.get_or_create_result(
                             result_cache, t - self.dt, c, result_fields)
                         cur_r.znet = prev_r.znet + cur_r.z
+
+
+                # Update econ net fields.
+                for rkey, cur_r in econ_result_cache[c][t].items():
+                    for field in ['value', 'hours_fished']:
+                        net_field = field + '_net'
+                        if t == self.t0:
+                            setattr(cur_r, net_field, getattr(cur_r, field, 0))
+                        else:
+                            prev_r = self.get_or_create_econ_result(
+                                econ_result_cache, t - self.dt, c, 
+                                cur_r.gear_id)
+                            setattr(cur_r, net_field, 
+                                    getattr(prev_r, net_field, 0))
+
+
                 # End of timestep block
             # End of cell block
 
         # Save results.
-        self.save_result_cache(result_cache, commit=commit)
+        self.save_result_cache('Result', result_cache, commit=commit)
+        self.save_result_cache('EconResult', econ_result_cache, commit=commit)
 
-    def save_result_cache(self, result_cache, commit=True):
-        prev_num_saved = self.result_counter
+    def save_result_cache(self, table, result_cache, commit=True):
+        prev_num_saved = self.table_counters[table]
 
         def results_iter():
             for cell_results in result_cache.values():
                 for time_results in cell_results.values():
                     for result in time_results.values():
-                        self.result_counter += 1
+                        self.table_counters[table] += 1
                         yield result
 
-        self.logger.info("Saving partial results...")
-        self.dao.bulk_insert_results(results_iter(), commit=commit)
+        self.logger.info("Saving partial results for '%s' table..." % table)
+        self.dao.bulk_insert_objects(table, results_iter(), commit=commit)
         self.logger.info("%.3e results saved. (%.3e overall)" % (
-            self.result_counter - prev_num_saved, self.result_counter))
+            self.table_counters[table] - prev_num_saved, 
+            self.table_counters[table]))
 
     def get_effort_cache(self, cells):
         """ Get efforts cache, grouped by cell and time. """
@@ -368,6 +400,21 @@ class SASI_Model(object):
                 y=0.0,
                 z=0.0,
                 **relevant_fields
+            )
+            result_cache[cell_id][t][result_key] = new_result
+        return result_cache[cell_id][t][result_key]
+
+    def get_or_create_econ_result(self, result_cache, t, cell_id, gear_id):
+        result_key = tuple([t, cell_id, gear_id])
+        if not result_cache[cell_id][t].has_key(result_key):
+            new_result = self.dao.schema['sources']['EconResult'](
+                t=t,
+                cell_id=cell_id,
+                gear_id=gear_id,
+                value=0.0,
+                value_net=0.0,
+                hours_fished=0.0,
+                hours_fished_net=0.0,
             )
             result_cache[cell_id][t][result_key] = new_result
         return result_cache[cell_id][t][result_key]

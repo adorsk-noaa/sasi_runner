@@ -145,6 +145,22 @@ class GeoRefinePackager(object):
                     'z',
                     'znet',
                 ]
+            },
+
+            {
+                'id': 'econ',
+                'data': self.data['econ_result'],
+                'mappings': [
+                    'id',
+                    't',
+                    'cell_id',
+                    'gear_id',
+                    'a',
+                    'value',
+                    'value_net',
+                    'hours_fished',
+                    'hours_fished_net'
+                ]
             }
         ]
 
