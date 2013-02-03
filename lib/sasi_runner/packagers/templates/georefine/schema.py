@@ -70,16 +70,30 @@ sources['result']= Table('result', metadata,
         Column('y', Float),
         Column('z', Float),
         Column('znet', Float),
-        Column('hours_fished', Float),
-        Column('value', Float),
         )
+
 # Create time/field/cell indices. These are essential for filtering in a reasonable
 # amount of time.
-for col in ['energy_id', 'cell_id', 'gear_id', 'substrate_id',
+for col in ['energy_id', 'gear_id', 'substrate_id',
             'feature_category_id', 'feature_id']:
     Index('idx_t_%s_cell_id' % col, sources['result'].c.t, sources['result'].c[col],
           sources['result'].c.cell_id)
 ordered_sources.append({'id': 'result', 'source': sources['result']})
+
+sources['econ']= Table('econ', metadata,
+        Column('id', Integer, primary_key=True),
+        Column('t', Integer),
+        Column('gear_id', String, ForeignKey('gear.id')),
+        Column('a', Float),
+        Column('hours_fished', Float),
+        Column('hours_fished_net', Float),
+        Column('value', Float),
+        Column('value_net', Float),
+        )
+for col in ['gear_id']:
+    Index('idx_t_%s_cell_id' % col, sources['econ'].c.t, sources['econ'].c[col],
+          sources['econ'].c.cell_id)
+ordered_sources.append({'id': 'econ', 'source': sources['econ']})
 
 # This dictionary contains the schema objects GeoRefine will use.
 schema = {
