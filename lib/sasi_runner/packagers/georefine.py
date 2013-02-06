@@ -132,7 +132,7 @@ class GeoRefinePackager(object):
             },
 
             {
-                'id': 'ssai_result',
+                'id': 'sasi_result',
                 'data': self.data['sasi_result'],
                 'mappings': [
                     'id',

@@ -84,11 +84,14 @@ class SASI_Model(object):
         for f in self.dao.query('__Feature').all():
             self.features[f.id] = f
 
-        # Create gears lookup.
+        # Create gears lookups.
         self.logger.info("Creating gears lookup...")
         self.gears = {}
+        self.generic_gears = {}
         for g in self.dao.query('__Gear').all():
             self.gears[g.id] = g
+            if g.is_generic:
+                self.generic_gears[g.id] = g
 
         # Group features by category and habitat types.
         self.logger.info("Grouping features by categories and habitats...")
@@ -174,12 +177,13 @@ class SASI_Model(object):
                 for effort in effort_cache.get(c, {}).get(t, []):
 
                     gear = self.gears.get(effort.gear_id)
+                    generic_gear = self.generic_gears.get(gear.generic_id)
 
                     # Add raw effort fields to fishing results, by generic gear
                     # and specific gear (if not generic).
-                    gear_ids = [effort.gear_id]
-                    if not effort.is_generic:
-                        gear_ids.append(effort.generic_id)
+                    gear_ids = [gear.id]
+                    if generic_gear is not gear:
+                        gear_ids.append(generic_gear.id)
                     for gear_id in gear_ids:
                         fishing_result = self.get_or_create_fishing_result(
                             fishing_result_cache, t, c, gear_id)
@@ -194,20 +198,20 @@ class SASI_Model(object):
 
                     # If effort gear has depth limits, skip if cell depth is not
                     # w/in the limits.
-                    if not gear:
+                    if not generic_gear:
                         continue
-                    if gear.min_depth is not None \
-                       and cell.z < gear.min_depth:
+                    if generic_gear.min_depth is not None \
+                       and cell.z < generic_gear.min_depth:
                         continue
                     if gear.max_depth is not None \
-                       and cell.z > gear.max_depth:
+                       and cell.z > generic_gear.max_depth:
                         continue
-                    result_fields['gear_id'] = gear.id
+                    result_fields['gear_id'] = generic_gear.id
 
                     # Get relevant habitat types for the effort.
                     relevant_habitat_types = []
                     for ht in self.c_ht_fc_f[c]['ht'].keys():
-                        if ht in self.ht_by_g.get(effort.gear_id, {}): 
+                        if ht in self.ht_by_g.get(generic_gear.id, {}): 
                             relevant_habitat_types.append(ht)
 
                     # Skip if no relevant habitat types.
@@ -247,7 +251,7 @@ class SASI_Model(object):
                             result_fields['feature_category_id'] = fc
                             relevant_features = []
                             for f in self.c_ht_fc_f[c]['ht'][ht]['fc'][fc]:
-                                if f in self.f_by_g[effort.gear_id]: 
+                                if f in self.f_by_g[generic_gear.id]: 
                                     relevant_features.append(f)
 
                             # Skip if no relevant features.
@@ -262,7 +266,7 @@ class SASI_Model(object):
                                 result_fields['feature_id'] = f
 
                                 # Get vulnerability assessment for the effort.
-                                va = self.vas[(effort.gear_id, ht[0], ht[1], f)]
+                                va = self.vas[(generic_gear.id, ht[0], ht[1], f)]
 
                                 omega = self.omegas[va.s]
                                 tau = self.taus[va.r]
@@ -370,10 +374,10 @@ class SASI_Model(object):
     def get_nominal_efforts(self, cells):
         efforts = []
         Effort = self.dao.schema['sources']['Effort']
-        num_gears = len(self.gears)
+        num_gears = len(self.generic_gears)
         for t in range(self.t0, self.tf, self.dt):
             for cell in cells:
-                for gear in self.gears.values():
+                for gear in self.generic_gears.values():
                     efforts.append(
                         Effort(
                             cell_id=cell.id,
@@ -406,6 +410,7 @@ class SASI_Model(object):
                 x=0.0,
                 y=0.0,
                 z=0.0,
+                znet=0.0,
                 **relevant_fields
             )
             result_cache[cell_id][t][result_key] = new_result
