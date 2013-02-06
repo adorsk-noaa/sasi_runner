@@ -122,14 +122,18 @@ class GeoRefinePackager(object):
                 'data': self.data['gear'],
                 'mappings': [
                     'id',
+                    'generic_id',
+                    'is_generic',
                     'label',
                     'description',
+                    'min_depth',
+                    'max_depth',
                 ]
             },
 
             {
-                'id': 'result',
-                'data': self.data['result'],
+                'id': 'ssai_result',
+                'data': self.data['sasi_result'],
                 'mappings': [
                     'id',
                     't',
@@ -148,8 +152,8 @@ class GeoRefinePackager(object):
             },
 
             {
-                'id': 'econ',
-                'data': self.data['econ_result'],
+                'id': 'fishing_result',
+                'data': self.data['fishing_result'],
                 'mappings': [
                     'id',
                     't',

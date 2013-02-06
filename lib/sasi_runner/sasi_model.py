@@ -46,8 +46,8 @@ class SASI_Model(object):
         self.effort_model = effort_model
 
         self.table_counters = {
-            'Result': 0,
-            'EconResult': 0,
+            'SasiResult': 0,
+            'FishingResult': 0,
         }
 
         self.setup()
@@ -156,8 +156,8 @@ class SASI_Model(object):
         result_fields = {}
 
         # Get a local cache of results and efforts for the current batch.
-        result_cache = self.get_result_cache(cell_batch)
-        econ_result_cache = self.get_result_cache(cell_batch)
+        sasi_result_cache = self.get_result_cache(cell_batch)
+        fishing_result_cache = self.get_result_cache(cell_batch)
         effort_cache = self.get_effort_cache(cell_batch)
 
         for cell in cell_batch:
@@ -172,21 +172,28 @@ class SASI_Model(object):
 
             for t in range(self.t0, self.tf + 1, self.dt):
                 for effort in effort_cache.get(c, {}).get(t, []):
-                    # Add raw effort fields to econ results.
-                    econ_result = self.get_or_create_econ_result(
-                        econ_result_cache, t, c, effort.gear_id)
-                    for field in ['value', 'hours_fished', 'a']:
-                        old_val = getattr(econ_result, field, None)
-                        if old_val is None:
-                            old_val = 0.0
-                        effort_val = getattr(effort, field, None) 
-                        if effort_val is None:
-                            effort_val = 0.0
-                        setattr(econ_result, field, old_val + effort_val)
+
+                    gear = self.gears.get(effort.gear_id)
+
+                    # Add raw effort fields to fishing results, by generic gear
+                    # and specific gear (if not generic).
+                    gear_ids = [effort.gear_id]
+                    if not effort.is_generic:
+                        gear_ids.append(effort.generic_id)
+                    for gear_id in gear_ids:
+                        fishing_result = self.get_or_create_fishing_result(
+                            fishing_result_cache, t, c, gear_id)
+                        for field in ['value', 'hours_fished', 'a']:
+                            old_val = getattr(fishing_result, field, None)
+                            if old_val is None:
+                                old_val = 0.0
+                            effort_val = getattr(effort, field, None) 
+                            if effort_val is None:
+                                effort_val = 0.0
+                            setattr(fishing_result, field, old_val + effort_val)
 
                     # If effort gear has depth limits, skip if cell depth is not
                     # w/in the limits.
-                    gear = self.gears.get(effort.gear_id)
                     if not gear:
                         continue
                     if gear.min_depth is not None \
@@ -261,7 +268,7 @@ class SASI_Model(object):
                                 tau = self.taus[va.r]
 
                                 result = self.get_or_create_result(
-                                    result_cache, t, c, result_fields)
+                                    sasi_result_cache, t, c, result_fields)
 
                                 # Calculate swept area for the feature.
                                 f_swept_area = pct_f * getattr(effort, 'a', 0.0)
@@ -284,7 +291,7 @@ class SASI_Model(object):
                                 for future_t in range(t + 1, t + tau + 1, self.dt):
                                     if future_t <= self.tf:
                                         future_result = self.get_or_create_result(
-                                            result_cache, future_t, c,
+                                            sasi_result_cache, future_t, c,
                                             result_fields)
                                         future_result.x += recovery_per_dt
 
@@ -296,24 +303,24 @@ class SASI_Model(object):
                     # End of efforts block
 
                 # Update znet for timestep.
-                for rkey, cur_r in result_cache[c][t].items():
+                for rkey, cur_r in sasi_result_cache[c][t].items():
                     if t == self.t0:
                         cur_r.znet = cur_r.z
                     else:
                         prev_r = self.get_or_create_result(
-                            result_cache, t - self.dt, c, result_fields)
+                            sasi_result_cache, t - self.dt, c, result_fields)
                         cur_r.znet = prev_r.znet + cur_r.z
 
 
-                # Update econ net fields.
-                for rkey, cur_r in econ_result_cache[c][t].items():
+                # Update fishing net fields.
+                for rkey, cur_r in fishing_result_cache[c][t].items():
                     for field in ['value', 'hours_fished']:
                         net_field = field + '_net'
                         if t == self.t0:
                             setattr(cur_r, net_field, getattr(cur_r, field, 0))
                         else:
-                            prev_r = self.get_or_create_econ_result(
-                                econ_result_cache, t - self.dt, c, 
+                            prev_r = self.get_or_create_fishing_result(
+                                fishing_result_cache, t - self.dt, c, 
                                 cur_r.gear_id)
                             setattr(cur_r, net_field, 
                                     getattr(prev_r, net_field, 0))
@@ -323,8 +330,8 @@ class SASI_Model(object):
             # End of cell block
 
         # Save results.
-        self.save_result_cache('Result', result_cache, commit=commit)
-        self.save_result_cache('EconResult', econ_result_cache, commit=commit)
+        self.save_result_cache('SasiResult', sasi_result_cache, commit=commit)
+        self.save_result_cache('FishingResult', fishing_result_cache, commit=commit)
 
     def save_result_cache(self, table, result_cache, commit=True):
         prev_num_saved = self.table_counters[table]
@@ -392,7 +399,7 @@ class SASI_Model(object):
         relevant_fields = dict([(k,v) for k,v in fields.items() if k in
                                 self.result_fields])
         if not result_cache[cell_id][t].has_key(result_key):
-            new_result = self.dao.schema['sources']['Result'](
+            new_result = self.dao.schema['sources']['SasiResult'](
                 t=t,
                 cell_id=cell_id,
                 a=0.0,
@@ -404,10 +411,10 @@ class SASI_Model(object):
             result_cache[cell_id][t][result_key] = new_result
         return result_cache[cell_id][t][result_key]
 
-    def get_or_create_econ_result(self, result_cache, t, cell_id, gear_id):
+    def get_or_create_fishing_result(self, result_cache, t, cell_id, gear_id):
         result_key = tuple([t, cell_id, gear_id])
         if not result_cache[cell_id][t].has_key(result_key):
-            new_result = self.dao.schema['sources']['EconResult'](
+            new_result = self.dao.schema['sources']['FishingResult'](
                 t=t,
                 cell_id=cell_id,
                 gear_id=gear_id,

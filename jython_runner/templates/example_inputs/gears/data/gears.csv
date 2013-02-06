@@ -1,7 +1,13 @@
-id,label,category,description
-GC1,Generic Trawl,Trawl
-GC2,Generic Scallop,Scallop
-GC3,Generic Dredge,Dredge
-GC4,Generic Longline,Longline
-GC5,Generic Gillnet,Gillnet
-GC6,Generic Trap,Trap
+id,generic_id,label,description,is_generic,min_depth,max_depth
+GC1,GC1,Generic Trawl,Generic Trawl description...,1,0,5000
+GC11,GC1,Specific Trawl A,Specific Trawl A description...,,,
+GC2,GC2,Generic Scallop,Generic Scallop description...,1,0,2500
+GC21,GC2,Specific Scallop A,Specific Scallop A description...,,,
+GC3,GC3,Generic Dredge,Generic Dredge description...,1,0,5000
+GC31,GC3,Specfici Dredge A,Specfici Dredge A description...,,,
+GC4,GC4,Generic Longline,Generic Longline description...,1,0,5000
+GC41,GC4,Specific Longline A,Specific Longline A description...,,,
+GC5,GC5,Generic Gillnet,Generic Gillnet description...,1,0,5000
+GC51,GC5,Specific Gillnet A,Specific Gillnet A description...,,,
+GC6,GC6,Generic Trap,Generic Trap description...,1,0,5000
+GC61,GC6,Specific Trap A,Specific Trap A description...,,,
