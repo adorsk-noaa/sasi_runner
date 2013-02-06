@@ -40,14 +40,14 @@ def browseURI(uri):
         rt.exec('open "%s"' % uri)
     else:
         if osName.startswith("Windows"):
-            rt.exec('rundll32 url.dll,FileProtocolHandler "%s"' % uri)
+            rt.exec(['rundll32 url.dll,FileProtocolHandler', uri])
         else:
             browsers = ["google-chrome", "firefox", "opera", "konqueror", 
                         "epiphany", "mozilla", "netscape" ]
             for b in browsers:
-                exists = rt.exec("which %s" % b).getInputStream().read()
+                exists = rt.exec(['which', b]).getInputStream().read()
                 if exists != -1:
-                    Runtime.getRuntime().exec('%s "%s"' % (b, uri))
+                    Runtime.getRuntime().exec([b, uri])
                     return
 
 class JythonGui(ItemListener):
@@ -110,7 +110,8 @@ class JythonGui(ItemListener):
 
         # 'Set result fields' elements.
         result_fields = [
-            {'id': 'gear_id', 'label': 'Gear', 'selected': True}, 
+            {'id': 'gear_id', 'label': 'Gear', 'selected': True, 
+             'enabled': False}, 
             {'id': 'substrate_id', 'label': 'Substrate', 'selected': True}, 
             {'id': 'energy_id', 'label': 'Energy', 'selected': False},
             {'id': 'feature_id', 'label': 'Feature', 'selected': False}, 
@@ -127,6 +128,7 @@ class JythonGui(ItemListener):
                 result_field['id'], result_field['selected'])
             checkBox = JCheckBox(
                 result_field['label'], result_field['selected'])
+            checkBox.setEnabled(result_field.get('enabled', True))
             checkBox.addItemListener(self)
             checkPanel.add(checkBox)
             self.resultFieldCheckBoxes[checkBox] = result_field
