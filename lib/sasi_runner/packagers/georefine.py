@@ -72,6 +72,7 @@ class GeoRefinePackager(object):
                     'type',
                     'type_id',
                     'area',
+                    'depth',
                     'geom_wkt'
                 ]
             },

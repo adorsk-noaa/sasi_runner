@@ -38,7 +38,7 @@ class SASI_Model(object):
         # but can greatly increase the number of results.
         if not result_fields:
             result_fields = ['gear_id', 'substrate_id', 'energy_id',
-                                 'feature_id', 'feature_category_id']
+                             'feature_id', 'feature_category_id']
         self.result_fields = result_fields
 
         self.dao = dao
@@ -201,10 +201,10 @@ class SASI_Model(object):
                     if not generic_gear:
                         continue
                     if generic_gear.min_depth is not None \
-                       and cell.z < generic_gear.min_depth:
+                       and cell.depth < generic_gear.min_depth:
                         continue
                     if gear.max_depth is not None \
-                       and cell.z > generic_gear.max_depth:
+                       and cell.depth > generic_gear.max_depth:
                         continue
                     result_fields['gear_id'] = generic_gear.id
 

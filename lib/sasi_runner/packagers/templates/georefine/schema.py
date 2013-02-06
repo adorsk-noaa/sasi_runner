@@ -17,7 +17,7 @@ ordered_sources.append({'id': 'time', 'source': sources['time']})
 
 sources['cell'] = Table('cell', metadata,
         Column('id', Integer, primary_key=True),
-        Column('z', Float),
+        Column('depth', Float),
         Column('area', Float),
         GeometryExtensionColumn('geom', MultiPolygon(2)),
         )
