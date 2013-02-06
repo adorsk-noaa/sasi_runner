@@ -1,5 +1,5 @@
 from sqlalchemy import (Table, Column, ForeignKey, ForeignKeyConstraint, 
-                        Integer, String, Float, Index)
+                        Integer, String, Boolean, Float, Index)
 from sqlalchemy.orm import relationship, mapper
 from sqlalchemy import MetaData
 from geoalchemy import *
@@ -53,7 +53,7 @@ ordered_sources.append({'id': 'feature', 'source': sources['feature']})
 sources['gear'] = Table('gear', metadata,
         Column('id', String, primary_key=True),
         Column('generic_id', String),
-        Column('is_generic', String),
+        Column('is_generic', Boolean),
         Column('min_depth', Float),
         Column('max_depth', Float),
         Column('label', String),
@@ -90,13 +90,14 @@ sources['fishing_result']= Table('fishing_result', metadata,
         Column('t', Integer),
         Column('cell_id', Integer, ForeignKey('cell.id')),
         Column('gear_id', String, ForeignKey('gear.id')),
+        Column('generic_gear_id', String, ForeignKey('gear.id')),
         Column('a', Float),
         Column('hours_fished', Float),
         Column('hours_fished_net', Float),
         Column('value', Float),
         Column('value_net', Float),
         )
-for col in ['gear_id']:
+for col in ['gear_id', 'generic_gear_id']:
     Index('idx_fishing_result_t_%s_cell_id' % col,
           sources['fishing_result'].c.t, sources['fishing_result'].c[col],
           sources['fishing_result'].c.cell_id)

@@ -43,7 +43,6 @@ class GeoRefinePackager(object):
         self.create_data_files()
         self.copy_map_data()
         self.create_schema_files()
-        self.create_app_config_files()
         self.create_static_files()
         archive_file = self.create_archive(self.output_file)
         shutil.rmtree(self.target_dir)
@@ -160,6 +159,7 @@ class GeoRefinePackager(object):
                     't',
                     'cell_id',
                     'gear_id',
+                    'generic_gear_id',
                     'a',
                     'value',
                     'value_net',
@@ -198,13 +198,16 @@ class GeoRefinePackager(object):
                 'georefine/schema.py')
             f.write(schema_template.render())
 
-    def create_app_config_files(self):
-        map_parameters = self.get_map_parameters()
+    def create_static_files(self):
+        # Create dir.
+        static_files_dir = os.path.join(self.target_dir, 'static')
+        os.makedirs(static_files_dir)
 
+        # Create app config.
+        map_parameters = self.get_map_parameters()
         map_layers = self.get_map_layers()
         formatted_map_layers = self.format_layers_for_app_config(map_layers)
-
-        app_config_file = os.path.join(self.target_dir, "GeoRefine_appConfig.js")
+        app_config_file = os.path.join(static_files_dir, "GeoRefine_appConfig.js")
         with open(app_config_file, "wb") as f:
             app_config_template = self.template_env.get_template(
                 'georefine/GeoRefine_appConfig.js')
@@ -214,10 +217,6 @@ class GeoRefinePackager(object):
                     map_layers=formatted_map_layers
                 )
             )
-
-    def create_static_files(self):
-        # Create dir.
-        static_files_dir = os.path.join(self.target_dir, 'static')
 
         # Copy metadata into dir.
         if os.path.isdir(self.metadata_dir):

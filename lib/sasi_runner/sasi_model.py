@@ -186,7 +186,7 @@ class SASI_Model(object):
                         gear_ids.append(generic_gear.id)
                     for gear_id in gear_ids:
                         fishing_result = self.get_or_create_fishing_result(
-                            fishing_result_cache, t, c, gear_id)
+                            fishing_result_cache, t, c, gear_id, generic_gear.id)
                         for field in ['value', 'hours_fished', 'a']:
                             old_val = getattr(fishing_result, field, None)
                             if old_val is None:
@@ -325,7 +325,7 @@ class SASI_Model(object):
                         else:
                             prev_r = self.get_or_create_fishing_result(
                                 fishing_result_cache, t - self.dt, c, 
-                                cur_r.gear_id)
+                                cur_r.gear_id, cur_r.generic_gear_id)
                             setattr(cur_r, net_field, 
                                     getattr(prev_r, net_field, 0))
 
@@ -416,13 +416,15 @@ class SASI_Model(object):
             result_cache[cell_id][t][result_key] = new_result
         return result_cache[cell_id][t][result_key]
 
-    def get_or_create_fishing_result(self, result_cache, t, cell_id, gear_id):
+    def get_or_create_fishing_result(self, result_cache, t, cell_id, gear_id,
+                                     generic_gear_id):
         result_key = tuple([t, cell_id, gear_id])
         if not result_cache[cell_id][t].has_key(result_key):
             new_result = self.dao.schema['sources']['FishingResult'](
                 t=t,
                 cell_id=cell_id,
                 gear_id=gear_id,
+                generic_gear_id=generic_gear_id,
                 value=0.0,
                 value_net=0.0,
                 hours_fished=0.0,
