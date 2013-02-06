@@ -204,10 +204,10 @@ class GeoRefinePackager(object):
         map_layers = self.get_map_layers()
         formatted_map_layers = self.format_layers_for_app_config(map_layers)
 
-        app_config_file = os.path.join(self.target_dir, "app_config.py")
+        app_config_file = os.path.join(self.target_dir, "GeoRefine_appConfig.js")
         with open(app_config_file, "wb") as f:
             app_config_template = self.template_env.get_template(
-                'georefine/app_config.py')
+                'georefine/GeoRefine_appConfig.js')
             f.write(
                 app_config_template.render(
                     map_parameters=map_parameters,
