@@ -37,7 +37,7 @@ class RunSasiTaskTestCase(unittest.TestCase):
             get_connection=get_connection,
             logger=logger,
             config={
-                'result_fields': ['gear_id', 'substrate_id'],
+                #'result_fields': ['gear_id', 'substrate_id'],
                 'ingest': {
                     'sections': {
                         'gears': {

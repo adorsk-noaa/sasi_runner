@@ -3,6 +3,7 @@ from jinja2 import Environment, PackageLoader
 import os
 import zipfile
 import csv
+import json
 import shutil
 import tempfile
 import logging
@@ -185,7 +186,7 @@ class GeoRefinePackager(object):
             ).export()
 
     def copy_map_data(self):
-        for section in ['map_layers', 'map_parameters']:
+        for section in ['map_layers', 'map_config']:
             target_dir = os.path.join(self.data_dir, section)
             source_dir = os.path.join(self.source_data_dir, section)
             if os.path.isdir(source_dir):
@@ -204,7 +205,7 @@ class GeoRefinePackager(object):
         os.makedirs(static_files_dir)
 
         # Create app config.
-        map_parameters = self.get_map_parameters()
+        map_config = self.read_map_config()
         map_layers = self.get_map_layers()
         formatted_map_layers = self.format_layers_for_app_config(map_layers)
         app_config_file = os.path.join(static_files_dir, "GeoRefine_appConfig.js")
@@ -213,7 +214,7 @@ class GeoRefinePackager(object):
                 'georefine/GeoRefine_appConfig.js')
             f.write(
                 app_config_template.render(
-                    map_parameters=map_parameters,
+                    map_config=map_config,
                     map_layers=formatted_map_layers
                 )
             )
@@ -230,13 +231,17 @@ class GeoRefinePackager(object):
             for item in dirs + files:  
                 os.chmod(os.path.join(root, item), 0755)
 
-    def get_map_parameters(self):
-        map_parameters_file = os.path.join(
-            self.data_dir, "map_parameters", "data", "map_parameters.csv"
-        )
-        with open(map_parameters_file, "rb") as f:
-            reader = csv.DictReader(f)
-            return reader.next()
+    def read_map_config(self):
+        map_config_dir = os.path.join(self.data_dir, "map_config")
+        map_config = {}
+        for config_section in ['defaultMapOptions', 'defaultLayerOptions',
+                               'defaultLayerAttributes']:
+            config_file = os.path.join(map_config_dir, 
+                                       config_section + '.json')
+            if os.path.isfile(config_file):
+                with open(config_file, "rb") as f:
+                    map_config[config_section] = f.read()
+        return map_config
 
     def get_map_layers(self):
         map_layers = {'base': [], 'overlay': []}
