@@ -21,25 +21,29 @@ class GeoRefinePackagerTest(unittest.TestCase):
         features = data_generators.generate_features()
         substrates = data_generators.generate_substrates()
         gears = data_generators.generate_gears()
-        results = data_generators.generate_results(
-            times=range(0,3), cells=cells, energys=energys,
-            features=features, substrates=substrates, gears=gears)
+        #results = data_generators.generate_results(
+            #times=range(0,3), cells=cells, energys=energys,
+            #features=features, substrates=substrates, gears=gears)
 
         # Directory for GeoRefine-specific data files.
-        # The source dir. #@TODO: better name for this?
-        source_data_dir = data_generators.generate_data_dir()
+        source_dir = data_generators.generate_data_dir()
 
         metadata_dir = tempfile.mkdtemp(prefix="gr_md.")
         open(os.path.join(metadata_dir, "foo.html"), "wb").write("Hi")
 
         packager = GeoRefinePackager(
-            cells=cells,
-            energies=energys,
-            substrates=substrates,
-            features=features,
-            gears=gears,
-            results=results,
-            source_data_dir=source_data_dir,
+            data={
+                'time': [t for t in range(0,10)],
+                'cell': cells,
+                'energy': energys,
+                'substrate': substrates,
+                'feature': features,
+                'feature_category': [],
+                'gear': gears,
+                'sasi_result': [],
+                'fishing_result': [],
+            },
+            source_dir=source_dir,
             metadata_dir=metadata_dir
         )
 

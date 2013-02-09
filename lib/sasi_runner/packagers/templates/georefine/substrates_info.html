@@ -1,0 +1,8 @@
+<ul style="margin: 0; padding: 0; list-style: none; text-align: center;">
+    {% for s in substrates %}
+    <li style="display: inline-block;{% if not loop.first %} margin-left: .5em;{% endif %}">
+        <div style="display:inline-block; vertical-align: middle;">{= s.label =}</div>
+        <div style="width: 1em; height: 1em; display:inline-block; vertical-align: middle; background-color: {= s.color =};"></div>
+    </li>
+    {% endfor %}
+</ul>

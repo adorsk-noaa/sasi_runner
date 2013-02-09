@@ -219,7 +219,7 @@ class RunSasiTask(task_manager.Task):
         if output_format == 'georefine':
             packager = packagers.GeoRefinePackager(
                 data=data,
-                source_data_dir=data_dir,
+                source_dir=data_dir,
                 metadata_dir=metadata_dir,
                 logger=logger,
                 output_file=output_file,

@@ -21,13 +21,19 @@ class LoggerLogHandler(logging.Handler):
 
 class GeoRefinePackager(object):
 
-    def __init__(self, data, source_data_dir=None, metadata_dir=None,
+    def __init__(self, data, source_dir=None, metadata_dir=None,
                  logger=logging.getLogger(), output_file=None): 
         self.data = data
-        self.source_data_dir = source_data_dir
+        self.source_dir = source_dir
         self.metadata_dir = metadata_dir
         self.logger = logger
         self.target_dir = tempfile.mkdtemp(prefix="grp.")
+
+        self.static_dir = os.path.join(self.target_dir, 'static')
+        os.makedirs(self.static_dir)
+
+        self.layers_dir = os.path.join(self.static_dir, 'map_layers')
+        os.makedirs(self.layers_dir)
         
         if not output_file:
             os_hndl, output_file = tempfile.mkstemp(suffix=".georefine.zip")
@@ -42,7 +48,6 @@ class GeoRefinePackager(object):
     def create_package(self):
         self.create_target_dirs()
         self.create_data_files()
-        self.copy_map_data()
         self.create_schema_files()
         self.create_static_files()
         archive_file = self.create_archive(self.output_file)
@@ -185,13 +190,6 @@ class GeoRefinePackager(object):
                 logger=section_logger,
             ).export()
 
-    def copy_map_data(self):
-        for section in ['map_layers', 'map_config']:
-            target_dir = os.path.join(self.data_dir, section)
-            source_dir = os.path.join(self.source_data_dir, section)
-            if os.path.isdir(source_dir):
-                shutil.copytree(source_dir, target_dir)
-
     def create_schema_files(self):
         schema_file = os.path.join(self.target_dir, "schema.py")
         with open(schema_file, "wb") as f:
@@ -200,15 +198,26 @@ class GeoRefinePackager(object):
             f.write(schema_template.render())
 
     def create_static_files(self):
-        # Create dir.
-        static_files_dir = os.path.join(self.target_dir, 'static')
-        os.makedirs(static_files_dir)
 
-        # Create app config.
+        # Copy map layers.
+        layers_source_dir = os.path.join(self.source_dir, 'map_layers')
+        if os.path.isdir(layers_source_dir):
+            for item in os.listdir(layers_source_dir):  
+                full_path = os.path.join(layers_source_dir, item)
+                if os.path.isdir(full_path):
+                    shutil.copytree(
+                        full_path,
+                        os.path.join(self.layers_dir, item)
+                    )
+
+        # Create substrates layer.
+        self.create_substrates_layer()
+
+        # Create GeoRefine appConfig.
         map_config = self.read_map_config()
         map_layers = self.get_map_layers()
         formatted_map_layers = self.format_layers_for_app_config(map_layers)
-        app_config_file = os.path.join(static_files_dir, "GeoRefine_appConfig.js")
+        app_config_file = os.path.join(self.static_dir, "GeoRefine_appConfig.js")
         with open(app_config_file, "wb") as f:
             app_config_template = self.template_env.get_template(
                 'georefine/GeoRefine_appConfig.js')
@@ -219,15 +228,15 @@ class GeoRefinePackager(object):
                 )
             )
 
-        # Copy metadata into dir.
+        # Copy metadata.
         if os.path.isdir(self.metadata_dir):
             shutil.copytree(
                 self.metadata_dir, 
-                os.path.join(static_files_dir, 'sasipedia')
+                os.path.join(self.static_dir, 'sasipedia')
             )
 
         # Set permissions.
-        for root, dirs, files in os.walk(static_files_dir):  
+        for root, dirs, files in os.walk(self.static_dir):  
             for item in dirs + files:  
                 os.chmod(os.path.join(root, item), 0755)
 
@@ -243,14 +252,9 @@ class GeoRefinePackager(object):
                     map_config[config_section] = f.read()
         return map_config
 
+    #@TODO
     def get_map_layers(self):
-        map_layers = {'base': [], 'overlay': []}
-        map_layers_file = os.path.join(
-            self.data_dir, "map_layers", "data", "map_layers.csv"
-        )
-        with open(map_layers_file, "rb") as f:
-            reader = csv.DictReader(f)
-            return [row for row in reader]
+        return []
 
     def format_layers_for_app_config(self, layers):
         formatted_layers = {}
@@ -326,3 +330,61 @@ class GeoRefinePackager(object):
         logger.addHandler(log_handler)
         logger.setLevel(self.logger.level)
         return logger
+
+    def create_substrates_layer(self):
+        # Read substrates.
+        substrates = []
+        substrates_path = os.path.join(
+            self.source_dir, 'substrates', 'data', 'substrates.csv')
+        with open(substrates_path, 'rb') as f:
+            for row in csv.DictReader(f):
+                css_color = row.get('color', '#000000')
+                hex_color = css_color.lstrip('#')
+                row['rgb'] = [int(hex_color[i:i+2],16) for i in range(0, 6, 2)]
+                substrates.append(row)
+
+        layer_dir = os.path.join(self.layers_dir, 'substrates')
+        os.makedirs(layer_dir)
+        shutil.copytree(
+            os.path.join(self.source_dir, 'habitats', 'data'),
+            os.path.join(layer_dir, 'shapefiles')
+        )
+
+        # Write layer client config.
+        client_path = os.path.join(layer_dir, 'client.json')
+        info_template = self.template_env.get_template(
+            'georefine/substrates_info.html')
+        info_html = info_template.render(substrates=substrates)
+        print info_html
+        client_config = {
+            'label': 'Substrates',
+            'layer_type': "WMS",
+            'disabled': True,
+            'params': {
+                'srs':'EPSG:3857',
+                'transparent': True,
+            },
+            'info': info_html,
+            'properties': {
+                'projection': 'EPSG:3857',
+                'serverResolutions': [],
+                'tileSize': {'w': 512, 'h': 512}
+            }
+        }
+        with open(client_path, 'wb') as f:
+            json.dump(client_config, f)
+
+        # Write mapfile.
+        mapfile_path = os.path.join(layer_dir, 'substrates.map')
+        with open(mapfile_path, 'wb') as f:
+            mapfile_template = self.template_env.get_template(
+                'georefine/substrates.map')
+            f.write(mapfile_template.render(substrates=substrates))
+
+        # Write wms config.
+        wms_config_path = os.path.join(layer_dir, 'wms.json')
+        wms_config = {
+            'mapfile': 'substrates.map'
+        }
+        with open(wms_config_path, 'wb') as f:
+            json.dump(wms_config, f)

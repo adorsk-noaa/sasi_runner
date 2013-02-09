@@ -1,0 +1,30 @@
+MAP
+  EXTENT -180 -90 180 90
+  IMAGETYPE "image/gif"
+  NAME "substrates"
+  SIZE 640 640
+  STATUS ON
+  UNITS DD
+  PROJECTION
+    "init=EPSG:3587"
+  END
+  WEB
+    METADATA
+      "ows_enable_request"	"*"
+    END
+  END
+  LAYER
+    STATUS ON
+    NAME "substrates"
+    DATA "shapefiles/habitats.shp"
+    TYPE POLYGON
+    {% for substrate in substrates %}
+    CLASS
+      EXPRESSION ([SUBSTRATE] eq '{= substrate.id =}')
+      STYLE
+        COLOR {= substrate.rgb =}
+      END # STYLE
+    END # CLASS
+    {% endfor %}
+  END # LAYER
+END # MAP
