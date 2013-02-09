@@ -33,6 +33,7 @@ class GeoRefinePackager(object):
         os.makedirs(self.static_dir)
 
         self.layers_dir = os.path.join(self.static_dir, 'map_layers')
+        self.layers_source_dir = os.path.join(self.source_dir, 'map_layers')
         os.makedirs(self.layers_dir)
         
         if not output_file:
@@ -42,7 +43,7 @@ class GeoRefinePackager(object):
         self.template_env = Environment(
             loader=PackageLoader('sasi_runner.packagers', 'templates'),
             variable_start_string='{=',
-            variable_end_string='=}'
+            variable_end_string='=}',
         )
 
     def create_package(self):
@@ -51,7 +52,7 @@ class GeoRefinePackager(object):
         self.create_schema_files()
         self.create_static_files()
         archive_file = self.create_archive(self.output_file)
-        shutil.rmtree(self.target_dir)
+        #shutil.rmtree(self.target_dir)
         return archive_file
 
     def create_target_dirs(self):
@@ -199,34 +200,46 @@ class GeoRefinePackager(object):
 
     def create_static_files(self):
 
-        # Copy map layers.
-        layers_source_dir = os.path.join(self.source_dir, 'map_layers')
-        if os.path.isdir(layers_source_dir):
-            for item in os.listdir(layers_source_dir):  
-                full_path = os.path.join(layers_source_dir, item)
-                if os.path.isdir(full_path):
-                    shutil.copytree(
-                        full_path,
-                        os.path.join(self.layers_dir, item)
-                    )
-
         # Create substrates layer.
         self.create_substrates_layer()
 
+        # Copy layer dirs.
+        layers_source_dir = os.path.join(self.source_dir, 'map_layers')
+        if os.path.isdir(layers_source_dir):
+            for layer_id in os.listdir(layers_source_dir):  
+                layer_source_dir = os.path.join(layers_source_dir, layer_id)
+                if os.path.isdir(layer_source_dir):
+                    layer_target_dir = os.path.join(self.layers_dir, layer_id)
+                    shutil.copytree(
+                        layer_source_dir,
+                        layer_target_dir
+                    )
+
+        # Get layer data from target dir.
+        layers = []
+        for layer_id in os.listdir(self.layers_dir):  
+            layer_dir = os.path.join(self.layers_dir, layer_id)
+            if os.path.isdir(layer_source_dir):
+                layer = {
+                    'id': layer_id,
+                    'dir': layer_dir,
+                }
+                config_path = os.path.join(layer_dir, 'client.json')
+                if os.path.isfile(config_path):
+                    with open(config_path, 'rb') as f:
+                        layer['json_config'] = f.read()
+                layers.append(layer)
+
         # Create GeoRefine appConfig.
         map_config = self.read_map_config()
-        map_layers = self.get_map_layers()
-        formatted_map_layers = self.format_layers_for_app_config(map_layers)
         app_config_file = os.path.join(self.static_dir, "GeoRefine_appConfig.js")
         with open(app_config_file, "wb") as f:
             app_config_template = self.template_env.get_template(
                 'georefine/GeoRefine_appConfig.js')
-            f.write(
-                app_config_template.render(
-                    map_config=map_config,
-                    map_layers=formatted_map_layers
-                )
-            )
+            f.write(app_config_template.render(
+                map_config=map_config,
+                layers=layers,
+            ))
 
         # Copy metadata.
         if os.path.isdir(self.metadata_dir):
@@ -243,69 +256,14 @@ class GeoRefinePackager(object):
     def read_map_config(self):
         map_config_dir = os.path.join(self.data_dir, "map_config")
         map_config = {}
-        for config_section in ['defaultMapOptions', 'defaultLayerOptions',
-                               'defaultLayerAttributes']:
-            config_file = os.path.join(map_config_dir, 
+        for config_section in ['defaultMapProperties',
+                               'defaultLayerProperties']:
+            config_path = os.path.join(map_config_dir, 
                                        config_section + '.json')
-            if os.path.isfile(config_file):
+            if os.path.isfile(config_path):
                 with open(config_file, "rb") as f:
                     map_config[config_section] = f.read()
         return map_config
-
-    #@TODO
-    def get_map_layers(self):
-        return []
-
-    def format_layers_for_app_config(self, layers):
-        formatted_layers = {}
-        for layer in layers:
-            category = formatted_layers.setdefault(
-                layer['layer_category'], [])
-            formatted_layer = self.format_layer_for_app_config(layer)
-            category.append(formatted_layer)
-        return formatted_layers
-
-    def format_layer_for_app_config(self, layer):
-        """ Format a layer for use in an app config template. """
-        formatted_layer = {'attrs': {}, 'wms_params': {}, 'options': {}}
-
-        # Required directly mapped attributes.
-        for attr in ['id', 'label', 'source', 'layer_type']:
-            formatted_layer['attrs'][attr] = "'%s'" % layer[attr]
-
-        # Optional directly mapped attributes.
-        for attr in ['max_extent']:
-            if not layer.get(attr) == None:
-                formatted_layer['attrs'][attr] = "'%s'" % layer[attr]
-
-        # Layer source.
-        source = layer.get('source', 'georefine_wms_layer')
-        formatted_layer['attrs']['source'] = "'%s'" % source
-
-        # Boolean attributes.
-        for attr in ['disabled']:
-            if not layer.get(attr):
-                formatted_layer['attrs'][attr] = 'False'
-            else:
-                formatted_layer['attrs'][attr] = 'True'
-
-        # Optional WMS Parameters.
-        wms_params = {}
-        for attr in ['layers', 'styles']:
-            if layer.get(attr):
-                wms_params[attr] = "'%s'" % layer[attr]
-        for attr in ['transparent']:
-            if layer.get(attr):
-                wms_params[attr] = 'True'
-
-        # For GeoRefine wms layers, set WMS layers param to be layer id.
-        #@TODO: kludgy, clean this up later.
-        if source == 'georefine_wms_layer':
-            wms_params['layers'] = "'%s'" % layer['id']
-
-        formatted_layer['wms_params'] = wms_params
-
-        return formatted_layer
 
     def create_archive(self, output_file):
         def zipdir(basedir, archivename, basename=None):
@@ -355,20 +313,22 @@ class GeoRefinePackager(object):
         info_template = self.template_env.get_template(
             'georefine/substrates_info.html')
         info_html = info_template.render(substrates=substrates)
-        print info_html
         client_config = {
+            'id': 'substrates',
             'label': 'Substrates',
+            'source': 'georefine_wms',
             'layer_type': "WMS",
             'disabled': True,
             'params': {
                 'srs':'EPSG:3857',
                 'transparent': True,
+                'layers': 'substrates',
             },
             'info': info_html,
             'properties': {
                 'projection': 'EPSG:3857',
-                'serverResolutions': [],
-                'tileSize': {'w': 512, 'h': 512}
+                #'serverResolutions': [],
+                #'tileSize': {'w': 512, 'h': 512}
             }
         }
         with open(client_path, 'wb') as f:

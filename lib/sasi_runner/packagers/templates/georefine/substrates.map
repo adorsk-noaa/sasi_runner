@@ -6,7 +6,7 @@ MAP
   STATUS ON
   UNITS DD
   PROJECTION
-    "init=EPSG:3587"
+    "init=epsg:3587"
   END
   WEB
     METADATA
@@ -18,11 +18,14 @@ MAP
     NAME "substrates"
     DATA "shapefiles/habitats.shp"
     TYPE POLYGON
+    PROJECTION
+      "init=epsg:4326"
+    END
     {% for substrate in substrates %}
     CLASS
-      EXPRESSION ([SUBSTRATE] eq '{= substrate.id =}')
+      EXPRESSION ('[SUBSTRATE]' eq '{= substrate.id =}')
       STYLE
-        COLOR {= substrate.rgb =}
+        COLOR {= substrate.rgb |join(' ') =}
       END # STYLE
     END # CLASS
     {% endfor %}
