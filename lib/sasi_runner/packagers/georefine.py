@@ -1,4 +1,6 @@
 import sasi_data.exporters as exporters
+from sasi_data.util import shapefile as shapefile_util
+from sasi_data.util import gis as gis_util
 from jinja2 import Environment, PackageLoader
 import os
 import zipfile
@@ -301,12 +303,37 @@ class GeoRefinePackager(object):
                 row['rgb'] = [int(hex_color[i:i+2],16) for i in range(0, 6, 2)]
                 substrates.append(row)
 
+        # Make substrate shapefile from habitats, 
+        # with EPSG:3857 as the CRS.
         layer_dir = os.path.join(self.layers_dir, 'substrates')
         os.makedirs(layer_dir)
-        shutil.copytree(
-            os.path.join(self.source_dir, 'habitats', 'data'),
-            os.path.join(layer_dir, 'shapefiles')
+        habs_shapefile = os.path.join(
+            self.source_dir, 'habitats', 'data', 'habitats.shp')
+        reader = shapefile_util.get_shapefile_reader(habs_shapefile)
+        source_mbr = reader.get_mbr()
+        source_crs = reader.get_crs()
+        source_schema = reader.get_schema()
+        
+        substrate_shapefile = os.path.join(layer_dir, 'substrates.shp')
+        writer = shapefile_util.get_shapefile_writer(
+            shapefile=substrate_shapefile, 
+            crs='EPSG:3857',
+            schema=source_schema,
         )
+        for record in reader.records():
+            shp = gis_util.geojson_to_shape(record['geometry'])
+            proj_shp = gis_util.reproject_shape(shp, source_crs, 'EPSG:3857')
+            record['geometry'] = json.loads(gis_util.shape_to_geojson(proj_shp))
+            writer.write(record)
+        writer.close()
+        reader.close()
+
+        # Transform bounds to EPSG:3857.
+        mbr_diag = gis_util.wkt_to_shape(
+            "LINESTRING (%s %s, %s %s)" % source_mbr)
+        projected_diag = gis_util.reproject_shape(
+            mbr_diag, source_crs, 'EPSG:3857')
+        projected_mbr = gis_util.get_shape_mbr(projected_diag)
 
         # Write layer client config.
         client_path = os.path.join(layer_dir, 'client.json')
@@ -326,9 +353,10 @@ class GeoRefinePackager(object):
             },
             'info': info_html,
             'properties': {
+                'maxExtent': projected_mbr,
                 'projection': 'EPSG:3857',
-                #'serverResolutions': [],
-                #'tileSize': {'w': 512, 'h': 512}
+                'serverResolutions': [4891.96981024998, 2445.98490512499, 1222.99245256249, 611.49622628138, 305.748113140558],
+                'tileSize': {'w': 512, 'h': 512}
             }
         }
         with open(client_path, 'wb') as f:
@@ -339,7 +367,10 @@ class GeoRefinePackager(object):
         with open(mapfile_path, 'wb') as f:
             mapfile_template = self.template_env.get_template(
                 'georefine/substrates.map')
-            f.write(mapfile_template.render(substrates=substrates))
+            f.write(mapfile_template.render(
+                substrates=substrates,
+                mbr=projected_mbr
+            ))
 
         # Write wms config.
         wms_config_path = os.path.join(layer_dir, 'wms.json')

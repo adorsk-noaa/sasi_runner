@@ -1,12 +1,12 @@
 MAP
-  EXTENT -180 -90 180 90
+  EXTENT {= mbr |join(' ') =}
   IMAGETYPE "image/gif"
   NAME "substrates"
-  SIZE 640 640
+  SIZE 512 512
   STATUS ON
   UNITS DD
   PROJECTION
-    "init=epsg:3587"
+    "init=epsg:3857"
   END
   WEB
     METADATA
@@ -16,10 +16,10 @@ MAP
   LAYER
     STATUS ON
     NAME "substrates"
-    DATA "shapefiles/habitats.shp"
+    DATA "substrates.shp"
     TYPE POLYGON
     PROJECTION
-      "init=epsg:4326"
+      "init=epsg:3857"
     END
     {% for substrate in substrates %}
     CLASS
