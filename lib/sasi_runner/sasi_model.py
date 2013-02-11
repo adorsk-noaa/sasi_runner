@@ -375,7 +375,7 @@ class SASI_Model(object):
         efforts = []
         Effort = self.dao.schema['sources']['Effort']
         num_gears = len(self.generic_gears)
-        for t in range(self.t0, self.tf, self.dt):
+        for t in range(self.t0, self.tf + 1, self.dt):
             for cell in cells:
                 for gear in self.generic_gears.values():
                     efforts.append(
