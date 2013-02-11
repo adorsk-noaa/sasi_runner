@@ -292,6 +292,9 @@ class GeoRefinePackager(object):
         return logger
 
     def create_substrates_layer(self):
+        logger = self.get_logger_for_section(
+            section_id='substrates_layer', 
+            base_msg="Creating substrates layer...")
         # Read substrates.
         substrates = []
         substrates_path = os.path.join(
@@ -309,24 +312,54 @@ class GeoRefinePackager(object):
         os.makedirs(layer_dir)
         habs_shapefile = os.path.join(
             self.source_dir, 'habitats', 'data', 'habitats.shp')
+        logger.info("Reading shapes from habitats file...")
         reader = shapefile_util.get_shapefile_reader(habs_shapefile)
         source_mbr = reader.get_mbr()
         source_crs = reader.get_crs()
         source_schema = reader.get_schema()
         
+        write_msg = "Writing out data for substrates layer..."
+        logger.info(write_msg)
+        reader = shapefile_util.get_shapefile_reader(habs_shapefile)
         substrate_shapefile = os.path.join(layer_dir, 'substrates.shp')
         writer = shapefile_util.get_shapefile_writer(
             shapefile=substrate_shapefile, 
             crs='EPSG:3857',
             schema=source_schema,
         )
+        skipped = 0
+        counter = 0
+        log_interval = 1e3
         for record in reader.records():
+            counter += 1
+            if (counter % log_interval) == 0:
+                prog_msg = "%s %d of %d (%.1f)" % (
+                    write_msg, counter, reader.size, 
+                    100.0 * counter/reader.size)
+                logger.info(prog_msg)
             shp = gis_util.geojson_to_shape(record['geometry'])
             proj_shp = gis_util.reproject_shape(shp, source_crs, 'EPSG:3857')
             record['geometry'] = json.loads(gis_util.shape_to_geojson(proj_shp))
-            writer.write(record)
+            bad_rec = False
+            ps = record['properties']
+            if type(ps['ENERGY']) is not unicode:
+                bad_rec = True
+            if type(ps['Z']) is not float:
+                bad_rec = True
+            if type(ps['SUBSTRATE']) is not unicode:
+                bad_rec = True
+            if record['geometry']['type'] != 'Polygon':
+                bad_rec = True
+
+            if not bad_rec:
+                writer.write(record)
+            else:
+                skipped += 1
+
         writer.close()
         reader.close()
+        if skipped:
+            self.logger.info("Skipped %s records due to formatting" % skipped)
 
         # Transform bounds to EPSG:3857.
         mbr_diag = gis_util.wkt_to_shape(
