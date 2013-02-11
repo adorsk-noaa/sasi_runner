@@ -23,9 +23,11 @@ class LoggerLogHandler(logging.Handler):
 
 class GeoRefinePackager(object):
 
-    def __init__(self, data, source_dir=None, metadata_dir=None,
-                 logger=logging.getLogger(), output_file=None): 
+    def __init__(self, data, model_parameters={}, source_dir=None, 
+                 metadata_dir=None, logger=logging.getLogger(), 
+                 output_file=None): 
         self.data = data
+        self.model_parameters = model_parameters
         self.source_dir = source_dir
         self.metadata_dir = metadata_dir
         self.logger = logger
@@ -238,6 +240,7 @@ class GeoRefinePackager(object):
             app_config_template = self.template_env.get_template(
                 'georefine/GeoRefine_appConfig.js')
             f.write(app_config_template.render(
+                model_parameters=model_parameters,
                 map_config=map_config,
                 layers=layers,
             ))
