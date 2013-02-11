@@ -35,7 +35,6 @@ class GeoRefinePackager(object):
         os.makedirs(self.static_dir)
 
         self.layers_dir = os.path.join(self.static_dir, 'map_layers')
-        self.layers_source_dir = os.path.join(self.source_dir, 'map_layers')
         os.makedirs(self.layers_dir)
         
         if not output_file:
@@ -378,7 +377,6 @@ class GeoRefinePackager(object):
             'label': 'Substrates',
             'source': 'georefine_wms',
             'layer_type': "WMS",
-            'disabled': True,
             'params': {
                 'srs':'EPSG:3857',
                 'transparent': True,
@@ -389,8 +387,10 @@ class GeoRefinePackager(object):
                 'maxExtent': projected_mbr,
                 'projection': 'EPSG:3857',
                 'serverResolutions': [4891.96981024998, 2445.98490512499, 1222.99245256249, 611.49622628138, 305.748113140558],
-                'tileSize': {'w': 512, 'h': 512}
-            }
+                'tileSize': {'w': 512, 'h': 512},
+                'visibility': False
+            },
+            'zIndex': 30,
         }
         with open(client_path, 'wb') as f:
             json.dump(client_config, f)
