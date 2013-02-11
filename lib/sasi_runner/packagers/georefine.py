@@ -240,7 +240,7 @@ class GeoRefinePackager(object):
             app_config_template = self.template_env.get_template(
                 'georefine/GeoRefine_appConfig.js')
             f.write(app_config_template.render(
-                model_parameters=model_parameters,
+                model_parameters=self.model_parameters,
                 map_config=map_config,
                 layers=layers,
             ))
@@ -258,16 +258,11 @@ class GeoRefinePackager(object):
                 os.chmod(os.path.join(root, item), 0755)
 
     def read_map_config(self):
-        map_config_dir = os.path.join(self.data_dir, "map_config")
-        map_config = {}
-        for config_section in ['defaultMapProperties',
-                               'defaultLayerProperties']:
-            config_path = os.path.join(map_config_dir, 
-                                       config_section + '.json')
-            if os.path.isfile(config_path):
-                with open(config_file, "rb") as f:
-                    map_config[config_section] = f.read()
-        return map_config
+        map_config_path = os.path.join(self.data_dir, "map_config.json")
+        if os.path.isfile(map_config_path):
+            with open(map_config_file, "rb") as f:
+                return json.load(f)
+        return {}
 
     def create_archive(self, output_file):
         def zipdir(basedir, archivename, basename=None):
@@ -300,7 +295,7 @@ class GeoRefinePackager(object):
         # Read substrates.
         substrates = []
         substrates_path = os.path.join(
-            self.source_dir, 'substrates', 'data', 'substrates.csv')
+            self.source_dir, 'substrates.csv')
         with open(substrates_path, 'rb') as f:
             for row in csv.DictReader(f):
                 css_color = row.get('color', '#000000')
@@ -313,7 +308,7 @@ class GeoRefinePackager(object):
         layer_dir = os.path.join(self.layers_dir, 'substrates')
         os.makedirs(layer_dir)
         habs_shapefile = os.path.join(
-            self.source_dir, 'habitats', 'data', 'habitats.shp')
+            self.source_dir, 'habitats', 'habitats.shp')
         logger.info("Reading shapes from habitats file...")
         reader = shapefile_util.get_shapefile_reader(habs_shapefile)
         source_mbr = reader.get_mbr()
@@ -361,7 +356,8 @@ class GeoRefinePackager(object):
         writer.close()
         reader.close()
         if skipped:
-            self.logger.info("Skipped %s records due to formatting" % skipped)
+            self.logger.info("%s Skipped %s records due to formatting" %
+                             (write_msg, skipped))
 
         # Transform bounds to EPSG:3857.
         mbr_diag = gis_util.wkt_to_shape(
