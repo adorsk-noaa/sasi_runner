@@ -315,7 +315,7 @@ class GeoRefinePackager(object):
         source_crs = reader.get_crs()
         source_schema = reader.get_schema()
         
-        write_msg = "Writing out data for substrates layer..."
+        write_msg = "Writing shapes..."
         logger.info(write_msg)
         reader = shapefile_util.get_shapefile_reader(habs_shapefile)
         substrate_shapefile = os.path.join(layer_dir, 'substrates.shp')
@@ -345,7 +345,7 @@ class GeoRefinePackager(object):
                 bad_rec = True
             if type(ps['SUBSTRATE']) is not unicode:
                 bad_rec = True
-            if record['geometry']['type'] != 'Polygon':
+            if record['geometry']['type'] != source_schema['geometry']:
                 bad_rec = True
 
             if not bad_rec:
