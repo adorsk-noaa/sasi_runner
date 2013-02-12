@@ -269,7 +269,7 @@ class SASI_Model(object):
                                 va = self.vas[(generic_gear.id, ht[0], ht[1], f)]
 
                                 omega = self.omegas[va.s]
-                                tau = self.taus[va.r]
+                                tau = int(round(self.taus[va.r]))
 
                                 result = self.get_or_create_result(
                                     sasi_result_cache, t, c, result_fields)
