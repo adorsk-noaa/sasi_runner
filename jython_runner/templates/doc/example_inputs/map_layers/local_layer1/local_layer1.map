@@ -1,0 +1,30 @@
+MAP
+  EXTENT -180 -90 180 90
+  IMAGETYPE "image/gif"
+  SIZE 512 512
+  STATUS ON
+  PROJECTION
+    "init=epsg:4326"
+  END
+  WEB
+    METADATA
+      "ows_enable_request"	"*"
+      "wms_srs" "EPSG:4326 EPSG:3857"
+    END
+  END
+  LAYER
+    STATUS ON
+    NAME "local_layer1"
+    DATA "local_layer1.shp"
+    TYPE POLYGON
+
+    PROJECTION
+      "init=epsg:4326"
+    END
+
+    CLASS
+      COLOR 255 0 0
+    END
+
+  END # LAYER
+END # MAP

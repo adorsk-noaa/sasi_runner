@@ -1,0 +1,15 @@
+{
+  "id": "local_layer1",
+  "label":"Local Layer 1",
+  "layer_type":"WMS",
+  "source":"georefine_wms",
+  "properties":{
+  },
+  "info":"Layer Info",
+  "params":{
+    "layers":"local_layer1",
+    "srs":"EPSG:3857",
+    "transparent":true
+  },
+  "zIndex":30,
+}

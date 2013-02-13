@@ -1,0 +1,117 @@
+<html>
+<head></head>
+<body>
+
+<h2>Map Layers Directory</h2>
+
+This page describes the format of the map_layers directory.
+
+A set of example inputs is included with this documentation: <a href="example_inputs" >example inputs</a> .
+
+<div>
+<b>Note</b>: Currently it is somewhat complicated to add a layer. It is not expected that most users will need to add layers.
+</div>
+
+
+<div>
+    The map_layers directory contains data and definitions for map layers to include in the SASI Data Explorer.  There are two types of layers that can be included:
+    <ol>
+        <li><a href="#remote">Remote Layers</a>: the map images are provided by a remote server</li>
+        <li>Local Layers: the map images will be provided by the SASI Data Explorer</li>
+    </ol>
+
+    The formats of these layers will described below.
+
+    <div>
+    </div>
+</div>
+
+<div class="section">
+    <h3>General Notes</h3>
+    <ul>
+        <li>Each layer should have its own directory in the map_layers directory.</li>
+        <li>Each layer directory should include a client.json' file</a>. This file tells the Data Explorer how to render the layer.</li>
+    </ul>
+</div>
+
+<div class="section">
+    <a name="remote">
+    <h3>Remote Layers</h3>
+    <div>Remote Layers provide map images from an external server</div>
+
+    <h4>client.json</h4>
+    <div>
+        Each remote layer directory should include a client.json file. This file is a <a href="http://www.json.org/">JSON</a> file that tells the Data Explorer how to create the layer.
+    </div>
+
+    <div>
+        The format of the JSON should be as follows:
+        <pre>
+        {
+  "layer_type": "LAYER_TYPE", // either 'WMS' or 'XYZ'
+  "label": "LAYER NAME", // the name of the layer as it will appear in the Data Explorer.
+  "url": "http://some/service/url",
+  "properties": {
+    ... // Properties as per the OpenLayers <a href="http://dev.openlayers.org/releases/OpenLayers-2.12/doc/apidocs/files/OpenLayers/Layer-js.html#OpenLayers.Layer.Properties">Layer API</a>
+  },
+  "zIndex": 10, // The stacking order of the layer.
+  "info": "Layer info:&lt;a target=\"_blank\" href=\"http://info.mylayer.com\"&gt;link&lt;/a&gt;", // HTML fragment providing brief info about the layer.
+}
+        </pre>
+    </div>
+</div>
+
+<div class="section">
+    <a name="local">
+    <h3>Local Layers</h3>
+    <div>Local Layers provide map images that are served by the Data Explorer</div>
+
+    <h4>client.json</h4>
+    <div>
+        Each local layer directory should include a client.json file. This file is a <a href="http://www.json.org/">JSON</a> file that tells the Data Explorer how to create the layer.
+    </div>
+
+    <div>
+        The format of the JSON should be as follows:
+        <pre>
+        {
+  "id": "layer_dir", // *must* match the layer's directory name
+  "layer_type": "WMS", // *must* be WMS
+  "source": "georefine_wms", // *must* be 'georefine_wms',
+  "label": "LAYER NAME", // the name of the layer as it will appear in the Data Explorer.
+  "properties": {
+    ... // Properties as per the OpenLayers <a href="http://dev.openlayers.org/releases/OpenLayers-2.12/doc/apidocs/files/OpenLayers/Layer-js.html#OpenLayers.Layer.Properties">Layer API</a>
+  },
+  "zIndex": 10, // The stacking order of the layer.
+  "info": "Layer info:&lt;a target=\"_blank\" href=\"http://info.mylayer.com\"&gt;link&lt;/a&gt;", // HTML fragment providing brief info about the layer.
+}
+        </pre>
+    </div>
+
+    <h4>wms.json</h4>
+    <div>
+        Each local layer directory should include a wms.json file. This file is a <a href="http://www.json.org/">JSON</a> file that tells the Data Explorer where to find the layer's mapfile.
+    </div>
+
+    <div>
+        The format of the JSON should be as follows:
+        <pre>
+        {
+          "mapfile": "my_layer.map" // The location of the layer's mapfile, relative to the wms.json file.
+        }
+        </pre>
+    </div>
+
+    <h4>mapfile</h4>
+    <div>
+        Each local layer directory should also include a .map mapfile file. This file is a <a href="http://www.mapserver.org/mapfile/">MapServer Mapfile</a> that tells the Data Explorer how to generate images for the layer. In general the mapfile should support projection 'EPSG:3857' (web mercator) in the wms_srs metadata.
+    </div>
+
+    <h4>data Files</h4>
+    <div>
+        Local data layers can include additional data files. For example, shapefile sets containing the layer's data.
+    </div>
+</div>
+
+</body>
+</html>
