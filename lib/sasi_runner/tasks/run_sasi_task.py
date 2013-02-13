@@ -193,17 +193,6 @@ class RunSasiTask(task_manager.Task):
 
         # Assemble data for packager.
         data = {}
-        data_categories = ['cell', 'energy', 'substrate', 'feature_category', 
-                           'feature', 'gear', 'sasi_result', 'fishing_result']
-        for category in data_categories:
-            source_name = ''.join([s.capitalize() for s in category.split('_')])
-            items_q = dao.query('__' + source_name,
-                                format_='query_obj')
-            batched_items = dao.get_batched_results(items_q, batch_size)
-            data[category] = {
-                'items': batched_items,
-                'num_items': items_q.count()
-            }
 
         # Special time data, to make time queries reasonable.
         parms = dao.query('__ModelParameters').one()
@@ -216,6 +205,18 @@ class RunSasiTask(task_manager.Task):
                                                 parms.time_step)]
         }
 
+        data_categories = ['cell', 'energy', 'substrate', 'feature_category', 
+                           'feature', 'gear', 'sasi_result', 'fishing_result']
+        for category in data_categories:
+            source_name = ''.join([s.capitalize() for s in category.split('_')])
+            items_q = dao.query('__' + source_name,
+                                format_='query_obj')
+            batched_items = dao.get_batched_results(items_q, batch_size)
+            data[category] = {
+                'items': batched_items,
+                'num_items': items_q.count()
+            }
+
         if output_format == 'georefine':
             packager = packagers.GeoRefinePackager(
                 data=data,
@@ -224,6 +225,7 @@ class RunSasiTask(task_manager.Task):
                 metadata_dir=metadata_dir,
                 logger=logger,
                 output_file=output_file,
+                result_fields=self.config['result_fields'],
             )
         package_file = packager.create_package()
         return package_file

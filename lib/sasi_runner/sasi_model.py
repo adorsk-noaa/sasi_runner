@@ -362,8 +362,8 @@ class SASI_Model(object):
         else:
             cell_ids = [c.id for c in cells]
             Effort = self.dao.schema['sources']['Effort']
-            effort_q = self.dao.session.query(Effort)
-            efforts = effort_q.filter(Effort.cell_id.in_(cell_ids)).all()
+            efforts = self.dao.session.query(Effort)
+            efforts = efforts.filter(Effort.cell_id.in_(cell_ids))
 
         for effort in efforts:
             cell_efforts = effort_cache.setdefault(effort.cell_id, {})

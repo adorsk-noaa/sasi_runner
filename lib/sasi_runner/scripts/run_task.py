@@ -19,6 +19,7 @@ argparser.add_argument('--result-fields', '-rf', nargs='*',
                                 'feature_id', 'feature_category_id'])
 argparser.add_argument('--grid-limit', '-gl', type=int)
 argparser.add_argument('--habitats-limit', '-hl', type=int)
+argparser.add_argument('--efforts-limit', '-el', type=int)
 
 args = argparser.parse_args()
 
@@ -69,6 +70,9 @@ task = RunSasiTask(
                 },
                 'habitats': {
                     'limit': args.habitats_limit
+                },
+                'fishing_efforts': {
+                    'limit': args.efforts_limit
                 },
             }
         },

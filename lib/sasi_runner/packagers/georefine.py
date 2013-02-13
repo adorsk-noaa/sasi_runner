@@ -23,22 +23,24 @@ class LoggerLogHandler(logging.Handler):
 
 class GeoRefinePackager(object):
 
-    def __init__(self, data, model_parameters={}, source_dir=None, 
-                 metadata_dir=None, logger=logging.getLogger(), 
-                 output_file=None): 
+    def __init__(self, data, model_parameters={}, source_dir=None,
+                 metadata_dir=None, logger=logging.getLogger(),
+                 output_file=None, result_fields=[]):
         self.data = data
         self.model_parameters = model_parameters
         self.source_dir = source_dir
         self.metadata_dir = metadata_dir
         self.logger = logger
+        self.result_fields = result_fields
         self.target_dir = tempfile.mkdtemp(prefix="grp.")
+
 
         self.static_dir = os.path.join(self.target_dir, 'static')
         os.makedirs(self.static_dir)
 
         self.layers_dir = os.path.join(self.static_dir, 'map_layers')
         os.makedirs(self.layers_dir)
-        
+
         if not output_file:
             os_hndl, output_file = tempfile.mkstemp(suffix=".georefine.zip")
         self.output_file = output_file
@@ -243,6 +245,7 @@ class GeoRefinePackager(object):
                 model_parameters=self.model_parameters,
                 map_config=map_config,
                 layers=layers,
+                result_fields=self.result_fields,
             ))
 
         # Copy metadata.

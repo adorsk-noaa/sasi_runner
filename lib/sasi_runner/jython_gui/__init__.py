@@ -125,7 +125,7 @@ class JythonGui(ItemListener):
             JLabel(("<html><i>This sets the specificity with which<br>"
                     "results will be grouped. Note that enabling<br>"
                     "more fields can *greatly* increase resulting<br>"
-                    "output sizes.</i>")))
+                    "output sizes and run times.</i>")))
         #self.top_panel.add(getStageLabel("Set result resolution:"))
         self.top_panel.add(resolutionLabelPanel)
         checkPanel = JPanel(GridLayout(0, 1))
