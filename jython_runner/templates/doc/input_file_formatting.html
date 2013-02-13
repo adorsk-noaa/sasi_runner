@@ -1,0 +1,317 @@
+<html>
+<head></head>
+<body>
+
+<h2>Input Files Formatting Guide</h2>
+
+This page describes the format of input files for the SASI Runner program.
+
+A set of example inputs is included with this documentation: <a href="example_inputs" >example inputs</a> .
+
+<div class="section">
+    <h3>General Notes</h3>
+    <ul>
+        <li>Values are case-sensitive, e.g. 'id' is not the same as 'ID'.</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h3>Overall Input Layout</h3>
+    <div>
+        The SASI Gridder takes a single directory as an input. This directory should have the following layout:
+        <pre>
+        /
+         - energies.csv
+         - feature_categories.csv
+         - features.csv
+         - (optional) fishing_efforts.csv
+         - gears.csv
+         - grid /
+           - grid.dbf
+           - grid.prj
+           - grid.shp
+           - grid.shx
+         - habitats /
+           - habitats.dbf
+           - habitats.prj
+           - habitats.shp
+           - habitats.shx
+         - (optional) map_layers /
+           - layer1 /
+             - client.json
+         - model_parameters.csv
+         - substrates.csv
+         - va.csv
+        </pre>
+
+        The format of each section of this directory will be described below.
+    </div>
+</div>
+
+<div class="section">
+    <a name="energies">
+    <h3>energies.csv</h3>
+    <div>
+        <div class="example">
+            Example: <a href="example_inputs/energies.csv">energies.csv</a>
+        </div>
+
+        <div>
+            This file contains definitions for hydrodynamic energy levels. For example, 'High'.
+
+            This file should be a CSV file with the following columns:
+            <pre>id, label, description</pre>
+
+            <div class="highlight">
+                <ul>
+                    <li>The values in the id column should match up with the 'energy_id' column in the <a href="#va">va.csv</a> file, and the 'ENERGY' attribute in the <a href="#habitats">habitats</a> shapefile.</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <a name="feature_categories">
+    <h3>feature_categories.csv</h3>
+    <div>
+        <div class="example">
+            Example: <a href="example_inputs/feature_categories.csv" >feature_categories.csv</a>
+        </div>
+
+        <div>
+            This file contains definitions for feature categories. For example, 'Biological'.
+
+            This file should be a CSV file with the following columns:
+            <pre>id, label, description</pre>
+
+            <div class="highlight">
+                <ul>
+                    <li>The values in the id column should match up with the 'category' column in the <a href="#features">features.csv</a> file.</li>.
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <a name="features">
+    <h3>features.csv</h3>
+    <div>
+        <div class="example">
+            Example: <a href="example_inputs/features.csv" >features.csv</a>
+        </div>
+
+        <div>
+            This file contains definitions for features. For example, 'Brachiopods'.
+
+            This file should be a CSV file with the following columns:
+            <pre>id, label, category, description</pre>
+
+            <div class="highlight">
+                <ul>
+                    <li>The values in the id column should match up with the 'feature_id' column in the <a href="#va">va.csv</a> file.</li>
+                    <li>The values in the category column should match up with the 'id' column in the <a href="#feature_categories">feature_categories.csv</a> file.</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <a name="fishing_efforts">
+    <h3>fishing_efforts.csv (optional)</h3>
+    <div>
+        <div class="example">
+            Example: <a href="example_inputs/fishing_efforts.csv" >fishing_efforts.csv</a>
+        </div>
+
+        <div>
+            This file contains data for realized fishing effort data.
+
+            This file should be a CSV file with the following columns:
+            <pre>cell_id, gear_id, time, a, hours_fished, value</pre>
+
+            <div class="highlight">
+                <ul>
+                    <li>This file will be ignored if the value of the 'effort_model' column of the <a href="#model_parameters">model_parameters.csv</a> is not 'realized'.</li>
+                    <li>The values in the cell_id column should match up with the 'ID' attribute of the <a href="#grid">grid</a> shapefile.</li>
+                    <li>The values in the gear_id column should match up with the 'id' column in the <a href="#gears">gears.csv</a> file.</li>
+                    <li>Values in the a column should be in units of km<sup>2</sup>.</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <a name="gears">
+    <h3>gears.csv</h3>
+    <div>
+        <div class="example">
+            Example: <a href="example_inputs/gears.csv" >gears.csv</a>
+        </div>
+
+        <div>
+            This file contains definitions for gear types.
+
+            This file should be a CSV file with the following columns:
+            <pre>id, generic_id, label, description, is_generic, min_depth, max_depth</pre>
+
+            <div class="highlight">
+                <ul>
+                    <li>The values in the generic_id column define how to map specific gear types to generic gear types. They should match up with the 'gear_id' column of the <a href="#va">va.csv</a> file.</li>
+                    <li>The is_generic column should have value of '1' if the gear is generic, and be left blank otherwise.</li>
+                    <li>min_depth and max_depth are optional. If specified, they should be in units of positive meters.</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <a name="grid">
+    <h3>grid</h3>
+    <div>
+        <div class="example">
+            Example: <a href="example_inputs/grid" >grid</a>
+        </div>
+
+        <div>
+            This directory contains the shapefile set for the SASI 100km cell grid.
+
+            The shapefile should have at least these attributes:
+            <pre>ID</pre>
+
+            <div class="highlight">
+                <ul>
+                    <li>The 'ID' attribute should contain a numeric cell id.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <a name="habitats">
+    <h3>habitats</h3>
+    <div>
+        <div class="example">
+            Example: <a href="example_inputs/habitats" >habitats</a>
+        </div>
+
+        <div>
+            This directory contains the shapefile set for the SASI habitats.
+
+            The shapefile should have these attributes: 
+            <pre>ENERGY, SUBSTRATE, Z</pre>
+
+            <div class="highlight">
+                <ul>
+                    <li>Values for the 'ENERGY' attribute should match up with the 'id' column of the <a href="#energies">energies.csv</a> file.</li>
+                    <li>Values for the 'SUBSTRATE' attribute should match up with the 'id' column of the <a href="#substrates">substrates.csv</a> file.</li>
+                    <li>Values for the 'Z' attribute should be in units of *negative* meters</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h3>map_layers</h3>
+    <div>
+        <div>
+            This directory contains definitions for map layers to be included in the SASI data explorer. The structure of this directory is described on a separate page: <a href="map_layers.html">The Map Layers Directory</a>.
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <a name="model_parameters">
+    <h3>model_parameters.csv</h3>
+    <div>
+        <div class="example">
+            Example: <a href="example_inputs/model_parameters.csv" >model_parameters.csv</a>
+        </div>
+
+        <div>
+            This file contains definitions for the model parameters. For example, the tau recovery parameter.
+
+            This file should be a CSV file with the following columns:
+            <pre>time_start, time_end, time_step, t_0, t_1, t_2, t_3, w_0, w_1, w_2, w_3, effort_model</pre>
+
+            <div class="highlight">
+                <ul>
+                    <li>The time_start column should contain an integer start year, for example '1996'</li>
+                    <li>The time_end column should contain an integer ending year, for example '2010'</li>
+                    <li>The time_step column should contain an integer value for the time between model steps, for example '1'</li>
+                    <li>The t_0, t_1, t_2, t_3 columns should contain numeric values for the tau recovery parameter.</li>
+                    <li>The w_0, w_1, w_2, w_3 columns should contain numeric values for the omega recovery parameter.</li>
+                    <li>The value of the effort_model column should be 'realized' if you wish to use fishing efforts from the <a href="#fishing_efforts">fishing_efforts.csv file</a>, otherwise nominal efforts will be generated.
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <a name="substrates">
+    <h3>substrates.csv</h3>
+    <div>
+        <div class="example">
+            Example: <a href="example_inputs/substrates.csv" >substrates.csv</a>
+        </div>
+
+        <div>
+            This file contains definitions for substrates. For example, 'Sand'.
+
+            This file should be a CSV file with the following columns:
+            <pre>id, label, description, color</pre>
+
+            <div class="highlight">
+                <ul>
+                    <li>The values in the id column should match up with the 'substrate_id' column in the <a href="#va">va.csv</a> file.</li>
+                    <li>The values in the color column should be hex-code CSS colors. For example, '#7FC97F'. These colors will be used as the fill color for the substrates layer that is generated for the SASI Data Explorer.</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <a name="va">
+    <h3>va.csv</h3>
+    <div>
+        <div class="example">
+            Example: <a href="example_inputs/va.csv" >va.csv</a>
+        </div>
+
+        <div>
+            This file contains vulnerability assessment data.
+
+            This file should be a CSV file with the following columns:
+            <pre>gear_id, substrate_id, feature_id, energy_id, s, r</pre>
+
+            <div class="highlight">
+                <ul>
+                    <li>The values in 'xxx_id' columns should match up with the id columns of the corresponding files.
+                    <li>The values of the s and r columns should be 0, 1, 2, or 3. These values correspond to the t_0, t_1, ..., w_0, w_1, ... columns in the <a href="#model_parameters">model_parameters.csv file</a>.
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+</body>
+</html>

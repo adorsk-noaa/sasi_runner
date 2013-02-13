@@ -1,0 +1,13 @@
+{
+  "layer_type": "XYZ",
+  "label": "ESRI Ocean Basemap",
+  "url": "http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/${z}/${y}/${x}",
+  "properties": {
+    "visibility": true,
+    "isBaseLayer": true,
+    "sphericalMercator": true,
+    "serverResolutions": [156543.033928, 78271.5169639999, 39135.7584820001, 19567.8792409999, 9783.93962049996, 4891.96981024998, 2445.98490512499, 1222.99245256249, 611.49622628138, 305.748113140558, 152.874056570411, 76.4370282850732, 38.2185141425366, 19.1092570712683, 9.55462853563415, 4.77731426794937, 2.38865713397468],
+  },
+  "zIndex": 10,
+  "info": "Ocean Basemap from ESRI ArcGIS Services. <a target=\"_blank\" href=\"http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer\">link<a>"
+}

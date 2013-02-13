@@ -1,0 +1,2 @@
+time_start,time_end,time_step,t_0,t_1,t_2,t_3,w_0,w_1,w_2,w_3,effort_model
+0,10,1,1,1.5,3.5,7.5,0.05,0.175,0.375,0.75,nominal

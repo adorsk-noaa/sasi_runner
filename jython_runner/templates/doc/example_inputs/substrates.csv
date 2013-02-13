@@ -1,0 +1,6 @@
+id,label,description,color
+S1,Mud,Particle size range: &lt; 0.0039 - 0.0625 mm,#7FC97F
+S2,Sand,Particle size range: 0.0625 - 2 mm,#BEAED4
+S3,Granule-pebble,Particle size range: 2 - 64 mm,#FDC086
+S4,Cobble,Particle size range: 64 - 256 mm,#386CB0
+S5,Boulder,Particle size range: &gt; 256 mm,#F0027F
