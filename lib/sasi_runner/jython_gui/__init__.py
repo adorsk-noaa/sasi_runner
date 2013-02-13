@@ -68,7 +68,7 @@ class JythonGui(ItemListener):
             "SASI Runner",
             defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE,
         )
-        self.frame.size = (650, 400,)
+        self.frame.size = (650, 600,)
 
         self.main_panel = JPanel()
         self.main_panel.layout = BoxLayout(self.main_panel, BoxLayout.Y_AXIS)
@@ -119,7 +119,15 @@ class JythonGui(ItemListener):
              'selected': False}
         ]
         self.selected_result_fields = {}
-        self.top_panel.add(getStageLabel("Set result resolution:"))
+        resolutionLabelPanel = JPanel(GridLayout(0,1))
+        resolutionLabelPanel.add(getStageLabel("Set result resolution:"))
+        resolutionLabelPanel.add(
+            JLabel(("<html><i>This sets the specificity with which<br>"
+                    "results will be grouped. Note that enabling<br>"
+                    "more fields can *greatly* increase resulting<br>"
+                    "output sizes.</i>")))
+        #self.top_panel.add(getStageLabel("Set result resolution:"))
+        self.top_panel.add(resolutionLabelPanel)
         checkPanel = JPanel(GridLayout(0, 1))
         self.top_panel.add(checkPanel) 
         self.resultFieldCheckBoxes = {}
@@ -134,7 +142,7 @@ class JythonGui(ItemListener):
             self.resultFieldCheckBoxes[checkBox] = result_field
 
         # 'Run' elements.
-        self.top_panel.add(getStageLabel("Run SASI: "))
+        self.top_panel.add(getStageLabel("Run SASI: (this might take a while)"))
         self.run_button = JButton("Run...", actionPerformed=self.runSASI)
         self.top_panel.add(self.run_button)
 
