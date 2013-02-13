@@ -57,7 +57,7 @@ class GeoRefinePackager(object):
         self.create_schema_files()
         self.create_static_files()
         archive_file = self.create_archive(self.output_file)
-        #shutil.rmtree(self.target_dir)
+        shutil.rmtree(self.target_dir)
         return archive_file
 
     def create_target_dirs(self):
@@ -239,10 +239,14 @@ class GeoRefinePackager(object):
         map_config = self.read_map_config()
         app_config_file = os.path.join(self.static_dir, "GeoRefine_appConfig.js")
         with open(app_config_file, "wb") as f:
+
+            initial_tstep_index = len(self.data['time']['items']) - 1
+
             app_config_template = self.template_env.get_template(
                 'georefine/GeoRefine_appConfig.js')
             f.write(app_config_template.render(
                 model_parameters=self.model_parameters,
+                initial_tstep_index=initial_tstep_index,
                 map_config=map_config,
                 layers=layers,
                 result_fields=self.result_fields,
