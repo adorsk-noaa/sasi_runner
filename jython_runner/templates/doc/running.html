@@ -2,9 +2,9 @@
 <head></head>
 <body>
 
-<h2>Running SASI Gridder</h2>
+<h2>Running SASI Runner</h2>
 
-This page describes how to run the SASI Gridder program.
+This page describes how to run the SASI Runner program.
 
 <ol>
     <li>Read the instructions.</li>
@@ -20,17 +20,20 @@ This page describes how to run the SASI Gridder program.
         Specify an output file:
         <ol>
             <li>Click the 'Specify output' button.</li>
-            <li>Choose where you want to put the output file, and what you want to call it. Make sure the filename ends with '.csv' .
+            <li>Choose where you want to put the output file, and what you want to call it. Make sure the filename ends with '.zip' .
             <li>Click the 'Save' button.</li>
             <li>You should see "Selected '/path/to/your/file' as output." in the log pane.
         </ol>
     </li>
     <li>
-        Run the gridder:
+        Configure the model resolution by checking fields. If a field is a checked, you will be able to group results by that field. For example, if the 'energy' field is checked, you will get separate result rows for each energy level. Please note that increasing the resolution by enabling more fields can *greatly* increase run times and output file sizes.
+    </li>
+    <li>
+        Run the runner:
         <ol>
             <li>Click the 'Run' button. You should see log messages start to appear in the log pane.</li>
-            <li>Wait for the gridder to finish. This can take some time.</li>
-            <li>When the gridder is complete the progress bar will stop. The final message in the log pane should be something like 'Gridding completed, output file is: '/path/to/the/output.csv'</li>
+            <li>Wait for the runner to finish. This can take some time.</li>
+            <li>When the runner is complete the progress bar will stop. The final message in the log pane should be something like 'SASI Run completed, output file is: '/path/to/the/output.zip'</li>
         </ol>
     </li>
 </ol>
