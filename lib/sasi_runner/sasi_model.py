@@ -128,6 +128,9 @@ class SASI_Model(object):
     def run(self, log_interval=1, commit=True, batch_size=20, **kwargs):
         self.run_counter = 0
 
+        # Limit batch size to avoid overloading SQL 'in' statements.
+        batch_size = min(batch_size, 500)
+
         self.logger.info("Iterating through cells...")
         self.logger.info("Saving results every %s cells" % batch_size)
         Cell = self.dao.schema['sources']['Cell']
