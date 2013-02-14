@@ -264,7 +264,10 @@ class JythonGui(ItemListener):
             self.progressBar.setIndeterminate(False)
             self.progressBar.setValue(100)
 
-            shutil.rmtree(self.tmp_dir)
+            try:
+                shutil.rmtree(self.tmp_dir)
+            except:
+                pass
 
         Thread(target=run_task).start()
 
