@@ -63,13 +63,14 @@ def main():
         os.path.join(pylib_dir, 'setuptools.pth')
     )
 
-    entrypoint_target = os.path.join(pylib_dir, 'entrypoint.py')
-    if os.path.exists(entrypoint_target):
-        os.remove(entrypoint_target)
-    shutil.copy(
-        os.path.join(templates_dir, 'entrypoint.py'),
-        entrypoint_target,
-    )
+    for item in ['entrypoint.py', 'sasi_runner_jython_gui.py']:
+        target = os.path.join(pylib_dir, item)
+        if os.path.exists(target):
+            os.remove(target)
+        shutil.copy(
+            os.path.join(templates_dir, item),
+            target
+        )
 
     # Jars.
     javalib_dir = os.path.join(base_dir, '.lib', 'java')
